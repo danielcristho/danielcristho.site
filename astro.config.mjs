@@ -7,7 +7,9 @@ export default defineConfig({
 		starlight({
 			title: 'danielcristho.',
 			social: {
-				github: 'https://github.com/danielcristho',
+				github: 'https://github.com/danielcristho/',
+				linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
+				"x.com": "https://twitter.com/chrstdan/",
 			},
 			sidebar: [
 				{
