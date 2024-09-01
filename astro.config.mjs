@@ -1,29 +1,75 @@
-import { defineConfig } from 'astro/config';
-import starlight from '@astrojs/starlight';
+import { defineConfig } from "astro/config";
+import starlightBlog from "starlight-blog";
+import starlight from "@astrojs/starlight";
+import partytown from "@astrojs/partytown";
+import compress from "astro-compress";
+import robotsTxt from "astro-robots-txt";
+import { BLOG_URL } from "./src/contants";
+import tailwind from "@astrojs/tailwind";
 
-// https://astro.build/config
 export default defineConfig({
-	integrations: [
-		starlight({
-			title: 'danielcristho.',
-			social: {
-				github: 'https://github.com/danielcristho/',
-				linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
-				"x.com": "https://twitter.com/chrstdan/",
-			},
-			sidebar: [
-				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
-				},
-				{
-					label: 'Reference',
-					autogenerate: { directory: 'reference' },
-				},
-			],
-		}),
-	],
+    site: BLOG_URL,
+    integrations: [
+        starlightBlog({
+            authors: {
+                danielcristho: {
+                    name: "Daniel Pepuho",
+                    title: "",
+                    url: "https://danielcristho.site",
+                },
+            },
+        }),
+        starlight({
+            lastUpdated: true,
+            title: "danielcristho.",
+            editLink: {
+                baseUrl:
+                    "https://github.com/bugron/bugron.github.io/edit/astro/",
+            },
+            customCss: ["./src/styles/custom.css"],
+            components: {
+                MarkdownContent:
+                    "starlight-blog/overrides/MarkdownContent.astro",
+                Sidebar: "starlight-blog/overrides/Sidebar.astro",
+                ThemeSelect: "starlight-blog/overrides/ThemeSelect.astro",
+                TableOfContents: "./src/components/TableOfContents.astro",
+                Header: "./src/components/Header.astro",
+                Head: "./src/components/Head.astro",
+            },
+            social: {
+                github: "https://github.com/danielcristho",
+                linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
+                "x.com": "https://twitter.com/chrstdan",
+            },
+            head: [
+                {
+                    tag: "script",
+                    attrs: {
+                        src: "https://www.googletagmanager.com/gtag/js?id=G-EWP344X6RY",
+                        type: "text/partytown",
+                        async: true,
+                    },
+                },
+                {
+                    tag: "script",
+                    type: "text/partytown",
+                    content: `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-EWP344X6RY');
+					`,
+                },
+            ],
+        }),
+        compress(),
+        robotsTxt(),
+        partytown({
+            config: {
+                forward: ["dataLayer.push"],
+            },
+        }),
+        tailwind(),
+    ],
 });

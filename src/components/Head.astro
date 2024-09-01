@@ -1,0 +1,21 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import DefaultHead from "@astrojs/starlight/components/Head.astro";
+
+const getBlogPostSlug = (articleSlug: string, customImageFileNameWithExt = '') => ({
+   [ `blog/${articleSlug}`]: `/og/blog/${customImageFileNameWithExt ? customImageFileNameWithExt : articleSlug + '.png'}?v=1`
+});
+const defaultOgImage = '/og/default.png?v=1';
+
+const ogImages: Record<string, string> = {
+    ...getBlogPostSlug('how-to-quickly-setup-a-blog'),
+    ...getBlogPostSlug('bisecting-bugs-with-git'),
+}
+
+const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
+---
+
+<meta property="og:image" content={ogImage} />
+<meta property="twitter:image" content={ogImage} />
+<meta name="author" content="Arsen Melikyan" />
+<DefaultHead {...Astro.props} />
