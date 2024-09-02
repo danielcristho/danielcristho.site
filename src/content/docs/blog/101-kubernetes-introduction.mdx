@@ -1,0 +1,61 @@
+---
+title: "Kubernetes 101: Introduction"
+date: 2024-09-01
+description: Introduction to kubernetes.
+tags:
+    - Kubernetes
+    - Book Summeries
+    - Blog
+authors: danielcristho
+---
+
+**Hi, welcome to the wonderful world of DevOps. This is a post I wrote while learning Kubernetes. So, let's start the journey!😎**.
+
+## 📄 What is Kubernetes?
+Since release by Google in 2014, Kubernetes has become a very popular technology in modern cloud infrastructure. _**It is a useful open-source orchestrator for containerizing applications**_.
+
+![Kubernetes everywhere meme](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/19x9zvjzljfay9ixkq61.jpg)
+
+**The name Kubernetes comes from the Greek, meaning** **"navigator"** or **"pilot"**. As such, Kubernetes is expected to become an open-source platform that can be used for application workload management, as well as providing declarative configuration and automation. Now, with widely available services, support and tools, Kubernetes has a large and rapidly growing ecosystem.
+
+Based on its experience over the last decade, and with the best ideas coming from the community, Google created Kubernetes, see [Large-scale cluster management at Google with Borg](https://research.google/pubs/large-scale-cluster-management-at-google-with-borg/) for more.
+
+By the way, Kubernetes is not a _monolithic system_, but rather a _building block_ and _pluggable_ system that is needed to build a platform that developers want, while still prioritizing the concept of flexibility.
+
+## ⚡ Kubernetes Features
+There are many features of Kubernetes:
+
+**- Service discovery and load balancing**, means Kubernetes can expose containers using their DNS or IP. Kubernetes can also perform load balancing and distribute traffic within a system.
+
+**- Storage orchestration**, Kubernetes automatically installs storage systems, either on-premises or cloud services.
+
+**- Deployment and automatic rollback**, Kubernetes will change the current state to the user's desired state at a controlled rate. For example, Kubernetes will automatically create a new container, delete the old container, and adopt its resources into the new container.
+
+**- Automatic Packing**, Kubernetes is very efficient in the allocation of memory (RAM) and CPU usage for each container.
+
+**- Recovery**, Kubernetes can restart failed containers, replace containers, and shut down containers that do not respond and do not provide services to users.
+
+**- Managing secrets and configurations**, Kubernetes stores and manages sensitive information, such as passwords, OAuth tokens, and SSH keys, so this information can be updated without creating container images and exposing existing secrets.
+
+**- Providing PaaS services**, Kubernetes provides features such as deployment, scaling, load balancing, logging, and monitoring, although **Kubernetes runs at the container level rather than the hardware level**.
+
+## 😌 The following features are not available!?
+
+![Kubernetes meme](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/vm9rhbq4krk9tzif39ft.jpg)
+
+There are some features not included or provided by Kubernetes, for example:
+
+1. Kubernetes aims to support all variations of workloads (including stateless or stateful, and data processing), so as long as the application is running on containers, there is no limit to the applications that can be supported.
+
+2. Kubernetes does not provide a CI/CD workflow mechanism.
+
+3. Kubernetes does not provide application-level services such as middleware (e.g. message buses), data processing frameworks (e.g. Spark), databases (e.g. MySQL), caches, or cluster storage systems (e.g. Ceph) as an integrated service. But all of these components can run on Kubernetes.
+
+4. Kubernetes does not provide or require a configuration language like [Jsonnet](https://jsonnet.org), as it provides a declarative API that can be used with different types of declarative specifications.
+
+- Kubernetes does not provide or adapt a configuration for the machine's maintenance, management, or self-healing to any particular specification.
+
+Reference:
+- [Kubernetes Untuk Pemula](https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula) write using Bahasa Indonesia.
+
+Thank you for reading this post.😀
