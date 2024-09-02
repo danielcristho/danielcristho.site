@@ -24,7 +24,7 @@ export default defineConfig({
             title: "danielcristho.",
             editLink: {
                 baseUrl:
-                    "https://github.com/bugron/bugron.github.io/edit/astro/",
+                    "https://github.com/danielcristho/astrdocs/edit/main",
             },
             customCss: ["./src/styles/custom.css"],
             components: {

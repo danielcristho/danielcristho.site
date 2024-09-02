@@ -1,7 +1,7 @@
 ---
 import Button from "../components/cv/Button.astro";
 import XIcon from "../components/cv/icons/X.astro";
-import { Globe, Mail, Phone, Github, Linkedin, Youtube } from "lucide-astro";
+import { Globe, Mail, Phone, Github, Linkedin} from "lucide-astro";
 import { RESUME_DATA } from "../resume-data";
 
 import "@fontsource/inter";
@@ -10,28 +10,28 @@ import "../components/cv/globals.css";
 const ogImage = "/og/cv.png?v=1";
 ---
 
-<title>Arsen Melikyan's CV</title>
-<meta name="title" content="Arsen Melikyan's CV" />
-<meta name="description" content="This page represents Arsen Melikyan's CV" />
-<meta name="author" content="Arsen Melikyan" />
+<title>Daniel Pepuho's CV</title>
+<meta name="title" content="Daniel Pepuho's CV" />
+<meta name="description" content="This page represents Daniel Pepuho's CV" />
+<meta name="author" content="Daniel Pepuho" />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://melikyan.dev/cv/" />
-<meta property="og:title" content="Arsen Melikyan's CV" />
+<meta property="og:url" content="https://danielcristho.site/cv/" />
+<meta property="og:title" content="Daniel Pepuho's CV" />
 <meta
   property="og:description"
-  content="This page represents Arsen Melikyan's CV"
+  content="This page represents Daniel Pepuho's CV"
 />
 <meta property="og:image" content={ogImage} />
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://melikyan.dev/cv/" />
-<meta property="twitter:title" content="Arsen Melikyan's CV" />
+<meta property="twitter:url" content="https://danielcristho.site/cv/" />
+<meta property="twitter:title" content="Daniel Pepuho's CV" />
 <meta
   property="twitter:description"
-  content="This page represents Arsen Melikyan's CV"
+  content="This page represents Daniel Pepuho's CV"
 />
 <meta property="twitter:image" content={ogImage} />
 
@@ -66,7 +66,7 @@ const ogImage = "/og/cv.png?v=1";
           <Button href={`tel:${RESUME_DATA.contact.tel}`}>
             <Phone class="size-4" />
           </Button>
-          <Button href={`https://github/${RESUME_DATA.contact.github}/`}>
+          <Button href={`https://github.com/${RESUME_DATA.contact.github}/`}>
             <Github class="size-4" />
           </Button>
           <Button
@@ -76,11 +76,6 @@ const ogImage = "/og/cv.png?v=1";
           </Button>
           <Button href={`https://x.com/${RESUME_DATA.contact.X}/`}>
             <XIcon class="size-4" />
-          </Button>
-          <Button
-            href={`https://www.youtube.com/${RESUME_DATA.contact.youtubeUsername}/`}
-          >
-            <Youtube class="size-4" />
           </Button>
         </div>
         <div
@@ -149,7 +144,7 @@ const ogImage = "/og/cv.png?v=1";
         })
       }
     </section>
-    <!-- <section class="flex min-h-0 flex-col gap-y-3">
+    <section class="flex min-h-0 flex-col gap-y-3">
       <h2 class="text-xl font-bold">Education</h2>
       {
         RESUME_DATA.education.map((education) => {
@@ -173,9 +168,9 @@ const ogImage = "/og/cv.png?v=1";
           );
         })
       }
-    </section> -->
+    </section>
     <section class="flex min-h-0 flex-col gap-y-3">
-      <h2 class="text-xl font-bold">Skills</h2>
+      <h2 class="text-xl font-bold">Skills&Technologies</h2>
       <div class="flex flex-wrap gap-1">
         {
           RESUME_DATA.skills.map((skill) => {
