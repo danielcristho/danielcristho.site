@@ -1,10 +1,10 @@
 export const RESUME_DATA = {
     name: "Daniel Pepuho",
     location: "Jayapura, Papua",
-    about: "Senior Software Engineer focused on building products with extra attention to detail",
+    about: "A student with a focus on networking, programming and system administration. With over 3 years experience as an IT Infra.",
     summary:
-        "As a Full Stack Engineer, I have successfully taken multiple products from 0 to 1. I lead teams effectively, ensuring an environment where people can do their best work. Currently, I work mostly with TypeScript, React, Node.js, and GraphQL. I have over 8 years of experience in working remotely with companies all around the world.",
-    avatarUrl: "https://avatars.githubusercontent.com/u/13225220?v=4",
+        "",
+    avatarUrl: "https://avatars.githubusercontent.com/u/69733783?v=4",
     personalWebsiteUrl: "https://danielcristho.site",
     contact: {
         email: "pepuhodaniel93@gmail.com",
@@ -34,20 +34,17 @@ export const RESUME_DATA = {
                 "This is my first experience using Docker in the Production Project.",
             ],
             usedTechnologies: [
-                "React.js",
-                "TypeScript",
-                "Mobx",
-                "Esri maps",
+                "Ansible",
+                "AWS Lambda",
+                "Docker",
+                "Mariadb",
                 "GitHub Actions",
-                "Jetbrains TeamCity",
-                "in-house front-end platform, and design system solutions",
             ],
         },
         {
             company: "PT. Internusa Total Solution",
-            // link: "https://www.tidepoollabs.com/",
-            badges: [],
             title: "IT Network Intern",
+            badges: [],
             start: "Jul 2019",
             end: "Oct 2019",
             descriptions: [
@@ -74,24 +71,24 @@ export const RESUME_DATA = {
     ],
     projects: [
         {
-            title: "danielcristho.site",
-            techStack: ["Personal Project", "Astro", "Starlight"],
-            description:
-                "My personal website and blog. Built with Astro and Starlight",
-            link: {
+        title: "danielcristho.site",
+        techStack: ["Personal Project", "Astro", "Starlight"],
+        description:
+            "My personal website and blog. Built with Astro and Starlight",
+        link: {
                 label: "danielcristho.site",
                 href: "https://danielcristho.site/",
-            },
+        },
         },
         {
-            title: "ppdbjatim.net",
-            techStack: ["Next JS", "Laravel", "Docker", "Mariadb"],
-            description:
-                "I worked on both the front-end (React.js) app and a Chrome web extension.",
-            link: {
-                label: "8thmind.com",
-                href: "https://www.8thmind.com/",
-            },
+        title: "ppdbjatim.net",
+        techStack: ["Next JS", "Laravel", "Docker", "Mariadb"],
+        description:
+            "I worked on both the front-end (React.js) app and a Chrome web extension.",
+        link: {
+                label: "ppdbjatim.net",
+                href: "https://pppdjatim.net/",
+        },
         },
     ],
 } as const;

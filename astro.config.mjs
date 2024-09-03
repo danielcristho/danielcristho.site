@@ -28,8 +28,7 @@ export default defineConfig({
             },
             customCss: ["./src/styles/custom.css"],
             components: {
-                MarkdownContent:
-                    "starlight-blog/overrides/MarkdownContent.astro",
+                MarkdownContent: "starlight-blog/overrides/MarkdownContent.astro",
                 Sidebar: "starlight-blog/overrides/Sidebar.astro",
                 ThemeSelect: "starlight-blog/overrides/ThemeSelect.astro",
                 TableOfContents: "./src/components/TableOfContents.astro",
@@ -39,7 +38,7 @@ export default defineConfig({
             social: {
                 github: "https://github.com/danielcristho",
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
-                "x.com": "https://twitter.com/chrstdan",
+                "x.com": "https://twitter.com/chrstdan"
             },
             head: [
                 {
@@ -54,11 +53,10 @@ export default defineConfig({
                     tag: "script",
                     type: "text/partytown",
                     content: `
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-
-gtag('config', 'G-EWP344X6RY');
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('js', new Date());
+                        gtag('config', 'G-EWP344X6RY');
 					`,
                 },
             ],
