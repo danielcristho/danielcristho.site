@@ -29,17 +29,42 @@ export const RESUME_DATA = {
             start: "2023",
             end: "2024",
             descriptions: [
-                "Role as IT Infrastructure, Responsible for managing server websites, like creating",
-                "CI/CD, building configuration management using Ansible, and creating automated scripts.",
-                "This is my first experience using Docker in the Production Project.",
+                "Responsible for managing the website server used by over 500k students to enrol in local high schools. As IT Infra, I was responsible for managing servers and storage. As DevOps, I was responsible for creating automation, creating CI/CD for backend deployment, managing database, monitoring server."
             ],
             usedTechnologies: [
                 "Ansible",
                 "AWS Lambda",
+                "DigitalOcean",
                 "Docker",
-                "Mariadb",
                 "GitHub Actions",
+                "Grafana",
+                "Laravel",
+                "Mariadb",
+                "Next.js",
+                "Prometheus",
+                "ProxySQL",
             ],
+        },
+        {
+            company: "PPDB SULSEL",
+            link: "https://ppdb.sulselprov.go.id",
+            badges: [],
+            title: "IT Infra & DevOps",
+            start: "Mar 2022",
+            end: "Jul 2022",
+            descriptions: [
+                "Responsible for managing the website server used by over 200k students to enrol in local high schools."
+            ],
+            usedTechnologies: [
+                "Ansible",
+                "DigitalOcean",
+                "Lintasarta Cloudeka",
+                "Laravel",
+                "Next.js",
+                "Nginx",
+                "PostgreSQL"
+            ],
+
         },
         {
             company: "PT. Internusa Total Solution",
@@ -48,9 +73,7 @@ export const RESUME_DATA = {
             start: "Jul 2019",
             end: "Oct 2019",
             descriptions: [
-                "Responsible for maintaining internet service on the client side.",
-                "Monitoring network performance to determine if adjustments need to be made.",
-                "Network installation.",
+                "Responsible for maintaining Internet service on the client side, monitoring network performance and network installation."
             ],
             usedTechnologies: [
                 "Mikrotik",
@@ -58,9 +81,12 @@ export const RESUME_DATA = {
                 "Unifi (Ubiqiti)"
             ],
         },
+        ],
 
-    ],
     skills: [
+        "DevOps",
+        "IT Infra",
+        "Sysadmin",
         "Docker",
         "Ansible",
         "MySQL/Mariadb",
@@ -78,17 +104,7 @@ export const RESUME_DATA = {
         link: {
                 label: "danielcristho.site",
                 href: "https://danielcristho.site/",
-        },
-        },
-        {
-        title: "ppdbjatim.net",
-        techStack: ["Next JS", "Laravel", "Docker", "Mariadb"],
-        description:
-            "I worked on both the front-end (React.js) app and a Chrome web extension.",
-        link: {
-                label: "ppdbjatim.net",
-                href: "https://pppdjatim.net/",
-        },
+            },
         },
     ],
 } as const;
