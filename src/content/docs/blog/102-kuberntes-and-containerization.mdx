@@ -6,7 +6,128 @@ tags:
     - Kubernetes
     - Container
     - Docker
-    - Book Summeries
+    - Read From Book
     - Blog
 authors: danielcristho
 ---
+
+Okay, let's start again. **Kubernetes** and **container** are two things that cannot be separated from each other.
+
+**Understanding container is essential in the context of Kubernetes, because Kubernetes is an orchestration system for managing containers.** Knowing about containers will help you understand how Kubernetes organizes and distributes containerized applications, optimizes resource usage, and ensures isolation and failure recovery.
+
+## 🤔 Why Container?
+
+![VM Meme](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/7k92zqdvr1gdazkot3lt.jpeg)
+
+The old way of deploying an application was to install the application on a machine (VM) and then install various libraries or dependencies using a package manager. This creates dependencies between executables (files that can be run), configuration, and other dependencies. It takes a lot of time to do this.
+
+![Container meme](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/7ofd1icf5n3dh61l9sox.jpg)
+
+A new way to overcome this problem is by deploying the applications using containers. **By the way, containers are virtualization at the operating system level, not at the hardware level**.
+
+Containers support isolation, both between the containers and also with the machine on which the container is placed. Then, You can't see another process in another container because each container has its file system.
+
+There are advantages and disadvantages when using containers:
+
+### ➕ Pros
+
+**- Portability**, containers encapsulate all dependencies and configurations, allowing applications to run consistently across different environments.
+
+**- Efficiency**, containers share the host OS kernel, making them more lightweight and resource-efficient compared to virtual machines.
+
+**- Scalability**, containers can be easily scaled up or down to handle varying loads, and orchestration tools like Kubernetes automate this process.
+
+**- Isolation**, containers provide process and resource isolation, enhancing security and stability by limiting the impact of failures to individual containers.
+
+### ➖ Cons
+
+**- Complexity**, managing containerized applications can be complex, especially at scale, requiring robust orchestration and monitoring tools.
+
+**- Security**, containers share the host OS kernel, which can pose security risks if a vulnerability in the kernel is exploited.
+
+**- Compatibility**, not all applications are suitable for containerization, especially those with complex dependencies or those that require direct access to hardware.
+
+## 📦 Container Architecture
+
+![Container Architecture](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/nj5lq5774523s7mv0n3n.png)
+
+Containers have several main components you need to know about, likes:
+
+**1. Container Runtime**
+
+A container runtime is a software component responsible for running containers. It provides the tools and services necessary to create, start, stop, and manage the lifecycle of containers. Container runtimes ensure that containers are isolated from each other and from the host system while sharing the host operating system kernel. **There are various kinds of runtimes, such as Docker, containerd, CRI-O, and several other types of runtime implementations in support of the Kubernetes CRI (Container Runtime Interface)**.
+
+**2. Container Image**
+
+A container image is a lightweight, standalone, executable software package that includes everything needed to run a piece of software, including code, runtime, system tools, libraries, and settings. Container images are used to create containers.
+
+**3. Application Container**
+
+This is the result of the new image, including any code changes. Then build the container using the new image and re-run it.
+
+## ☸️ Kubernetes Architecture
+
+Kubernetes clusters consist of worker nodes that run applications in containers. Each cluster has at least one worker node. Pods are a workload component of the application. The control plane manages the worker nodes and pods in the cluster.
+
+![Kubernetes Architecture](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/jx0qe9v8t6c3upy4dkm1.png)
+
+### 🎛 Control Plane Components
+
+**1. Kube-apiserver**
+
+The control plane component exposing the Kubernetes API as the front-end, and this component is designed for horizontal scaling.
+
+**2. Etcd**
+
+It is a consistent key-value store that is used as data storage for Kubernetes clusters, so you need to pay attention to the mechanism for backing it up on Kubernetes clusters.
+
+**3. Kube-scheduler**
+
+**The Kube scheduler is a core component of Kubernetes, responsible for assigning pods to nodes within a cluster.** It ensures efficient resource utilization and adherence to various scheduling policies by filtering out nodes that don't meet the pod's requirements, scoring the remaining nodes based on criteria such as resource availability and affinity rules, and then binding the pod to the highest-scoring node. This process ensures that pods are placed on appropriate nodes, maintaining a balanced distribution of resources and adhering to constraints and priorities.
+
+**4. Kube-controller-manager**
+
+The Kube controller manager is a key component of Kubernetes, responsible for running various controllers that regulate the state of the cluster. It includes controllers that handle tasks such as node management, replication, and endpoint updates.
+
+**5. Cloud-controller-manager**
+
+The cloud controller manager is a component in Kubernetes that integrates the cluster with the underlying cloud services. It runs controllers specific to cloud environments that handle tasks such as node lifecycle, route management, and service load balancers.
+### 💻 Node Components
+
+**1. Kubelet**
+
+Kubelet is a critical agent that runs on each node in a Kubernetes cluster and is responsible for managing the state of the pods on that node. It ensures that the containers described in the pod specifications are running and healthy, by interacting with the container runtime.
+
+**2. Kube-proxy**
+
+Kube-proxy is a network component in Kubernetes that runs on each node and is responsible for maintaining network rules and facilitating communication between services. It handles traffic routing to ensure that requests are properly routed to the appropriate pods, supporting both internal and external service access. Kube-proxy uses methods such as iptables, IPVS, or userspace proxying to manage and balance network traffic, ensuring reliable and efficient connectivity within the Kubernetes cluster.
+
+**3. Container runtime**
+
+A container runtime is software that manages the lifecycle of containers, including creating, starting, stopping, and deleting them. It provides the tools and services necessary to run containerized applications, ensuring that they are isolated from each other and the host system. Popular container runtimes include Docker, containerd, rktlet, and CRI-O. In Kubernetes, the container runtime interfaces with the kubelet to manage containers as part of the orchestration of the cluster.
+
+### 🍨Addons Components
+
+Other components are pods and services that implement the functions required by the cluster.
+
+**1. DNS**
+
+DNS, or Domain Name System, is an important Kubernetes add-on that provides service discovery and name resolution within a cluster. It allows pods to communicate with each other, and with external services, by translating human-readable service names into IP addresses.
+
+**2. Web UI**
+
+Web UI add-ons in Kubernetes are additional components that provide graphical interfaces for managing and monitoring the cluster. These tools, such as the Kubernetes Dashboard, provide an easy-to-use web-based interface that allows administrators to interact with the cluster, view resource utilization, manage deployments, and troubleshoot issues.
+
+**3. Container Resource Monitoring**
+
+Container resource monitoring addons are tools or services used in Kubernetes to track and analyze container resource usage, such as CPU, memory, and disk I/O. These add-ons collect metrics _time-series_ from running containers and provide insight into their performance and resource consumption, improving resource allocation, scaling decisions, and troubleshooting.
+
+**4. Cluster-level logging**
+
+**Cluster-level logging is an add-on component in Kubernetes that collects and aggregates log data from all nodes and pods in the cluster.** It helps centralize logs, making it easier to monitor, analyze, and troubleshoot applications and infrastructure issues.
+
+References:
+- [Kubernetes Untuk Pemula](https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula) write using Bahasa Indonesia.
+- [Cluster Architecture](https://kubernetes.io/docs/concepts/architecture/).
+
+I think that's all from this post, maybe next I will explain Kubernetes Object and the other components.

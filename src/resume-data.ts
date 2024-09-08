@@ -1,7 +1,7 @@
 export const RESUME_DATA = {
     name: "Daniel Pepuho",
-    location: "Jayapura, Papua",
-    about: "A student with a focus on networking, programming and system administration. With over 3 years experience as an IT Infra.",
+    location: "Surabaya, East Java",
+    about: "A student with a focus on networking, programming system administration & DevOps. With over 3 years experience as Sysadmin & IT Infra.",
     summary:
         "",
     avatarUrl: "https://avatars.githubusercontent.com/u/69733783?v=4",
@@ -15,7 +15,7 @@ export const RESUME_DATA = {
     education: [
         {
             school: "Institut Teknologi Sepuluh Nopember",
-            degree: "Bachelor's Degree in Informatics",
+            degree: "Undergraduate student in Informatics.",
             start: "2020",
             end: "Present",
         },
@@ -29,7 +29,7 @@ export const RESUME_DATA = {
             start: "2023",
             end: "2024",
             descriptions: [
-                "Responsible for managing the website server used by over 500k students to enrol in local high schools. As IT Infra, I was responsible for managing servers and storage. As DevOps, I was responsible for creating automation, creating CI/CD for backend deployment, managing database, monitoring server."
+                "Responsible for managing server website used by over 500k students to enroll in local high schools. As IT Infra, I was responsible for managing servers and storage. As DevOps, I was responsible for creating automation, creating CI/CD for backend deployment, configure & managing database, monitoring server (resourece and database)."
             ],
             usedTechnologies: [
                 "Ansible",
@@ -53,7 +53,7 @@ export const RESUME_DATA = {
             start: "Mar 2022",
             end: "Jul 2022",
             descriptions: [
-                "Responsible for managing the website server used by over 200k students to enrol in local high schools."
+                "Responsible for managing server website used by over 200k students to enroll in local high schools. As IT Infra, I was responsible for managing servers, storage, firewall. As DevOps, I was responsible for application deployments, configuring web server, configuring and managing database."
             ],
             usedTechnologies: [
                 "Ansible",
@@ -95,6 +95,7 @@ export const RESUME_DATA = {
         "Cisco",
         "Mikrotik"
     ],
+
     projects: [
         {
         title: "danielcristho.site",

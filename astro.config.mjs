@@ -36,8 +36,8 @@ export default defineConfig({
                 Head: "./src/components/Head.astro",
             },
             social: {
-                github: "https://github.com/danielcristho",
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
+                github: "https://github.com/danielcristho",
                 "x.com": "https://twitter.com/chrstdan"
             },
             head: [
