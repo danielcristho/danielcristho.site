@@ -45,7 +45,7 @@ export default defineConfig({
                 {
                     tag: "script",
                     attrs: {
-                        src: "https://www.googletagmanager.com/gtag/js?id=G-EWP344X6RY",
+                        src: "https://www.googletagmanager.com/gtag/js?id=G-",
                         type: "text/partytown",
                         async: true,
                     },
@@ -57,7 +57,7 @@ export default defineConfig({
                         window.dataLayer = window.dataLayer || [];
                         function gtag(){dataLayer.push(arguments);}
                         gtag('js', new Date());
-                        gtag('config', 'G-EWP344X6RY');
+                        gtag('config', 'G-');
 					`,
                 },
             ],
