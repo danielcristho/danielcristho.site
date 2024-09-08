@@ -41,26 +41,6 @@ export default defineConfig({
                 github: "https://github.com/danielcristho",
                 "x.com": "https://twitter.com/chrstdan"
             },
-            head: [
-                {
-                    tag: "script",
-                    attrs: {
-                        src: "https://www.googletagmanager.com/gtag/js?id=G-",
-                        type: "text/partytown",
-                        async: true,
-                    },
-                },
-                {
-                    tag: "script",
-                    type: "text/partytown",
-                    content: `
-                        window.dataLayer = window.dataLayer || [];
-                        function gtag(){dataLayer.push(arguments);}
-                        gtag('js', new Date());
-                        gtag('config', 'G-');
-					`,
-                },
-            ],
         }),
         compress(),
         robotsTxt(),
