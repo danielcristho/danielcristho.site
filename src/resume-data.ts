@@ -1,9 +1,8 @@
 export const RESUME_DATA = {
     name: "Daniel Pepuho",
-    location: "Surabaya, East Java",
-    about: "A student with a focus on networking, programming system administration & DevOps. With over 3 years experience as Sysadmin & IT Infra.",
-    summary:
-        "",
+    location: "Jayapura, Papua",
+    about: "A student with a focus on networking, programming system administration & DevOps. With 3 years experience as Sysadmin & IT Infra.",
+    summary: "",
     avatarUrl: "https://avatars.githubusercontent.com/u/69733783?v=4",
     personalWebsiteUrl: "https://danielcristho.site",
     contact: {
@@ -86,6 +85,7 @@ export const RESUME_DATA = {
     skills: [
         "DevOps",
         "IT Infra",
+        "Network Administration",
         "Sysadmin",
         "Docker",
         "Ansible",
@@ -99,7 +99,7 @@ export const RESUME_DATA = {
     projects: [
         {
         title: "danielcristho.site",
-        techStack: ["Personal Project", "Astro", "Starlight"],
+        techStack: ["Personal Project", "Astro", "Starlight", "Blog"],
         description:
             "My personal website and blog. Built with Astro and Starlight",
         link: {

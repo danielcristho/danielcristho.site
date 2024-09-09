@@ -1,12 +1,15 @@
 ---
-const { length = 100, children } = Astro.props;
+const { content, lines = 3 } = Astro.props;
 
-const content = String(children);
-let truncatedText = content;
-
-if (content.length > length) {
-  truncatedText = content.slice(0, length) + '...';
-}
+const truncateStyle = {
+  display: '-webkit-box',
+  WebkitLineClamp: lines,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
 ---
 
-<p>{truncatedText}</p>
+<p style={truncateStyle}>
+  {content}
+</p>

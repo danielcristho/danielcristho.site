@@ -21,6 +21,7 @@
     "astro-robots-txt": "^1.0.0",
     "lucide-astro": "^0.309.0",
     "markdown-it": "^14.0.0",
+    "react-truncate": "^2.4.0",
     "sanitize-html": "^2.11.0",
     "sharp": "^0.33",
     "starlight-blog": "^0.4.0",

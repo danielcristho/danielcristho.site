@@ -34,7 +34,8 @@ export default defineConfig({
                 TableOfContents: "./src/components/TableOfContents.astro",
                 Header: "./src/components/Header.astro",
                 Head: "./src/components/Head.astro",
-                Footer: "/src/components/Footer.astro"
+                Footer: "/src/components/Footer.astro",
+                Truncate: "/src/components/Truncate.astro"
             },
             social: {
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
