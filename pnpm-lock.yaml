@@ -17,6 +17,9 @@ importers:
       '@astrojs/rss':
         specifier: ^4.0.1
         version: 4.0.7
+      '@astrojs/sitemap':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@astrojs/starlight':
         specifier: ^0.13.0
         version: 0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))
@@ -128,8 +131,8 @@ packages:
   '@astrojs/rss@4.0.7':
     resolution: {integrity: sha512-ZEG55XFB19l+DplUvBISmz04UbjDtKliRO4Y5+ERRhAMjgCVVobEBNE6ZwWG1h6orWUocy4nfPihKXDyB73x9g==}
 
-  '@astrojs/sitemap@3.1.6':
-    resolution: {integrity: sha512-1Qp2NvAzVImqA6y+LubKi1DVhve/hXXgFvB0szxiipzh7BvtuKe4oJJ9dXSqaubaTkt4nMa6dv6RCCAYeB6xaQ==}
+  '@astrojs/sitemap@3.2.0':
+    resolution: {integrity: sha512-SkrOCL3Z6HxdiXreZ1+aPBWgnBMJ31EgPdcscgQeLqI2Gqk/4EKLuw9q0SqKU9MmHpcPXXtcd0odfCk4barPoA==}
 
   '@astrojs/starlight@0.13.1':
     resolution: {integrity: sha512-cJ3WQcX3KAedH1uRApxp6usacCcRd76jsWT1V2j4rqWU817PBFrhF7xAsvm4aQaWPryqmsFOmBwSg+iOLsGNew==}
@@ -2629,9 +2632,9 @@ packages:
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
-  sitemap@7.1.2:
-    resolution: {integrity: sha512-ARCqzHJ0p4gWt+j7NlU5eDlIO9+Rkr/JhPFZKKQ1l5GCus7rJH4UdrlVAh0xC/gDS/Qir2UMxqYNHtsKr2rpCw==}
-    engines: {node: '>=12.0.0', npm: '>=5.6.0'}
+  sitemap@8.0.0:
+    resolution: {integrity: sha512-+AbdxhM9kJsHtruUF39bwS/B0Fytw6Fr1o4ZAIAEqA6cke2xcoO2GleBw9Zw7nRzILVEgz7zBM5GiTJjie1G9A==}
+    engines: {node: '>=14.0.0', npm: '>=6.0.0'}
     hasBin: true
 
   source-map-js@1.2.0:
@@ -3262,16 +3265,16 @@ snapshots:
       fast-xml-parser: 4.4.1
       kleur: 4.1.5
 
-  '@astrojs/sitemap@3.1.6':
+  '@astrojs/sitemap@3.2.0':
     dependencies:
-      sitemap: 7.1.2
+      sitemap: 8.0.0
       stream-replace-string: 2.0.0
       zod: 3.23.8
 
   '@astrojs/starlight@0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))':
     dependencies:
       '@astrojs/mdx': 1.1.5(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))
-      '@astrojs/sitemap': 3.1.6
+      '@astrojs/sitemap': 3.2.0
       '@pagefind/default-ui': 1.1.0
       '@types/mdast': 3.0.15
       astro: 4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4)
@@ -3983,7 +3986,7 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 20.14.12
 
   '@types/unist@2.0.11': {}
 
@@ -6501,7 +6504,7 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
-  sitemap@7.1.2:
+  sitemap@8.0.0:
     dependencies:
       '@types/node': 17.0.45
       '@types/sax': 1.2.7

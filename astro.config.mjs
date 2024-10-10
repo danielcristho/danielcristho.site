@@ -4,6 +4,7 @@ import starlight from "@astrojs/starlight";
 import partytown from "@astrojs/partytown";
 import compress from "astro-compress";
 import robotsTxt from "astro-robots-txt";
+import sitemap from '@astrojs/sitemap';
 import { BLOG_URL } from "./src/contants";
 import tailwind from "@astrojs/tailwind";
 
@@ -56,6 +57,7 @@ export default defineConfig({
         }),
         compress(),
         robotsTxt(),
+        sitemap(),
         partytown({
             config: {
                 forward: ["dataLayer.push"],
