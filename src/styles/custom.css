@@ -3,7 +3,6 @@
     height: 18px;
 }
 
-/* This might possibly overwrite all hero images */
 .hero img {
 	@media screen and (max-width: 799px) {
 		max-width: 10rem;
@@ -12,6 +11,13 @@
 
 .justify-center {
     justify-content: center;
+}
+
+.truncate {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 /* Dark mode colors. */

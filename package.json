@@ -17,6 +17,7 @@
     "@astrojs/starlight": "^0.13.0",
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource/inter": "^5.0.16",
+    "@giscus/react": "^3.0.0",
     "astro": "^4",
     "astro-compress": "^2.2.7",
     "astro-robots-txt": "^1.0.0",

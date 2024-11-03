@@ -1,15 +1,22 @@
----
-const { content, lines = 3 } = Astro.props;
+import { useState } from 'react';
 
-const truncateStyle = {
-  display: '-webkit-box',
-  WebkitLineClamp: lines,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-};
----
+export default function Truncate({ children, length = 100 }) {
+  const [isTruncated, setIsTruncated] = useState(true);
 
-<p style={truncateStyle}>
-  {content}
-</p>
+  const toggleTruncate = () => {
+    setIsTruncated(!isTruncated);
+  };
+
+  const content = isTruncated ? children.slice(0, length) : children;
+
+  return (
+    <div>
+      <p>{content}</p>
+      {children.length > length && (
+        <button onClick={toggleTruncate}>
+          {isTruncated ? 'Read More' : 'Show Less'}
+        </button>
+      )}
+    </div>
+  );
+}
