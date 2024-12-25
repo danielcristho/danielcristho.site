@@ -23,15 +23,14 @@ export default defineConfig({
         starlight({
             lastUpdated: true,
             title: "danielcristho.",
-            defaultLocale: "root",
+            defaultLocale: 'en',
             locales: {
-                root: {
+                en: {
                     label: "English",
-                    lang: "en",
                 },
-                "id": {
+                'id': {
                     label:"Bahasa Indonesia",
-                    lang:"id"
+                    lang: 'id',
                 },
             },
             editLink: {
@@ -52,7 +51,11 @@ export default defineConfig({
             social: {
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
                 github: "https://github.com/danielcristho",
-                "x.com": "https://twitter.com/chrstdan"
+                "x.com": "https://twitter.com/chrstdan",
+                // devto: {
+                //     url: "https://dev.to/danielcristho",
+                //     icon: "/src/assets/icons/dev-to-svgrepo-com.svg"
+                // }
             },
         }),
         compress(),

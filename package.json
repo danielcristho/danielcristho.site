@@ -14,7 +14,7 @@
     "@astrojs/partytown": "^2.0.3",
     "@astrojs/rss": "^4.0.1",
     "@astrojs/sitemap": "^3.2.0",
-    "@astrojs/starlight": "^0.13.0",
+    "@astrojs/starlight": "^0.13.1",
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource/inter": "^5.0.16",
     "@giscus/react": "^3.0.0",
