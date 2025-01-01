@@ -52,7 +52,8 @@ export default defineConfig({
             social: {
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
                 github: "https://github.com/danielcristho",
-                "x.com": "https://twitter.com/chrstdan"
+                "x.com": "https://twitter.com/chrstdan",
+                rss: "https://medium.com/@danielpepuho"
             },
         }),
         compress(),
