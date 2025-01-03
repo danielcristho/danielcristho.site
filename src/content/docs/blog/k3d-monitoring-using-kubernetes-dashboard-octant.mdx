@@ -105,7 +105,7 @@ $ kubectl -n kubernetes-dashboard create token admin-user
 Use `kubectl proxy` to access the dashboard:
 
 ```bash
-kubectl proxy
+$ kubectl proxy
 
 Starting to serve on 127.0.0.1:8001
 ```
@@ -116,6 +116,10 @@ Finally, open your browser and navigate to:
 http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
 ```
 
+![Login to Kubernetes Dashboard](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/hlgts2cocnoi1j24bv7s.png)
+
+![See the services](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ro6mxv84hr4d8s0tqdzr.png)
+
 Note: Don't forget to copy and paste the token when prompted.
 
 ## Setting Up Octant on K3D
@@ -123,7 +127,7 @@ Note: Don't forget to copy and paste the token when prompted.
 First, you need to install Octant, You can install Octant using a package manager or download it directly from the [official releases](https://github.com/vmware-archive/octant/releases/tag/v0.25.1). For example, on macOS, you can use Homebrew:
 
 ```bash
-brew install octant
+$ brew install octant
 ```
 
 Next, on Linux just download the appropriate binary and move it to your path:
