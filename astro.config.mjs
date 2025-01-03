@@ -47,13 +47,14 @@ export default defineConfig({
                 Header: "./src/components/Header.astro",
                 Head: "./src/components/Head.astro",
                 Footer: "/src/components/Footer.astro",
-                Truncate: "/src/components/Truncate.astro"
+                Truncate: "/src/components/Truncate.astro",
+                SocialIcons: "./src/components/SocialIcons.astro",
+
             },
             social: {
-                linkedin: "https://www.linkedin.com/in/daniel-pepuho/",
+                linkedin: "https://www.linkedin.com/in/daniel-pepuho",
                 github: "https://github.com/danielcristho",
-                "x.com": "https://twitter.com/chrstdan"
-                // rss: "https://medium.com/@danielpepuho"
+                "x.com": "https://twitter.com/chrstdan",
             },
         }),
         compress(),
