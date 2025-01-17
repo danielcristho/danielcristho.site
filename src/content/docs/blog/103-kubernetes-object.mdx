@@ -1,0 +1,84 @@
+---
+title: "Kubernetes 103: Objects"
+date: 2025-01-17
+description: Objects in kubernetes.
+tags:
+    - Kubernetes
+    - Read From Book
+    - Blog
+authors: danielcristho
+---
+
+Let's start again. Now I'm going to talk about objects in Kubernetes. In Kubernetes, an object represents a record of intent, where you declare what you want the cluster to do. The Kubernetes control plane works continuously to ensure that the current state of your system matches the desired state described by these objects.
+
+## Common Kubernetes Objects
+
+Here are some of the most commonly used objects in Kubernetes:
+
+### 1. Pod
+
+**A Pod is a group of one or more containers that share storage, networking, and a defined runtime configuration. Containers within a pod are scheduled and deployed together, operating in the same execution context.**
+
+![Containers on Pod](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/59nler9y3ga9fo6hnu0p.png)
+
+A pod acts as a logical host for tightly connected containers, enabling seamless communication via `localhost` and standard IPC mechanisms like SystemV semaphores or POSIX shared memory. Containers in different pods, however, have unique IP addresses and communicate using pod IPs, ensuring clear isolation while supporting inter-pod networking.
+
+Like containers in an application, pods are considered relatively ephemeral entities. Their lifecycle involves creation, assignment of a unique UID, scheduling to a node, and remaining there until they are stopped, restarted, or deleted. You can see the pod life cycle from the image below.
+
+![Pod Lifecycle](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/y1xovsd95lecso9lh7sr.png)
+
+If a node fails, all pods on that node are marked for deletion after a specific timeout. A pod with a unique ID will not be rescheduled to a new node; instead, it will be replaced by a new pod with a different ID.
+
+### 2. Service
+
+**A Service in Kubernetes is an abstraction that defines a logical set of Pods and the policies for accessing them, often referred to as microservices.** You can see the service balancing traffic across multiple pods in the image below.
+
+![Kubernetes Service](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/cbgxj4gr4vlktbnuicu7.png)
+
+For example, imagine a backend that provides image-processing functionality with three replicas. These replicas are identical, so the frontend doesn't need to know which backend instance it uses. Even if the backend Pods change over time, the frontend doesn’t need to manage or track the list of current backends.
+
+A Service decouples this complexity by providing a stable interface, allowing clients to interact with Pods without worrying about their lifecycle or specific details.
+
+For applications running on Kubernetes, the platform provides a simple API endpoint that is continuously updated to reflect the current state of the Pods within a service.
+
+For non-native applications, Kubernetes offers a virtual IP-based bridge that routes traffic to the backend Pods of the service. This ensures seamless integration and reliable access, regardless of changes in the underlying Pods.
+
+### 3. Volume
+
+A Kubernetes Volume provides a way for containers to access storage beyond their ephemeral lifecycle. Unlike a container's local filesystem, which is destroyed when the container stops, **a volume ensures data persists as long as the Pod using it exists.** Kubernetes supports multiple volume types, such as `emptyDir`, `hostPath`, `configMap`, `secret`, and `network-based storage` like `NFS` or `cloud provider-specific volumes`.
+
+Volumes can be shared among containers within the same Pod, enabling them to collaborate on data. However, when a Pod is deleted, the associated volume typically goes with it—unless you're using Persistent Volumes (PV).
+
+#### Persistent Volumes (PV) and Persistent Volume Claims (PVC)
+
+A PV is a piece of storage provisioned in the cluster, either statically or dynamically. It is an abstract representation of storage resources like disks, network storage, or cloud storage, and exists independently of any specific Pod.
+
+A PVC is a request for storage by a Pod. Users specify the required size, access modes (e.g., ReadWriteOnce, ReadOnlyMany), and storage class in the PVC. The cluster automatically binds the PVC to a suitable PV, providing the requested storage.
+
+There are two methods to provide Persistent Volumes (PV)
+
+##### 1. Static
+
+**-** The cluster administrator manually creates PVs by defining them in YAML manifests.
+**-** These PVs are available for binding with any PVC that matches their configuration.
+
+##### 2. Dynamic
+
+**-** Kubernetes automatically provisions PVs based on the PVCs submitted by users.
+
+**-** The cluster uses a `StorageClass` to determine the storage backend and provision the appropriate PV.
+
+**-** This method simplifies administration by eliminating the need for pre-created PVs.
+
+### 4. Namespace
+
+**A namespace in Kubernetes is a way to divide a cluster into virtual sub-clusters, providing logical isolation between resources. It is useful for organizing resources in environments with multiple teams, projects, or stages (e.g., development, staging, production).**
+
+By default, Kubernetes provides namespaces like `default`, `kube-system`, and `kube-public`. Users can create custom namespaces to segregate workloads and manage resource quotas, access controls, and policies independently for each namespace.
+
+Namespaces are ideal for multi-tenant environments or to avoid naming collisions in large clusters. However, they don’t provide hard security boundaries and are primarily a tool for organizational purposes.
+
+References:
+
+- KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
+- Kubernetes Objects Guide. https://phoenixnap.com/kb/kubernetes-objects.
