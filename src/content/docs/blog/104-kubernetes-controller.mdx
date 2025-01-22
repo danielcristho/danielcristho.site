@@ -25,11 +25,15 @@ Deployments **manage updates to Pods and ReplicaSets declaratively by transition
 
 Common uses for Deployments include:
 
-a. Releasing a ReplicaSet and monitoring its status.
-b. Updating Pod specifications to declare a new desired state.
-c. Scaling up to handle increased load.
-d. Rolling back to a previous version if the current state is unstable.
-e. Cleaning up unused ReplicaSets.
+**a.** Releasing a ReplicaSet and monitoring its status.
+
+**b.** Updating Pod specifications to declare a new desired state.
+
+**c.** Scaling up to handle increased load.
+
+**d.** Rolling back to a previous version if the current state is unstable.
+
+**e.** Cleaning up unused ReplicaSets.
 
 ## 2. ReplicaSet
 
@@ -47,11 +51,11 @@ In practical use, ReplicaSets are not typically managed directly by users. Inste
 
 Common uses of DaemonSet:
 
-1. Running storage daemons across nodes, such as Glusterd or Ceph.
+**1.** Running storage daemons across nodes, such as Glusterd or Ceph.
 
-2. Running log collection daemons across nodes, such as Fluentd or LogStash.
+**2.** Running log collection daemons across nodes, such as Fluentd or LogStash.
 
-3. Running node monitoring daemons, such as Prometheus Node Exporter, Flowmill, or New Relic Agent.
+**3.** Running node monitoring daemons, such as Prometheus Node Exporter, Flowmill, or New Relic Agent.
 
 DaemonSet is ideal for tasks that require processes to run on every node, such as log collection, monitoring, or providing local volumes.
 
