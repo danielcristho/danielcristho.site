@@ -13,7 +13,7 @@ export const RESUME_DATA = {
     },
     education: [
         {
-            school: "Institut Teknologi Sepuluh Nopember",
+            school: "Sepuluh Nopember Institute of Technology (ITS) Surabaya",
             degree: "Undergraduate student in Informatics.",
             start: "2020",
             end: "Present",
@@ -28,7 +28,12 @@ export const RESUME_DATA = {
             start: "2023",
             end: "2024",
             descriptions: [
-                "Responsible for managing server website used by over 500k students to enroll in local high schools. As IT Infra, I was responsible for managing servers and storage. As DevOps, I was responsible for creating automation, creating CI/CD for backend deployment, configure & managing database, monitoring server (resourece and database)."
+                "- Managed the server website for High School Enrollment of 500K+ candidates in East Java.",
+                "- Ensured scalability and reliability under heavy traffic conditions.",
+                "- Developed automation workflows using Ansible.",
+                "- Built CI/CD pipelines using GitHub Actions.",
+                "- Configuring and optimizing databases with ProxySQL for high availability performance.",
+                "- Set up resource monitoring using Grafana and Prometheus."
             ],
             usedTechnologies: [
                 "Ansible",
@@ -39,9 +44,9 @@ export const RESUME_DATA = {
                 "Grafana",
                 "Laravel",
                 "Mariadb",
+                "ProxySQL",
                 "Next.js",
                 "Prometheus",
-                "ProxySQL",
             ],
         },
         {
@@ -52,7 +57,10 @@ export const RESUME_DATA = {
             start: "Mar 2022",
             end: "Jul 2022",
             descriptions: [
-                "Responsible for managing server website used by over 200k students to enroll in local high schools. As IT Infra, I was responsible for managing servers, storage, firewall. As DevOps, I was responsible for application deployments, configuring web server, configuring and managing database."
+                "- Managed the server website for high school enrollment, serving over 175K+ candidates in South Sulawesi.",
+                "- Handled servers, storage, and firewalls as IT Infra.",
+                "- Deployed applications and managed web servers as DevOps.",
+                "- Configured and managed databases.",
             ],
             usedTechnologies: [
                 "Ansible",
@@ -63,7 +71,6 @@ export const RESUME_DATA = {
                 "Nginx",
                 "PostgreSQL"
             ],
-
         },
         {
             company: "PT. Internusa Total Solution",
@@ -72,7 +79,9 @@ export const RESUME_DATA = {
             start: "Jul 2019",
             end: "Oct 2019",
             descriptions: [
-                "Responsible for maintaining Internet service on the client side, monitoring network performance and network installation."
+                "- Maintained and troubleshot internet services for clients.",
+                "- Monitored network performance and implemented necessary optimizations.",
+                "- Installed and configured network infrastructure.",
             ],
             usedTechnologies: [
                 "Mikrotik",
@@ -81,7 +90,6 @@ export const RESUME_DATA = {
             ],
         },
         ],
-
     skills: [
         "DevOps",
         "IT Infra",
@@ -95,7 +103,6 @@ export const RESUME_DATA = {
         "Cisco",
         "Mikrotik"
     ],
-
     projects: [
         {
         title: "danielcristho.site",
@@ -106,6 +113,18 @@ export const RESUME_DATA = {
                 label: "danielcristho.site",
                 href: "https://danielcristho.site/",
             },
+        },
+    ],
+    organizational_volunteering: [
+        {
+            company: "Networking Technology and Intelligent Cybersecurity Laboratory ITS",
+            title: "Lab Administrator & Teaching Assistant",
+            descriptions: [
+                "- Participated as a collaborative team member alongside 10 other laboratory assistants, contributing to planning and supporting the implementation of laboratory activities during this period.",
+                "- Served as a teaching assistant for Computer Networks and Operating Systems courses, contributing to module preparation and managing practical sessions for over 200+ students.",
+            ],
+            start: "2022",
+            end: "2024"
         },
     ],
 } as const;
