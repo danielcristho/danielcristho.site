@@ -84,7 +84,7 @@ kind-cluster-control-plane   Ready    control-plane   75s   v1.31.0
 
 ### Create Simple Deployment
 
-**-** Use the `kubectl` create deployment command to define and start a deployment:
+**-** Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $  kubectl create deployment nginx --image=nginx
@@ -196,7 +196,7 @@ k3d-my-k3d-cluster-server-0   Ready    control-plane,master   2m33s   v1.30.4+k3
 
 ### Create Simple Deployment
 
-**-** Use the `kubectl` create deployment command to define and start a deployment:
+**-** Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $ kubectl create deployment httpd --image=httpd
@@ -301,7 +301,7 @@ ip-192-168-xx-yy.ec2.internal   Ready    <none>   17m   v1.30.8-eks-aeac57
 
 ### Create Simple Deployment
 
-**-** Use the kubectl create deployment command to define and start a deployment:
+**-** Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $ kubectl create deployment nginx --image=nginx
@@ -360,7 +360,7 @@ $  eksctl delete cluster --name cluster-1 --region us-east-1
 
 Setting up a Kubernetes cluster is the first step in running containerized applications at scale. In this guide, we've explored three different ways to create a Kubernetes cluster and do a simple deployment: using Kind and K3D for local development and using EKS for cloud-based deployments. Each method has its own advantages depending on your use case.
 
-Stay tuned!
+Thanks for reading this post. Stay tuned!
 
 References:
 
