@@ -36,7 +36,7 @@ export default defineConfig({
             },
             editLink: {
                 baseUrl:
-                    "https://github.com/danielcristho/astrdocs/edit/main",
+                    "https://github.com/danielcristho/danielcristho.site/edit/main",
             },
             customCss: ["./src/styles/custom.css"],
             components: {
