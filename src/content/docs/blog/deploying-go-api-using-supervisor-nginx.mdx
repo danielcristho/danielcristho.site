@@ -272,14 +272,14 @@ stdout_logfile=/var/log/go-api.out.log
 Now, we need build the Go API:
 
 ```bash
-go build -o main .
+$ go build -o main .
 ```
 
 Ensure the directory and binary have the correct permissions:
 
 ```bash
-sudo chown -R www-data:www-data /var/www/go-api
-sudo chmod 775 /var/www/go-api/main
+$ sudo chown -R www-data:www-data /var/www/go-api
+$ sudo chmod 775 /var/www/go-api/main
 ```
 
 #### Apply the Supervisor Configuration
@@ -310,8 +310,8 @@ go-api:go-api_00                 RUNNING   pid 198867, uptime 0:01:52
 If the API is not running, check the logs:
 
 ```bash
-cat /var/log/go-api.out.log
-cat /var/log/go-api.err.log
+$ cat /var/log/go-api.out.log
+$ cat /var/log/go-api.err.log
 ```
 
 Or use Supervisor’s built-in log viewer:
