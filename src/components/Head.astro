@@ -8,8 +8,8 @@ const getBlogPostSlug = (articleSlug: string, customImageFileNameWithExt = '') =
 const defaultOgImage = '/og/default.png?v=1';
 
 const ogImages: Record<string, string> = {
-    ...getBlogPostSlug('how-to-quickly-setup-a-blog'),
-    ...getBlogPostSlug('bisecting-bugs-with-git'),
+    ...getBlogPostSlug('exploring-k3s-on-docker-using-k3d'),
+    ...getBlogPostSlug('automating-flask-and-postgres-using-terraform-ansible'),
 }
 
 const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
