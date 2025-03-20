@@ -12,7 +12,7 @@ authors: danielcristho
 
 ## Intro
 
-Hi! In this post, I'll show you how to deploy a simple Go API using Supervisor to manage the process and Nginx as a web server to serve it.
+Hi! In this post, I'll show you how to deploy a Go API using Supervisor to manage the process and Nginx as a web server to serve it.
 
 Before we dive into the deployment steps, let's briefly discuss why we're using Supervisor and Nginx.
 
@@ -33,7 +33,7 @@ You might wonder why we use Supervisor instead of alternatives like [Systemd](ht
 
 ### When Should You Use Supervisor?
 
-Use Supervisor when you want a simple, non-containerized way to manage a Go service, with features like auto-restart and log management, without dealing with systemd’s complexity or Docker’s extra overhead.
+Use Supervisor when you want a  non-containerized way to manage a Go service, with features like auto-restart and log management, without dealing with systemd’s complexity or Docker’s extra overhead.
 
 ## Setup and Run a Simple Go API
 
@@ -253,9 +253,9 @@ stdout_logfile=/var/log/go-api.out.log
 
 > **Explanation**:
 
-> `directory=/var/www/simple-go-api` → The working directory of the Go API.
+> `directory=/var/www/go-api` → The working directory of the Go API.
 
-> `command=bash -c 'cd /var/www/simple-go-api && ./main'` → Runs the API.
+> `command=bash -c 'cd /var/www/go-api && ./main'` → Runs the API.
 
 > `autostart=true` → Starts automatically on system boot.
 
@@ -265,9 +265,9 @@ stdout_logfile=/var/log/go-api.out.log
 
 > `redirect_stderr=true` → Redirects error logs to stdout.
 
-> `stdout_logfile=/var/log/api/simple-go-api.out.log` → Standard output log file.
+> `stdout_logfile=/var/log/api/go-api.out.log` → Standard output log file.
 
-> `stderr_logfile=/var/log/api/simple-go-api.err.log` → Error log file.
+> `stderr_logfile=/var/log/api/go-api.err.log` → Error log file.
 
 Now, we need build the Go API:
 
@@ -394,4 +394,4 @@ curl http://YOUR_SERVER_IP
 
 ### Conclusion
 
-In this guide, we deployed a simple Go API using Supervisor to manage the process ensuring automatic restarts and efficient request handling also Nginx as a reverse proxy. Thank you for reading, and good luck with your deployment! 🚀
+In this guide, we deployed a Go API using Supervisor to manage the process ensuring automatic restarts and efficient request handling also Nginx as a reverse proxy. Thank you for reading, and good luck with your deployment! 🚀
