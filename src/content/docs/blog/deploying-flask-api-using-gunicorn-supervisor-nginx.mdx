@@ -26,7 +26,7 @@ In this guide, I'll show you how to deploy a Flask API using Gunicorn as the WSG
 
 **-** [**Nginx**](https://nginx.org): A reverse proxy to handle client requests and route them to Gunicorn.
 
-### Flask API Deployment Flow
+### Project Flow
 
 The diagram below illustrates the flow of a request and response when using Flask, Gunicorn, Supervisor, and Nginx.
 
@@ -383,7 +383,7 @@ Here are a few quick troubleshooting tips:
 
 > Permission errors: Ensure all paths used by Supervisor and Gunicorn are accessible by the appropriate user.
 
-### Conclusion
+## Conclusion
 
 In this guide, we deployed a Flask API using Gunicorn as the WSGI server, Supervisor to keep the app running reliably, and Nginx as a reverse proxy to handle incoming requests. With this setup, your Flask app is ready to serve real traffic efficiently and automatically recover from crashes. Thanks for reading — and good luck with your deployment! 🚀
 
