@@ -244,7 +244,7 @@ $ curl 127.0.0.1:8081/api/hello
 
 ### Step 2: The Dockerfile
 
-We'll use a multi-stage build to create a minimal and secure Docker image. This process compiles our Go application in one stage and then copies only the final binary to a much smaller final image. This keeps our final image size low and reduces the attack surface.
+We'll use a multi-stage build to create a minimal and secure Docker image. This process compiles our Go application in one stage and then copies only the final binary to a much smaller final image. This keeps our final image size low.
 
 Create a `Dockerfile` in your project directory and add the following code:
 
