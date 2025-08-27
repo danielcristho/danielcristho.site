@@ -16,7 +16,7 @@ export default defineConfig({
                 danielcristho: {
                     name: "Daniel Pepuho",
                     title: "",
-                    url: "https://danielcristho.site",
+                    url: "https://github.com/danielcristho",
                 },
             },
         }),
