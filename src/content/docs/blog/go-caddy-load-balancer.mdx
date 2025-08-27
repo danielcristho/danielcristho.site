@@ -35,15 +35,15 @@ Here's the project structure:
     └── main.go
 ```
 
-Our setup is composes of three main parts:
+Our setup is composed of three main parts:
 
 **1.** **Backend Workers (`src`)**: These are simple Go applications the will handle the requests. Each worker will simply return a "Hello form [hostname]" message, allowing us to sess which server is handling the request. This is the perfect way to visualize how Caddy distributes the load.
 
-**2.** **Caddy Load Balancer (`caddy`)**: Our Caddy instance will act as the reverse proxy, forwarding requets to the worker services. We'll use the `Caddyfile` to define our load balancing rules.
+**2.** **Caddy Load Balancer (`caddy`)**: Our Caddy instance will act as the reverse proxy, forwarding requests to the worker services. We'll use the `Caddyfile` to define our load balancing rules.
 
 **3.** **Docker Compose (`docker.compose.yml`)**: This file orchestrates everything, defining and running our multi-container application with a single-command.
 
-## Understading the Components
+## Understanding the Components
 
 Let's break down the files in our project.
 
@@ -98,7 +98,7 @@ CMD ["/app"]
 
 `docker-compose.yml`
 
-This file ties everything together. We define a service for our Caddy load balancer and three workers services.
+This file ties everything together. We define a service for our Caddy load balancer and three worker services.
 
 ```yml
 version: "3.8"
@@ -136,7 +136,7 @@ services:
 
 `caddy/Caddyfile`
 
-This where the magic happends! The `Caddyfile` is Caddy's configuration file. We'll define a **reverse proxy** that routes to our workers. The `lb_policy` directive is where we'll specify our load balancing algorithms.
+This is where the magic happens! The `Caddyfile` is Caddy's configuration file. We'll define a **reverse proxy** that routes to our workers. The `lb_policy` directive is where we'll specify our load balancing algorithms.
 
 ```go
 :80 {
