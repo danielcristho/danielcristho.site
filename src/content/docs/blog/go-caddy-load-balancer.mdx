@@ -1,0 +1,440 @@
+---
+title: Exploring Load Balancing in Caddy Using Docker
+date: 2025-08-27
+description: Exploring Load Balancing in Caddy Using Docker.
+tags:
+    - Go
+    - Docker
+authors: danielcristho
+---
+
+
+![Cover Images](https://res.cloudinary.com/diunivf9n/image/upload/v1755923140/caddy-lb-docker_peicwm.png)
+
+Hello there! In this post, we'll dive into the world of Caddy, a modern and powerful web server. Built using Go, Caddy offers a range of built-in features, including **reverse proxy** and **load balancing**.
+
+By the way, in this project, I'll use **Caddy 2**, the latest version, which comes with a completely rewritten architecture and enhanced features. To make our setup and testing as smooth as possible, we'll leverage Docker. Docker allows us to create a reproducible environment with all the necessary components easily.
+
+The main focus of this post will be on understanding and experimenting with Caddy's **load balancing algorithms**. We'll explore how Caddy intelligently distributes incoming traffic, the different strategies it offers (such as **Round Robin**, **Least Connection**, **Random**, and more), and how you can configure the for various use cases.
+
+By using Docker, we'll quickly spin up multiple backend services (which are called "workers") and route requests through a single Caddy instance acting as our load balancer.
+
+## The Project Setup
+
+To get started, let's look at the project structure. Our setup is straightforward, allowing us to focus on the core concepts of load balancing.
+
+Here's the project structure:
+
+```sh
+├── caddy
+│   └── Caddyfile
+├── docker-compose.yml
+└── src
+    ├── Dockerfile
+    ├── go.mod
+    └── main.go
+```
+
+Our setup is composes of three main parts:
+
+**1.** **Backend Workers (`src`)**: These are simple Go applications the will handle the requests. Each worker will simply return a "Hello form [hostname]" message, allowing us to sess which server is handling the request. This is the perfect way to visualize how Caddy distributes the load.
+
+**2.** **Caddy Load Balancer (`caddy`)**: Our Caddy instance will act as the reverse proxy, forwarding requets to the worker services. We'll use the `Caddyfile` to define our load balancing rules.
+
+**3.** **Docker Compose (`docker.compose.yml`)**: This file orchestrates everything, defining and running our multi-container application with a single-command.
+
+## Understading the Components
+
+Let's break down the files in our project.
+
+`src/main.go`
+
+This is a simple Go HTTP server. It listens on port `8081` and responds to any request by printing its `hostname`. This is our primary tool for observing the load balancing behavior.
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	hostname, _ := os.Hostname()
+	fmt.Fprintf(w, "Hello from %s\n", hostname)
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8081", nil)
+}
+```
+
+`src/Dockerfile`
+
+This `Dockerfile` builds our Go application into a lightweight, self-contained Docker image.
+
+```docker
+FROM golang:1.24 AS builder
+
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN go mod download
+
+RUN CGO_ENABLED=0 go build -o /go/bin/app
+
+FROM golang:1.24-alpine
+
+COPY --from=builder /go/bin/app /
+
+EXPOSE 8081
+ENV PORT 8081
+
+CMD ["/app"]
+```
+
+`docker-compose.yml`
+
+This file ties everything together. We define a service for our Caddy load balancer and three workers services.
+
+```yml
+version: "3.8"
+
+services:
+  load_balancer:
+    image: caddy:2.10-alpine
+    container_name: load_balancer
+    ports:
+      - "8082:80"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+
+  worker_1:
+    build: ./src
+    container_name: worker_1
+    hostname: worker_1
+    expose:
+      - "8081"
+
+  worker_2:
+    build: ./src
+    container_name: worker_2
+    hostname: worker_2
+    expose:
+      - "8081"
+
+  worker_3:
+    build: ./src
+    container_name: worker_3
+    hostname: worker_3
+    expose:
+      - "8081"
+```
+
+`caddy/Caddyfile`
+
+This where the magic happends! The `Caddyfile` is Caddy's configuration file. We'll define a **reverse proxy** that routes to our workers. The `lb_policy` directive is where we'll specify our load balancing algorithms.
+
+```go
+:80 {
+    reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy round_robin
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+## Experimenting with Load Balancing Algorithms
+
+Now that our project is set up, we can start experimenting. To run the project, simply execute docker-compose up in your terminal. You can then send requests to `http://127.0.0.1:8082` and observe which worker responds.
+
+### **1.** Round Robin (`lb_policy round_robin`)
+
+This is the most common and simplest load balancing algorithm. Caddy distributes incoming requests to the backend servers in a sequential, rotating manner. It's a fair and predictable method, assuming all servers are equally capable of handling the load.
+
+**How to Configure**:
+
+Modify your `caddy/Caddyfile` to use the `round_robin` policy.
+
+```go
+:80 {
+    reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy round_robin
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+**How to Test**:
+
+After running `docker-compose up -d --build`, open your terminal and send a few requests using `curl`. You should see that Caddy distributes the traffic evenly among the three workers.
+
+```sh
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_2
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_3
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+```
+
+Now, let's test Caddy's fault tolerance. In a real-world scenario, a server might crash or become unresponsive. We'll simulate this by manually stopping one of the workers.
+
+Run the following command in your terminal to stop `worker_1`:
+
+```sh
+$ docker stop worker_1
+```
+
+After a few moments (the health_interval you set, e.g., 3 seconds), Caddy will perform its next health check, detect that `worker_1` is unresponsive, and automatically mark it as unhealthy.
+
+Now, send a few more requests. What do you expect to happen? With `worker_1` down, Caddy should intelligently stop routing traffic to it and redirect all requests to the remaining healthy servers (`worker_2` and `worker_3`).
+
+![Demo Round Robin](https://res.cloudinary.com/diunivf9n/image/upload/v1756292795/round-robin_eawtmd.gif)
+
+### **2.** Weighted Round Robin (`lb_policy weighted_round_robin`)
+
+This algorithm is a more advanced version of Round Robin. It allows you to assign a "weight" to each backend server, which determines its share of the requests. **Servers with a higher weight will receive more traffic than those with a lower weight**. **This is ideal when you have servers with varying capacities, for example, a new, more powerful server and an older, less powerful one**.
+
+You can also use this policy to gradually drain traffic from an old server or ramp up traffic to a new one during deployments, making it a very useful strategy.
+
+**How to Configure**:
+
+To use this policy, you need to add the weight to each server's address in the `Caddyfile`. For our example, let's give `worker_1` a higher weight of 3, while `worker_2` and `worker_3` each have a weight of 1. This means `worker_1` should handle three out of every five requests.
+
+```go
+:80 {
+    reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy weighted_round_robin 3 1 1
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+After updating the `Caddyfile`, make sure to reload or restart your Caddy container to apply the changes. You can do this with `docker-compose up -d --build`.
+
+**How to Test**:
+
+Now, let's send a few requests to our load balancer and see how Caddy distributes the traffic according to the assigned weights. Send a few requests using curl and observe the responses.
+
+```sh
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_2
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_3
+
+$ curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+```
+
+![Weighted Round Robin Demo](https://res.cloudinary.com/diunivf9n/image/upload/v1756296739/weighted-round-robin_jndvgp.gif)
+
+### **3.** Least Connection (`lb_policy ip_hash`)
+
+Aight, let's dive into Least Connection. Unlike Round Robin, which is a simple, sequential algorithm, Least Connection is a dynamic and more intelligent load balancing policy. It chooses the backend server with the fewest number of currently active requests. This policy is excellent for situations where your requests have a highly variable processing time.
+
+For example, if one of your servers gets a handful of complex, long-running requests while the others are handling many small, quick ones, this algorithm will automatically route new traffic to the servers that are less burdened, preventing a single server from becoming a bottleneck. If there's a tie, meaning two or more servers have the same lowest number of connections, Caddy will randomly choose one of them.
+
+**How to Configure**:
+
+Configuring this policy is simple. You just need to change the `lb_policy` directive in your Caddyfile.
+
+```go
+:80 {
+    reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy least_conn
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+After updating your `Caddyfile`, make sure to restart your Caddy container with `docker-compose up -d --build` to apply the changes.
+
+**How to Test**:
+
+To demonstrate the Least Connection algorithm, you'll need to modify your Go code to simulate a long-running request. This will allow you to see how Caddy intelligently routes traffic away from the busy worker.
+
+**-** `Update Your Go Code`
+
+Open your `src/main.go` file and add a new handler that will simulate a task with a significant delay. This will act as our "long-running request."
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	hostname, _ := os.Hostname()
+	fmt.Fprintf(w, "Hello from %s\n", hostname)
+}
+
+func longHandler(w http.ResponseWriter, r *http.Request) {
+	hostname, _ := os.Hostname()
+	time.Sleep(10 * time.Second)
+	fmt.Fprintf(w, "Hello! long running request finished from %s\n", hostname)
+}
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/long", longHandler)
+	http.ListenAndServe(":8081", nil)
+}
+```
+
+**-** `Rebuild and Run Docker Compose`
+
+After updating your code, you must rebuild and run your containers to apply the changes.
+
+```sh
+$ docker-compose up -d --build
+```
+
+**-** `Test the Scenario`
+
+Now, you can test the Least Connection algorithm using two separate terminals.
+
+`Terminal 1 (Long-Running Request)`:
+
+Start a request to the /long endpoint. This will open a connection to one of the workers and hold it for 10 seconds. Caddy will detect that this worker has an active, ongoing connection.
+
+```sh
+$ curl http://127.0.0.1:8082/long
+```
+
+`Terminal 2 (Normal Requests)`:
+
+Immediately after running the command in Terminal 1, switch to Terminal 2 and send several quick requests to the root endpoint (/).
+
+```sh
+
+$ curl http://127.0.0.1:8082/
+# Output: Hello from worker_2
+
+$ curl http://127.0.0.1:8082/
+# Output: Hello from worker_3
+
+$ curl http://127.0.0.1:8082/
+# Output: Hello from worker_2
+```
+
+You will observe that Caddy will not send requests to the worker that is currently busy with the long-running request. Instead, all new requests will be routed to the other two workers, demonstrating how the `least_conn` algorithm effectively balances load dynamically. Once the long-running request is complete, that worker will once again be available to handle new requests.
+
+![Least Connection](https://res.cloudinary.com/diunivf9n/image/upload/v1756303617/least_connection_ryjvad.gif)
+
+### **4.** IP Hash (`lb_policy ip_hash`)
+
+The IP Hash load balancing algorithm is different from the previous ones because it's focused on session persistence. Instead of distributing requests based on a sequential or random order, it creates a hash from the client's IP address and uses that hash to consistently route all requests from that same client to the **same backend server**.
+
+**How to Configure**:
+
+Configuring the IP Hash policy is straightforward. You simply need to replace the lb_policy directive in your Caddyfile with `ip_hash`.
+
+```go
+:80 {
+    reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy ip_hash
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+After updating your Caddyfile, make sure to restart your Caddy container with `docker-compose up -d --build` to apply the changes.
+
+**How to Test**:
+
+To test this algorithm, you'll need to send requests from different "clients" (i.e., different IP addresses) and observe where they are routed. The easiest way to simulate this is by sending requests from your local machine and then using a proxy or a different network to see if the requests are routed to a different server.
+
+![IP Hash Demo](https://res.cloudinary.com/diunivf9n/image/upload/v1756304737/ip-hash_pu8wqw.gif)
+
+No matter how many times you run `curl` from the same machine, the requests will always be routed to the same worker. **This is because Caddy is hashing your local IP address (127.0.0.1 or the container's internal IP) and consistently mapping it to that specific worker**.
+
+This demonstrates how IP Hash ensures **session stickiness** without needing to share session data across all servers. It’s a powerful tool for maintaining a consistent user experience.
+
+### **5.** Random (`lb_policy random`)
+
+The Random load balancing policy is the simplest and most unpredictable of all the algorithms. As its name suggests, it selects a backend server at random for each new request. There is no sequential pattern or special logic; every request has an equal chance of being routed to any of the available servers.
+
+While it may seem less sophisticated than other algorithms, the Random policy is surprisingly effective in many scenarios. It's fast, has a very low overhead, and can be a great choice for distributing traffic evenly across a large pool of homogenous servers. It naturally avoids the **"thundering herd"** problem that can sometimes occur with Round Robin on **first-come-first-served** requests, as it prevents all clients from hitting the same server at the same time.
+
+**How to Configure**:
+
+Configuring this policy is the easiest. Simply replace the `lb_policy` directive in your Caddyfile with `random`.
+
+```go
+:80 {
+    reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
+        lb_policy random
+        health_uri /
+        health_interval 3s
+    }
+}
+```
+
+After updating your Caddyfile, make sure to restart your Caddy container with `docker-compose up -d --build` to apply the changes.
+
+**How to Test**:
+
+To test the Random policy, send a series of quick requests and observe the output. Unlike the predictable pattern of Round Robin or the consistent output of IP Hash, the responses will come from different workers in an unpredictable order.
+
+```sh
+curl http://127.0.0.1:8082
+# Output: Hello from worker_3
+
+curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+
+curl http://127.0.0.1:8082
+# Output: Hello from worker_2
+
+curl http://127.0.0.1:8082
+# Output: Hello from worker_1
+```
+
+![Demo Random](https://res.cloudinary.com/diunivf9n/image/upload/v1756305276/random_gvnz0i.gif)
+
+## Conclusion
+
+Throughout this post, we've explored the core capabilities of Caddy as a powerful web server and a flexible load balancer. Using a simple Docker setup, we were able to quickly demonstrate five different load balancing algorithms, each with its own unique advantages:
+
+**-** **Round Robin**: The classic, simple approach for evenly distributing traffic in a predictable sequence.
+
+**-** **Weighted Round Robin**: A smarter version of Round Robin that allows you to prioritize traffic to more powerful servers.
+
+**-** **Least Connection**: A dynamic algorithm that routes traffic based on real-time load, preventing a single server from becoming a bottleneck.
+
+**-** **IP Hash**: The ideal choice for session stickiness, ensuring a consistent user experience by always routing a client to the same backend server.
+
+**-** **Random**: A straightforward and fast algorithm for scattering traffic across servers, effective for a large pool of homogenous workers.
+
+This hands-on experience proved that Caddy is not just a simple web server but a robust tool for building scalable and reliable applications. Caddy's elegant syntax and powerful features make it an excellent choice for anyone looking to simplify their server configurations without sacrificing control or performance. Whether you're a seasoned developer or just starting, Caddy offers a smooth and intuitive experience that can handle everything from a single website to a complex, distributed application.
+
+References:
+
+**-** [Caddy Documentation: Reverse Proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
+
+**-** [Caddy Community Wiki](https://caddy.community)
