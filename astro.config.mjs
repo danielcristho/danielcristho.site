@@ -49,7 +49,6 @@ export default defineConfig({
                 Footer: "/src/components/Footer.astro",
                 Truncate: "/src/components/Truncate.astro",
                 SocialIcons: "./src/components/SocialIcons.astro",
-
             },
             social: {
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho",

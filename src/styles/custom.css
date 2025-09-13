@@ -1,6 +1,13 @@
+@font-face {
+    font-family: 'xproto nerd mono';
+    src: url('../../public/fonts/xproto.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .social-icons a svg {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
 }
 
 /* This might possibly overwrite all hero images */
@@ -16,6 +23,9 @@
 
 /* Dark mode colors. */
 :root {
+	--sl-font-sans: 'xproto nerd mono', sans-serif;
+	--sl-font-mono: 'xproto nerd mono', monospace;
+
 	--sl-color-accent-low: #312100;
 	--sl-color-accent: #2e8555;
 	--sl-color-accent-high: #2e8555;
@@ -28,8 +38,12 @@
 	--sl-color-gray-6: #262726;
 	--sl-color-black: #181818;
 }
+
 /* Light mode colors. */
 :root[data-theme='light'] {
+	--sl-font-sans: 'xproto nerd mono', sans-serif;
+	--sl-font-mono: 'xproto nerd mono', monospace;
+
 	--sl-color-accent-low: #2e8555;
 	--sl-color-accent: #2e8555;
 	--sl-color-accent-high: #432e00;
@@ -43,3 +57,4 @@
 	--sl-color-gray-7: #f6f6f6;
 	--sl-color-black: #ffffff;
 }
+

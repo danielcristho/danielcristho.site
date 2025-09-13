@@ -1,0 +1,19 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Truncate from '../../../components/Truncate.astro';
+
+const blogPosts = await getCollection('docs', ({ data }: CollectionEntry<'docs'>) => {
+    return data.category === 'blog';
+});
+---
+
+<main>
+  <h1>All Post</h1>
+  {blogPosts.map((post: CollectionEntry<'docs'>) => (
+    <div>
+      <h2><a href={`/${post.slug}`}>{post.data.title}</a></h2>
+      <Truncate text={post.body} maxLength={200} />
+      <a href={`/${post.slug}`}>Read more...</a>
+    </div>
+  ))}
+</main>

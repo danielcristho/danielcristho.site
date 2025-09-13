@@ -1,15 +1,17 @@
 ---
-const { content, lines = 3 } = Astro.props;
+export interface Props {
+    text: string;
+    maxLength?: number;
+}
 
-const truncateStyle = {
-  display: '-webkit-box',
-  WebkitLineClamp: lines,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-};
+const { text, maxLength = 200 } = Astro.props;
+
+let truncatedText = text;
+let needsTruncation = false;
+
+if (text.length > maxLength) {
+    truncatedText = text.substring(0, maxLength);
+    needsTruncation = true;
+}
 ---
-
-<p style={truncateStyle}>
-  {content}
-</p>
+<p>{truncatedText}{needsTruncation ? '...' : ''}</p>
