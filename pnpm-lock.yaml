@@ -56,6 +56,9 @@ importers:
       starlight-blog:
         specifier: ^0.4.0
         version: 0.4.0(@astrojs/starlight@0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4)))(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))
+      starlight-theme-flexoki:
+        specifier: ^0.2.0
+        version: 0.2.0(@astrojs/starlight@0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4)))
       tailwindcss:
         specifier: ^3.4.1
         version: 3.4.10
@@ -2664,6 +2667,12 @@ packages:
     peerDependencies:
       '@astrojs/starlight': '>=0.11.0'
       astro: '>=3.2.0'
+
+  starlight-theme-flexoki@0.2.0:
+    resolution: {integrity: sha512-xgQZVhL90UTCU+sd8BLWsMU2n8cdeVpiTVlIxLq1Ov7q0SOUvkUjetbAkuYcxsz8+hwNtHyaxFeNtXLNPweb5w==}
+    engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.34'
 
   stdin-discarder@0.2.2:
     resolution: {integrity: sha512-UhDfHmA92YAlNnCfhmq0VeNL5bDbiZGg7sZ2IvPsXubGkiNa9EC+tUTsjBRsYUAz87btI6/1wf4XoVvQ3uRnmQ==}
@@ -6531,6 +6540,10 @@ snapshots:
       '@astrojs/starlight': 0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))
       astro: 4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4)
       github-slugger: 2.0.0
+
+  starlight-theme-flexoki@0.2.0(@astrojs/starlight@0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))):
+    dependencies:
+      '@astrojs/starlight': 0.13.1(astro@4.14.6(@types/node@20.14.12)(lightningcss@1.25.1)(rollup@4.21.1)(terser@5.31.3)(typescript@5.5.4))
 
   stdin-discarder@0.2.2: {}
 

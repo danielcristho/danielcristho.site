@@ -4,7 +4,7 @@ import type { Props } from "@astrojs/starlight/props";
 import LanguageSelect from "@astrojs/starlight/components/LanguageSelect.astro";
 import Search from "@astrojs/starlight/components/Search.astro";
 import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
-import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
+// import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
 import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
 ---
 
@@ -31,7 +31,7 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: var(--sl-nav-gap);
+    gap: var(--sl-nav-gap); 
     height: 100%;
     padding-inline: var(--sl-content-padding);
   }
@@ -54,16 +54,44 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
     padding-inline-end: var(--sl-nav-gap);
   }
 
+  .search-mobile {
+    display: flex;
+    align-items: center;
+  }
+  
   .right-group {
     display: flex;
     gap: 1rem;
     align-items: center;
   }
 
-
   @media (max-width: 50rem) {
-    .center-group {
-      display: none;
+    .header {
+      justify-content: flex-start;
+      gap: 1rem;
     }
+
+    .center-group {
+      display: flex;
+      gap: 0.5rem;
+      
+      margin-left: 0.5rem;
+      margin-right: 0;
+    }
+    
+    .blog-links {
+      border-inline-end: none;
+      padding-inline-end: 0;
+    }
+  }
+
+  .right-group > div:nth-child(1) select {
+    text-indent: -9999px;
+    margin-inline-end: 0.5rem; 
+  }
+  .right-group > div:nth-child(1) select {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
   }
 </style>

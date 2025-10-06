@@ -7,10 +7,14 @@ import robotsTxt from "astro-robots-txt";
 import sitemap from '@astrojs/sitemap';
 import { BLOG_URL } from "./src/contants";
 import tailwind from "@astrojs/tailwind";
+import starlightThemeFlexoki from 'starlight-theme-flexoki'
+
 
 export default defineConfig({
     site: BLOG_URL,
     integrations: [
+        tailwind(),
+        starlightThemeFlexoki(),
         starlightBlog({
             authors: {
                 danielcristho: {
@@ -21,6 +25,7 @@ export default defineConfig({
             },
         }),
         starlight({
+            // plugins: [starlightThemeFlexoki()],
             lastUpdated: true,
             title: "danielcristho.",
             // defaultLocale: "root",
@@ -42,7 +47,7 @@ export default defineConfig({
             components: {
                 MarkdownContent: "starlight-blog/overrides/MarkdownContent.astro",
                 Sidebar: "starlight-blog/overrides/Sidebar.astro",
-                ThemeSelect: "starlight-blog/overrides/ThemeSelect.astro",
+                // ThemeSelect: "starlight-blog/overrides/ThemeSelect.astro",
                 TableOfContents: "./src/components/TableOfContents.astro",
                 Header: "./src/components/Header.astro",
                 Head: "./src/components/Head.astro",
@@ -64,6 +69,5 @@ export default defineConfig({
                 forward: ["dataLayer.push"],
             },
         }),
-        tailwind(),
     ],
 });
