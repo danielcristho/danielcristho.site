@@ -12,16 +12,15 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
   <div class="site-title">
     <SiteTitle {...Astro.props} />
   </div>
-  <nav class="blog-links">
-      <a href="/blog">Blog</a>
-      <a href="https://docs.danielcristho.site">Docs</a>
-      <a href="https://drive.google.com/file/d/1qjMTaxdjpZKyCft00JIsZycqsxQX1M5E/view?usp=sharing">Resume</a>
-  </nav>
-  <div class="search">
+  
+  <div class="center-group">
+      <nav class="blog-links">
+          <a href="/blog">Blog</a>
+          <a href="https://docs.danielcristho.site">Docs</a>
+      </nav>
       <Search {...Astro.props} />
   </div>
   <div class="right-group">
-      <SocialIcons {...Astro.props} />
       <ThemeSelect {...Astro.props} />
       <LanguageSelect {...Astro.props} />
   </div>
@@ -34,10 +33,18 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
     align-items: center;
     gap: var(--sl-nav-gap);
     height: 100%;
+    padding-inline: var(--sl-content-padding);
   }
 
   .site-title {
-    flex-grow: 1;
+  }
+
+  .center-group {
+    display: flex;
+    align-items: center;
+    margin-left: auto; 
+    margin-right: auto;
+    gap: 1.5rem; 
   }
 
   .blog-links {
@@ -47,21 +54,16 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
     padding-inline-end: var(--sl-nav-gap);
   }
 
-  .search {
-    display: flex;
-    align-items: center;
-  }
-
   .right-group {
     display: flex;
     gap: 1rem;
     align-items: center;
   }
 
+
   @media (max-width: 50rem) {
-    .blog-links {
-      border-inline-end: none;
-      padding-inline-end: 0;
+    .center-group {
+      display: none;
     }
   }
 </style>

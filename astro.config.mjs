@@ -23,17 +23,17 @@ export default defineConfig({
         starlight({
             lastUpdated: true,
             title: "danielcristho.",
-            defaultLocale: "root",
-            locales: {
-                root: {
-                    label: "English",
-                    lang: "en",
-                },
-                "id": {
-                    label:"Bahasa Indonesia",
-                    lang:"id"
-                },
-            },
+            // defaultLocale: "root",
+            // locales: {
+            //     root: {
+            //         label: "English",
+            //         lang: "en",
+            //     },
+            //     "id": {
+            //         label:"Bahasa Indonesia",
+            //         lang:"id"
+            //     },
+            // },
             editLink: {
                 baseUrl:
                     "https://github.com/danielcristho/danielcristho.site/edit/main",
