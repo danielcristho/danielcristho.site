@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'xproto nerd mono';
-    src: url('../../public/fonts/xproto.ttf') format('truetype');
+    src: url('../../fonts/xproto.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
