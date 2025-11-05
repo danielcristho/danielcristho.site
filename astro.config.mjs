@@ -19,7 +19,7 @@ export default defineConfig({
             authors: {
                 danielcristho: {
                     name: "Daniel Pepuho",
-                    title: "",
+                    // title: "IT Infrastructure",
                     url: "https://github.com/danielcristho",
                 },
             },
@@ -43,6 +43,12 @@ export default defineConfig({
                 baseUrl:
                     "https://github.com/danielcristho/danielcristho.site/edit/main",
             },
+            // customRoutes: [
+            // {
+            //     pattern: '/blog',
+            //     entrypoint: './src/pages/blog/index.astro',
+            // },
+            //     ],
             customCss: ["./src/styles/custom.css"],
             components: {
                 MarkdownContent: "starlight-blog/overrides/MarkdownContent.astro",
