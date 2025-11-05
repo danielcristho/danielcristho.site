@@ -1,19 +1,40 @@
 ---
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import Truncate from '../../../components/Truncate.astro';
 
-const blogPosts = await getCollection('docs', ({ data }: CollectionEntry<'docs'>) => {
-    return data.category === 'blog';
+const blogPosts = await getCollection('docs', ({ id }) => id.startsWith('blog/'));
+
+// Urutkan dari yang terbaru ke lama
+blogPosts.sort((a, b) => {
+  const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+  const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
+  return dateB - dateA;
 });
 ---
 
-<main>
-  <h1>All Post</h1>
-  {blogPosts.map((post: CollectionEntry<'docs'>) => (
-    <div>
-      <h2><a href={`/${post.slug}`}>{post.data.title}</a></h2>
-      <Truncate text={post.body} maxLength={200} />
-      <a href={`/${post.slug}`}>Read more...</a>
-    </div>
+<main class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-8">All Posts</h1>
+
+  {blogPosts.map((post) => (
+    <article class="mb-8 border-b border-gray-200 pb-4">
+      <h2 class="text-xl font-semibold mb-2">
+        <a href={`/${post.slug}`} class="text-blue-700 hover:underline">
+          {post.data.title}
+        </a>
+      </h2>
+
+      <!-- tampilkan excerpt kalau ada, kalau tidak pakai truncate dari body -->
+      <Truncate
+        content={post.data.excerpt ?? post.data.description ?? post.body}
+        length={200}
+      />
+
+      <a
+        href={`/${post.slug}`}
+        class="text-sm text-blue-600 hover:underline inline-block mt-2"
+      >
+        Read more...
+      </a>
+    </article>
   ))}
 </main>
