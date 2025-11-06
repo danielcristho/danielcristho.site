@@ -1,11 +1,9 @@
 ---
 import type { Props } from "@astrojs/starlight/props";
 
-// import LanguageSelect from "@astrojs/starlight/components/LanguageSelect.astro";
 import Search from "@astrojs/starlight/components/Search.astro";
 import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
-// import SocialIcons from "@astrojs/starlight/components/SocialIcons.astro";
-import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+import ThemeSelect from "./starlight/ThemeSelect.astro";
 ---
 
 <div class="header">
@@ -22,7 +20,6 @@ import ThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
   </div>
   <div class="right-group">
       <ThemeSelect {...Astro.props} />
-      <!-- <LanguageSelect {...Astro.props} /> -->
   </div>
 </div>
 

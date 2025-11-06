@@ -19,47 +19,28 @@ export default defineConfig({
             authors: {
                 danielcristho: {
                     name: "Daniel Pepuho",
-                    // title: "IT Infrastructure",
                     url: "https://github.com/danielcristho",
                 },
             },
         }),
         starlight({
-            // plugins: [starlightThemeFlexoki()],
             lastUpdated: true,
             title: "danielcristho.",
-            // defaultLocale: "root",
-            // locales: {
-            //     root: {
-            //         label: "English",
-            //         lang: "en",
-            //     },
-            //     "id": {
-            //         label:"Bahasa Indonesia",
-            //         lang:"id"
-            //     },
-            // },
             editLink: {
                 baseUrl:
                     "https://github.com/danielcristho/danielcristho.site/edit/main",
             },
-            // customRoutes: [
-            // {
-            //     pattern: '/blog',
-            //     entrypoint: './src/pages/blog/index.astro',
-            // },
-            //     ],
             customCss: ["./src/styles/custom.css"],
             components: {
                 MarkdownContent: "starlight-blog/overrides/MarkdownContent.astro",
                 Sidebar: "starlight-blog/overrides/Sidebar.astro",
-                // ThemeSelect: "starlight-blog/overrides/ThemeSelect.astro",
                 TableOfContents: "./src/components/TableOfContents.astro",
                 Header: "./src/components/Header.astro",
                 Head: "./src/components/Head.astro",
                 Footer: "/src/components/Footer.astro",
                 Truncate: "/src/components/Truncate.astro",
                 SocialIcons: "./src/components/SocialIcons.astro",
+                ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
             },
             social: {
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho",
