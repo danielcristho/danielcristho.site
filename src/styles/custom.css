@@ -1,8 +1,13 @@
 @font-face {
-    font-family: 'xproto nerd mono';
-    src: url('../../fonts/xproto.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+	font-family: 'XProto Nerd Mono';
+	src: url('/fonts/xproto.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+.prose {
+	font-family: 'XProto Nerd Mono', monospace;
 }
 
 .social-icons a svg {
@@ -17,14 +22,14 @@
 	}
 }
 
-.justify-center {
+.justify-center {		
     justify-content: center;
 }
 
 /* Dark mode colors. */
 :root {
-	--sl-font-sans: 'xproto nerd mono', sans-serif;
-	--sl-font-mono: 'xproto nerd mono', monospace;
+	--sl-font-sans: 'XProto Nerd Mono', sans-serif;
+	--sl-font-mono: 'XProto Nerd Mono', monospace;
 
 	--sl-color-accent-low: #312100;
 	--sl-color-accent: #2e8555;
@@ -41,8 +46,8 @@
 
 /* Light mode colors. */
 :root[data-theme='light'] {
-	--sl-font-sans: 'xproto nerd mono', sans-serif;
-	--sl-font-mono: 'xproto nerd mono', monospace;
+	--sl-font-sans: 'XProto Nerd Mono', sans-serif;
+	--sl-font-mono: 'XProto Nerd Mono', monospace;
 
 	--sl-color-accent-low: #2e8555;
 	--sl-color-accent: #2e8555;

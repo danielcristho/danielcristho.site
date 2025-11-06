@@ -68,6 +68,7 @@ export default {
             },
             fontFamily: {
                 sans: ["Inter", ...defaultTheme.fontFamily.sans],
+                mono: ["XProto Nerd Mono", ...defaultTheme.fontFamily.mono],
             },
         },
     },
