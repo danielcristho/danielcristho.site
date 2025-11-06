@@ -125,10 +125,17 @@
 	width: 2rem;
 	height: 2rem;
 	border-radius: 9999px;
+	background-color: transparent;
+	-webkit-tap-highlight-color: transparent;
 }
 .theme-toggle svg,
 .theme-toggle .theme-icon {
 	width: 1.25rem;
 	height: 1.25rem;
+}
+
+.theme-toggle:hover {
+	background-color: transparent;
+	transform: scale(1.05);
 }
 
