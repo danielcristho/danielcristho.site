@@ -1,0 +1,406 @@
+---
+title: "Docker Image Compression: gzip vs zstd"
+date: 2025-12-02
+description: Compare gzip and zstd to compress Docker image.
+tags:
+    - Docker
+    - Linux
+authors:
+  - name: Daniel Pepuho
+    picture: https://avatars.githubusercontent.com/u/69733783?s=200
+    url: https://github.com/danielcristho
+---
+
+![Cover Image](https://res.cloudinary.com/diunivf9n/image/upload/v1764688846/docker-cover_r4eomj.png)
+
+Docker images are already compressed when you push them to registries like [Docker Hub](https://hub.docker.com), [GHCR](ghcr.io), [AWS ECR](https://aws.amazon.com/ecr), etc.
+
+So why would anyone compress an image again by using [gzip](https://www.gzip.org) or [zstd](https://github.com/facebook/zstd)?
+
+![why this happen meme](https://res.cloudinary.com/diunivf9n/image/upload/v1764131809/why-does-this-happen_wvnscq.png)
+
+Because in the real world, engineers often need to:
+
+**-** move images between servers (air-gapped networks),
+
+**-** migrates registries,
+
+**-** backup image to object,
+
+**-** load or save images repeatedly in Continuous Integration (CI) pipelines.
+
+In these cases, `docker save` produces a raw `.tar` file often huge.
+Compressing that tarball can cut transfer and storage time by 50-80%.
+
+**But what’s the best compression tool? So we will test gzip vs zstd**.
+
+## 🤔 When Do We Need Image Compression?
+
+Like I said before, you need to compress your image to:
+
+**-** transfer image between SSH or local network (LAN),
+
+**-** work with offline or air-gapped servers,
+
+**-** backup images to object storage,
+
+**-** migrate to new registry.
+
+> **Skip compression when images are pushed directly to registry like DockerHub, registries are handled that**.
+
+## Test Up
+
+To get a realistic number, we will test three images:
+
+**-** [alpine](https://hub.docker.com/layers/library/alpine/latest/images/sha256-9eec16c5eada75150a82666ba0ad6df76b164a6f8582ba5cb964c0813fa56625)-> ~8MB
+
+**-** [maridb:10.6.18](https://hub.docker.com/layers/library/mariadb/10.6.18/images/sha256-23492dcccccd10285fd946f2d07956aed1dbd56f34d153d7de367840fc0afa88) -> ~396MB
+
+**-** [Custom Jupyterlab image](https://hub.docker.com/repository/docker/danielcristh0/datascience-notebook/tags/python-3.10.11/sha256-7d1c9ee5ee5d2ad2051f5a2e56d0861e28ced6b8a76ce0928075426b3762b79d) -> ~5.4GB
+
+### Environment
+
+#### 1. Local Computer
+
+**-** CPU: 4 cores / 8 threads
+
+**-** Storage: NVMe SSD
+
+**-** OS: Ubuntu 22.04
+
+**-** Docker Version: 27x
+
+**-** Tools: `gzip`, `zstd`, `time`, `scp`
+
+#### 2. VPS
+
+**-** CPU: 4 cores / 8 threads
+
+**-** Storage: VirtIO-backed SSD
+
+**-** OS: Ubuntu 22.04
+
+**-** Docker Version: 27x
+
+**-** Tools: `gzip`, `zstd`, `time`
+
+### Command used
+
+Below are the commands used to save, compress, transfer, decompress, and load the Docker images during testing.
+
+#### 1. Save the image (local machine)
+
+```sh
+docker pull <image_name>
+docker save <image_name> -o <image_name>.tar
+```
+
+```sh
+$ docker pull alpine:latest
+
+latest: Pulling from library/alpine
+Digest: sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+...
+```
+
+
+```sh
+$ docker save alpine:latest -o alpine_latest.tar
+
+$ docker save mariadb:10.6.18 -o mariadb_10.tar
+
+$ docker save danielcristh0/datascience-notebook:python-3.10.11 -o jupyter_notebook.tar
+
+```
+
+```sh
+
+$ ls -lh
+
+total 5,6G
+-rw------- 1 user group 8,3M Nov 28 19:51 alpine_latest.tar
+-rw------- 1 user group 5,2G Nov 28 20:18 jupyter_notebook.tar
+-rw------- 1 user group 384M Nov 28 20:14 mariadb_10.tar
+```
+
+#### 2. Compress the image (local machine)
+
+**-** `gzip`
+
+```sh
+time gzip -k <image>.tar
+```
+
+```sh
+$ time gzip -k alpine_latest.tar
+
+gzip -k alpine_latest.tar  0,44s user 0,01s system 99% cpu 0,452 total
+```
+
+```sh
+$ time gzip -k mariadb_10.tar
+
+gzip -k mariadb_10.tar  17,21s user 0,62s system 99% cpu 17,979 total
+```
+
+```sh
+$ time gzip -k jupyter_notebook.tar
+
+gzip -k jupyter_notebook.tar  238,83s user 3,56s system 99% cpu 4:03,16 total
+```
+
+> `-k` → keep original file
+
+> gzip uses a single CPU thread at its default level (≈ level 6)
+
+**-** `zstd`
+
+```sh
+time zstd -T0 -19 <image>.tar
+```
+
+```sh
+$  time zstd -T0 -19 alpine_latest.tar
+
+alpine_latest.tar    : 37.01%   (8617984 => 3189867 bytes, alpine_latest.tar.zst)
+zstd -T0 -19 alpine_latest.tar  3,64s user 0,10s system 100% cpu 3,734 total
+```
+
+```sh
+$  time zstd -T0 -19 mariadb_10.tar
+
+mariadb_10.tar       : 16.95%   (402636288 => 68258055 bytes, mariadb_10.tar.zst)
+zstd -T0 -19 mariadb_10.tar  172,89s user 0,66s system 191% cpu 1:30,81 total
+```
+
+```sh
+$  time zstd -T0 -22 jupyter_notebook.tar
+Warning : compression level higher than max, reduced to 19
+zstd: jupyter_notebook.tar.zst already exists; overwrite (y/n) ? y
+
+jupyter_notebook.tar : 24.79%   (5560227328 => 1378450873 bytes, jupyter_notebook.tar.zst)
+zstd -T0 -22 jupyter_notebook.tar  4759,54s user 19,32s system 188% cpu 42:11,68 total
+```
+
+> `-T0` → use all CPU threads
+
+> `-22` → request maximum compression (automatically reduced to `-19` by zstd)
+
+#### 3. Transfer to VPS
+
+**-** `gzip`
+
+```sh
+time scp <image_name>.tar.gz user@vps:/tmp/
+```
+
+```sh
+$ time scp alpine_latest.tar.gz onomi@myserver:/tmp
+alpine_latest.tar.gz    100% 3588KB 174.8KB/s   00:20
+
+scp alpine_latest.tar.gz onomi@myserver:/tmp  0,11s user 0,29s system 1% cpu 23,208 total
+
+
+$ time scp mariadb_10.tar.gz ubuntu@103.83.4.60:/tmp/
+mariadb_10.tar.gz   100%  114MB   2.2MB/s   00:50
+
+scp mariadb_10.tar.gz ubuntu@103.83.4.60:/tmp/  0,46s user 0,84s system 2% cpu 52,457 total
+
+
+$ time scp jupyter_notebook.tar.gz onomi@myserver:/tmp/
+jupyter_notebook.tar.gz  100% 1765MB   3.4MB/s   08:35
+
+scp jupyter_notebook.tar.gz onomi@myserver:/tmp/  5,03s user 10,42s system 2% cpu 8:38,50 total
+```
+
+**-** `zstd`
+
+```sh
+time scp <image_name>.tar.zst user@vps:/tmp/
+```
+
+```sh
+$ time scp alpine_latest.tar.zst onomi@myserver:/tmp
+alpine_latest.tar.zst   100% 3115KB 343.4KB/s   00:09
+
+scp alpine_latest.tar.zst onomi@myserver:/tmp  0,10s user 0,18s system 1% cpu 22,728 total
+
+
+$ time scp mariadb_10.tar.zst onomi@myserver:/tmp/
+mariadb_10.tar.zst  100%   65MB   3.0MB/s   00:21
+
+scp mariadb_10.tar.zst onomi@myserver:/tmp/  0,29s user 0,59s system 3% cpu 23,285 total
+
+
+$ time scp jupyter_notebook.tar.zst onomi@myserver:/tmp/
+jupyter_notebook.tar.zst    100% 1315MB   2.3MB/s   09:44
+
+scp jupyter_notebook.tar.zst onomi@myserver:/tmp/  3,94s user 7,64s system 1% cpu 9:46,33 total
+```
+
+#### 4. Load the Image on the Server (VPS)
+
+Now the compressed images are transferred to the VPS, the next step is to decompress them and load the Docker image into the remote server.
+
+**-** `gzip`
+
+```sh
+time gzip -dk <image>.tar.gz
+```
+
+```sh
+$ time gzip -dk alpine_latest.tar.gz
+
+real    0m0.189s
+user    0m0.116s
+sys     0m0.039s
+
+
+$ time gzip -dk mariadb_10.tar.gz
+
+
+real    0m5.108s
+user    0m3.813s
+sys     0m1.129s
+
+$ time gzip -dk jupyter_notebook.tar.gz
+
+real    1m8.344s
+user    0m48.466s
+sys     0m13.408s
+```
+
+**-** `zstd`
+
+```sh
+time zstd -d <image>.tar.zst
+```
+
+```sh
+$ time zstd -d alpine_latest.tar.zst
+alpine_latest.tar.zst: 8617984 bytes
+
+real    0m4.121s
+user    0m0.041s
+sys     0m0.043s
+
+$ time zstd -d mariadb_10.tar.zst
+mariadb_10.tar.zst  : 402636288 bytes
+
+real    0m3.455s
+user    0m0.983s
+sys     0m0.927s
+
+$ time zstd -d jupyter_notebook.tar.zst
+
+jupyter_notebook.tar.zst: 5560227328 bytes
+
+real    0m31.810s
+user    0m14.599s
+sys     0m13.600s
+```
+
+> Decompression in `zstd`is extremely fast, 5-10x faster than compression, even for large files.
+
+#### 5. Loading the Image Into Docker
+
+Once decompressed, load the `.tar` file:
+
+```sh
+docker load -i <image>.tar
+```
+
+```sh
+$ docker load -i jupyter_notebook.tar
+
+Loaded image: danielcristh0/datascience-notebook:python-3.10.11
+```
+
+```sh
+$ docker images
+
+IMAGE                                               ID             DISK USAGE   CONTENT SIZE   EXTRA
+danielcristh0/datascience-notebook:python-3.10.11   9b38bf7c570f       11.4GB         5.56GB
+```
+
+#### 6. Analysis: gzip vs zstd
+
+After running all compression, transfer, decompression, and loading tests across three different Docker images, let's compare gzip and zstd.
+
+##### Size Comparison
+
+> `zstd` consistently produces much smaller output files than `gzip`, especially on medium and large images.
+
+| Image            | Actual Size | gzip Size | zstd Size | Reduction (gzip) | Reduction (zstd) |
+| ---------------- | ------------- | --------- | --------- | ---------------- | ---------------- |
+| alpine:latest    | 8.3 MB        | 3.5 MB    | 3.1 MB    | ~57%             | ~62%             |
+| mariadb:10.6.18  | 384 MB        | 114 MB    | 65 MB     | ~70%             | ~83%             |
+| jupyter-notebook | 5.2 GB        | 1.7 GB    | 1.3 GB    | ~67%             | ~75%             |
+
+> `zstd` gives around 20-50% better compression than gzip.
+
+##### Speed
+
+| Image            | Actuaal Size | gzip Size | zstd Size | Reduction (gzip) | Reduction (zstd) |
+| ---------------- | ------------- | --------- | --------- | ---------------- | ---------------- |
+| alpine:latest    | 8.3 MB        | 3.5 MB    | 3.1 MB    | ~57%             | ~62%             |
+| mariadb:10.6.18  | 384 MB        | 114 MB    | 65 MB     | ~70%             | ~83%             |
+| jupyter-notebook | 5.2 GB        | 1.7 GB    | 1.3 GB    | ~67%             | ~75%             |
+
+> `zstd` gives better compression but requires significantly more CPU.
+
+##### Transfer Speed (via SCP)
+
+> Because `zstd` produces smaller files, transfer times are  2x faster. But on larger files, `zstd` can still lose to `gzip` depending on **CPU and disk performance**.
+
+| Image            | gzip Transfer | zstd Transfer |
+| ---------------- | ------------- | ------------- |
+| alpine           | 20 s          | 9 s           |
+| mariadb          | 50 s          | 21 s          |
+| jupyter-notebook | 8m 35s        | 9m 44s        |
+
+## When Should You Use gzip vs zstd?
+
+### Use zstd when you want
+
+**-** The smallest compressed Docker images
+
+**-** Fast decompression
+
+**-** Faster transfers across networks
+
+**-** Long-term backups
+
+### Use gzip when you want:
+
+**-** Fast compression
+
+**-** Low CPU usage
+
+**-** Simple, predictable behavior
+
+**-** Occasional small image transfers
+
+## TL;DR
+
+If you need to compress Docker images, here’s the quick answer:
+
+Use `zstd` when you want:
+
+**-** Smaller archive sizes (around 20-50% smaller than `gzip`)
+
+**-** Faster decompression
+
+**-** Faster network transfers
+
+Use gzip when you want:
+
+**-** Fast compression
+
+**-** Low CPU usage
+
+**-** Simplicity
+
+Aight, that's all. Thank you for taking your time to read this post
+
+Happy containerization! 🐳
