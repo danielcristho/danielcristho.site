@@ -359,9 +359,9 @@ After running all compression, transfer, decompression, and loading tests across
 | mariadb          | 50 s          | 21 s          |
 | jupyter-notebook | 8m 35s        | 9m 44s        |
 
-## When Should You Use gzip vs zstd?
+## When Should You Use gzip or zstd?
 
-### Use zstd when you want
+#### Use zstd when you want
 
 **-** The smallest compressed Docker images
 
@@ -371,7 +371,7 @@ After running all compression, transfer, decompression, and loading tests across
 
 **-** Long-term backups
 
-### Use gzip when you want:
+#### Use gzip when you want
 
 **-** Fast compression
 
@@ -385,7 +385,7 @@ After running all compression, transfer, decompression, and loading tests across
 
 If you need to compress Docker images, here’s the quick answer:
 
-Use `zstd` when you want:
+Use `zstd` when you want
 
 **-** Smaller archive sizes (around 20-50% smaller than `gzip`)
 
