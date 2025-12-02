@@ -341,11 +341,13 @@ After running all compression, transfer, decompression, and loading tests across
 
 ##### Speed
 
-| Image            | Actuaal Size | gzip Size | zstd Size | Reduction (gzip) | Reduction (zstd) |
-| ---------------- | ------------- | --------- | --------- | ---------------- | ---------------- |
-| alpine:latest    | 8.3 MB        | 3.5 MB    | 3.1 MB    | ~57%             | ~62%             |
-| mariadb:10.6.18  | 384 MB        | 114 MB    | 65 MB     | ~70%             | ~83%             |
-| jupyter-notebook | 5.2 GB        | 1.7 GB    | 1.3 GB    | ~67%             | ~75%             |
+> `gzip`is faster than `zstd` at compression.
+
+| Image            | gzip (time) | zstd (time) | Notes               |
+| ---------------- | ----------- | ---------------- | -------------- |
+| alpine           | 0.45 s      | 3.7 s            | 8x slower      |
+| mariadb          | 17.9 s      | 90.8 s           | 5x slower      |
+| jupyter-notebook | 243 s       | 42 minutes       | **10x slower** |
 
 > `zstd` gives better compression but requires significantly more CPU.
 
