@@ -8,6 +8,7 @@ import sitemap from '@astrojs/sitemap';
 import { BLOG_URL } from "./src/contants";
 import tailwind from "@astrojs/tailwind";
 import starlightThemeFlexoki from 'starlight-theme-flexoki'
+import rss from '@astrojs/rss';
 
 export default defineConfig({
     site: BLOG_URL,
@@ -23,6 +24,7 @@ export default defineConfig({
             },
         }),
         starlight({
+            favicon: "/favicon.ico",
             lastUpdated: true,
             title: "danielcristho.",
             editLink: {
@@ -45,6 +47,7 @@ export default defineConfig({
                 linkedin: "https://www.linkedin.com/in/daniel-pepuho",
                 github: "https://github.com/danielcristho",
                 "x.com": "https://twitter.com/chrstdan",
+                rss: `${BLOG_URL}/rss.xml`,
             },
         }),
         compress(),
