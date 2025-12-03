@@ -18,4 +18,10 @@ const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
 <meta property="og:image" content={ogImage} />
 <meta property="twitter:image" content={ogImage} />
 <meta name="author" content="Daniel Pepuho" />
+<link
+    rel="alternate"
+    type="application/rss+xml"
+    title="Daniel Pepuho's RSS Feed"
+    href={new URL("rss.xml", Astro.site)}
+/>
 <DefaultHead {...Astro.props} />
