@@ -1,0 +1,26 @@
+/* Dark mode */
+:root[data-theme="dark"] {
+    --sl-color-accent: #fabd2f;
+    --sl-color-text: #ebdbb2;
+    --sl-color-bg: #282828;
+    --sl-color-bg-nav: #1d2021;
+    --sl-color-border: #3c3836;
+
+    --sl-color-link: #fe8019;   
+    --sl-color-link-hover: #d65d0e;
+}
+
+:root[data-theme="dark"] pre {
+    background: #1d2021 !important;
+    border-color: #3c3836 !important;
+}
+
+:root pre {
+    background: #f2e5bc !important;
+    border-color: #d5c4a1 !important;
+}
+
+.sidebar-content {
+    background: var(--sl-color-bg-nav) !important;
+    border-right: 1px solid var(--sl-color-border) !important;
+}

@@ -15,7 +15,7 @@
     "@astrojs/rss": "^4.0.8",
     "@astrojs/sitemap": "^3.2.0",
     "@astrojs/starlight": "^0.13.0",
-    "@astrojs/tailwind": "^5.1.0",
+    "@astrojs/tailwind": "5.1.0",
     "@fontsource/inter": "^5.0.16",
     "astro": "^4",
     "astro-compress": "^2.2.7",
@@ -24,10 +24,9 @@
     "markdown-it": "^14.0.0",
     "react-truncate": "^2.4.0",
     "sanitize-html": "^2.11.0",
-    "sharp": "^0.33",
+    "sharp": "0.33.0",
     "starlight-blog": "^0.4.0",
-    "starlight-theme-flexoki": "^0.2.0",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "3.4.1",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
