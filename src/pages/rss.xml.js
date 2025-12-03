@@ -1,50 +1,30 @@
 import rss from "@astrojs/rss";
+import { getCollection } from "astro:content";
 
-/**
- * Loads all blog posts under:
- *   src/content/docs/blog/
- */
-const modules = import.meta.glob('../../content/docs/blog/**/*.{md,mdx}', { eager: true });
+export async function GET({ site }) {
+  // Ambil semua konten di collection "docs"
+  const allDocs = await getCollection("docs");
 
-function normalizePost(filePath, mod) {
-  const fm = mod.frontmatter ?? mod;
-  
-  // Extract slug from filename if no slug provided
-  const filename = filePath.split('/').pop();
-  const rawSlug = filename.replace(/\.(md|mdx)$/, '');
-  const slug = fm.slug ?? rawSlug;
-
-  return {
-    slug,
-    title: fm.title ?? rawSlug,
-    description: fm.description ?? fm.excerpt ?? "",
-    pubDate: fm.pubDate ? new Date(fm.pubDate) : null,
-  };
-}
-
-export async function GET({ site, request }) {
-  const siteUrl = site ?? new URL(request.url).origin;
-
-  const posts = Object.entries(modules).map(([path, mod]) =>
-    normalizePost(path, mod)
+  const posts = allDocs.filter((entry) =>
+    entry.id.startsWith("blog/")
   );
 
-  // Sort from newest tO oldest
+  // Sort by newest first
   posts.sort((a, b) => {
-    if (!a.pubDate) return 1;
-    if (!b.pubDate) return -1;
-    return b.pubDate - a.pubDate;
+    const da = new Date(a.data.date);
+    const db = new Date(b.data.date);
+    return db - da;
   });
 
   return rss({
     title: "danielcristho.",
     description: "Articles & writings by Daniel Pepuho.",
-    site: siteUrl,
+    site,
     items: posts.map((post) => ({
-      title: post.title,
-      description: post.description,
+      title: post.data.title,
+      description: post.data.description ?? post.data.excerpt ?? "",
+      pubDate: new Date(post.data.date),
       link: `/docs/blog/${post.slug}/`,
-      pubDate: post.pubDate ?? undefined,
     })),
   });
 }
