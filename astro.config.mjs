@@ -9,7 +9,6 @@ import { BLOG_URL } from "./src/contants";
 import tailwind from "@astrojs/tailwind";
 import starlightThemeFlexoki from 'starlight-theme-flexoki'
 
-
 export default defineConfig({
     site: BLOG_URL,
     integrations: [
