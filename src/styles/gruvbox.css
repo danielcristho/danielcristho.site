@@ -15,11 +15,6 @@
     border-color: #3c3836 !important;
 }
 
-:root pre {
-    background: #f2e5bc !important;
-    border-color: #d5c4a1 !important;
-}
-
 .sidebar-content {
     background: var(--sl-color-bg-nav) !important;
     border-right: 1px solid var(--sl-color-border) !important;
