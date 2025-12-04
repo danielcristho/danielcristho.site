@@ -16,7 +16,6 @@
     "@astrojs/sitemap": "^3.2.0",
     "@astrojs/starlight": "^0.13.0",
     "@astrojs/tailwind": "5.1.0",
-    "@fontsource/inter": "^5.0.16",
     "astro": "^4",
     "astro-compress": "^2.2.7",
     "astro-robots-txt": "^1.0.0",
@@ -26,6 +25,7 @@
     "sanitize-html": "^2.11.0",
     "sharp": "0.33.0",
     "starlight-blog": "^0.4.0",
+    "starlight-giscus": "^0.8.1",
     "tailwindcss": "3.4.1",
     "typescript": "^5.3.3"
   },

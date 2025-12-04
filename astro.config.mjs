@@ -36,7 +36,7 @@ export default defineConfig({
         },
         customCss: [
             "./src/styles/custom.css",
-            "./src/styles/gruvbox.css",
+            "./src/styles/gruvbox.css"
         ],
         components: {
             Sidebar: "starlight-blog/overrides/Sidebar.astro",
@@ -46,7 +46,7 @@ export default defineConfig({
             Footer: "./src/components/Footer.astro",
             SocialIcons: "./src/components/SocialIcons.astro",
             ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
-            // MarkdownContent: "./src/components/starlight//MarkdownContent.astro",
+            MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
         },
         social: {
             linkedin: "https://www.linkedin.com/in/daniel-pepuho",

@@ -1,0 +1,47 @@
+---
+const theme = `
+    <script>
+        const updateTheme = () => {
+        const theme = document.documentElement.dataset.theme === 'dark'
+            ? 'dark'
+            : 'light';
+        
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+
+        iframe.contentWindow.postMessage(
+            { giscus: { setConfig: { theme } } },
+            'https://giscus.app'
+        );
+        };
+
+        // Listen for theme changes
+        const observer = new MutationObserver(updateTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+        // Run on load
+        updateTheme();
+    </script>
+`;
+---
+
+<div class="giscus-container" style="margin-top: 3rem;">
+    <script
+    src="https://giscus.app/client.js"
+    data-repo="danielcristho/danielcristho.site"
+    data-repo-id="R_kgDOMo7Jhw"
+    data-category="General"
+    data-category-id="DIC_kwDOMo7Jh84Cj76O"
+    data-mapping="url"
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="bottom"
+    data-theme="dark"
+    data-lang="en"
+    crossorigin="anonymous"
+    async
+    ></script>
+
+    <Fragment set:html={theme} />
+</div>

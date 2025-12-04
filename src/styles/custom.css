@@ -63,4 +63,23 @@
 	--sl-color-black: #ffffff;
 }
 
+:root[data-theme="light"] {
+	--sl-font-sans: "XProto Nerd Mono", monospace;
+	--sl-font-mono: "XProto Nerd Mono", monospace;
+}
+
+:root[data-theme="dark"] {
+	--sl-font-sans: "XProto Nerd Mono", monospace;
+	--sl-font-mono: "XProto Nerd Mono", monospace;
+}
+
+:root, body {
+	font-family: var(--sl-font-sans) !important;
+}
+
+code, pre {
+	font-family: var(--sl-font-mono) !important;
+}
+
+
 
