@@ -1,4 +1,7 @@
 ---
+import Default from "starlight-blog/overrides/MarkdownContent.astro";
+import Giscus from "../Giscus.astro";
+
 const data = Astro.props?.data || {};
 const cover = data.cover;
 ---
@@ -6,19 +9,13 @@ const cover = data.cover;
 {cover && (
   <div style="margin-bottom: 1.5rem;">
     {cover.image && (
-      <img
-        src={cover.image}
-        alt={cover.alt}
-        class="sl-cover-image"
-        style="width: 100%; border-radius: 12px;"
-      />
-    )}
-
-    {cover.light && cover.dark && (
-      <>
-        <img src={cover.light} alt={cover.alt} class="light" style="width:100%;border-radius:12px;" />
-        <img src={cover.dark} alt={cover.alt} class="dark" style="width:100%;border-radius:12px;" />
-      </>
+      <img src={cover.image} alt={cover.alt} style="width:100%;border-radius:12px;" />
     )}
   </div>
 )}
+
+<Default {...Astro.props}>
+  <slot />
+</Default>
+
+<Giscus />
