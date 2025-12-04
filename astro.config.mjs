@@ -57,8 +57,11 @@ export default defineConfig({
         }),
 
     compress(),
+
     robotsTxt(),
+    
     sitemap(),
+    
     partytown({
         config: {
         forward: ["dataLayer.push"],
