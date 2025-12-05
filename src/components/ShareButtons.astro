@@ -1,0 +1,125 @@
+---
+interface Props {
+    title?: string;
+    url: string;
+}
+
+/**Clipboard  */
+const { title = "", url } = Astro.props;
+const fullUrl = Astro.url.href;
+const encodedUrl = encodeURIComponent(fullUrl);
+const encodedTitle = encodeURIComponent(title);
+
+/**Social media url */
+const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+const redditUrl = `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`;
+const xUrl = `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+---
+
+<div class="share-wrapper">
+    <p class="share-post">Share this post:</p>
+
+        <div class="share-box">
+            <!-- X -->
+            <a class="share-btn" href={xUrl} target="_blank" rel="noopener noreferrer nofollow" aria-label="Share on X">
+                <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+            </a>
+
+            <!-- Reddit -->
+            <a class="share-btn" href={redditUrl} target="_blank" rel="noopener noreferrer nofollow" aria-label="Share on Reddit">
+                <svg viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+            </a>
+
+            <!-- LinkedIn -->
+            <a class="share-btn" href={linkedinUrl} target="_blank" rel="noopener noreferrer nofollow" aria-label="Share on LinkedIn">
+                <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
+            </a>
+
+            <!-- Copy link -->
+            <button class="share-btn copy-btn" data-copy={fullUrl} aria-label="Copy URL">
+            <svg viewBox="0 0 24 24">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/>
+            </svg>
+            </button>
+        </div>
+    <div id="copy-toast" class="copy-toast">Link copied!</div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const copyButtons = document.querySelectorAll(".copy-btn");
+    const toast = document.getElementById("copy-toast");
+
+    copyButtons.forEach(btn => {
+        btn.addEventListener("click", async () => {
+        const text = btn.dataset.copy;
+        try {
+            await navigator.clipboard.writeText(text);
+
+            // Show toast
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 1500);
+
+            } catch (err) {
+                console.error("Clipboard failed:", err);
+                alert("Failed to copy link.");
+            }
+        });
+    });
+    });
+</script>
+
+<style>
+.share-wrapper {
+    margin-top: 2rem;
+}
+
+.share-post {
+    font-size: .9rem;
+    opacity: .7;
+    margin-bottom: .4rem;
+    text-align: right;
+}
+
+.share-box {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: rgb(119, 120, 120);
+    border-radius: 6px;
+    padding: 4px;
+    transition: opacity .2s ease;
+}
+
+.share-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+}
+
+.share-btn:hover {
+    opacity: .8;
+}
+
+.copy-toast {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .25s ease, transform .25s ease;
+    text-align: right;
+    font-size: .8rem;
+    margin-top: .3rem;
+}
+
+.copy-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
