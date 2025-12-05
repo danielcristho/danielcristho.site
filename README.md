@@ -14,13 +14,14 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 - Giscus-powered comments
 - Custom Gruvbox theme for dark mode
 - Supports `.md` and `.mdx` content
+- Shareable post
 
 ## This Project Built Using
 
 - Astro v4
 - Astro Starlight v0.13.0
-- Starlight blog 0.4.0
-- Starlight-Giscus 0.8.1
+- Starlight blog v0.4.0
+- Starlight-Giscus v0.8.1
 - Tailwind CSS
 
 ## 🚀 Project Structure
@@ -69,9 +70,9 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `pnpm run astro -- --help` | Get help using the Astro CLI                     |
 
-📄 License
+## 📄 License
 
-This project is licensed under the MIT License.
-You are free to use, modify, and distribute it, with attribution.
+MIT
+Copyright (c) 2024–present
 
 **Good luck out there, astronaut! 🚀**
