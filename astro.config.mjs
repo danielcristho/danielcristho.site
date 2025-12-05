@@ -14,6 +14,8 @@ export default defineConfig({
     tailwind(),
 
     starlightBlog({
+        pathname: '/blog',
+        rss: true,
         authors: {
             danielcristho: {
             name: "Daniel Pepuho",
