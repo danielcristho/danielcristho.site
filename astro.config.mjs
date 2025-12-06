@@ -20,6 +20,8 @@ export default defineConfig({
             danielcristho: {
             name: "Daniel Pepuho",
             url: "https://github.com/danielcristho",
+            title: 'IT Infra. Lost in the Cloud(s)',
+            picture: 'https://avatars.githubusercontent.com/u/69733783?s=200',
             },
         },
         metrics: {
