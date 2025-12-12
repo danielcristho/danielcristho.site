@@ -73,6 +73,10 @@ All commands are run from the root of the project, from a terminal:
 ## 📄 License
 
 MIT
-Copyright (c) 2024–present
+Copyright (c) 2024-present
 
-**Good luck out there, astronaut! 🚀**
+```sh
+╭──🎁─╮  Houston:
+│ ◠ ◡ ◠  Good luck out there, astronaut! 🚀
+╰─────╯
+```
