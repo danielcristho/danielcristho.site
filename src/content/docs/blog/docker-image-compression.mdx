@@ -8,9 +8,10 @@ tags:
     - Linux
 authors:
   - danielcristho
+cover:
+  alt: "Docker image compression cover"
+  image: "https://res.cloudinary.com/diunivf9n/image/upload/v1744701420/docker-cover.png"
 ---
-
-![Docker Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1764817920/docker-cover_jazhiq.png)
 
 Docker images are already compressed when you push them to registries like [Docker Hub](https://hub.docker.com), [GHCR](ghcr.io), [AWS ECR](https://aws.amazon.com/ecr), etc.
 
@@ -45,7 +46,9 @@ Like I said before, you need to compress your image to:
 
 **-** migrate to new registry.
 
-> **Skip compression when images are pushed directly to registry like DockerHub, registries are handled that**.
+:::note
+Skip compression when images are pushed directly to registry like DockerHub, registries are handled that.
+:::
 
 ## Test Up
 
@@ -147,10 +150,11 @@ $ time gzip -k jupyter_notebook.tar
 
 gzip -k jupyter_notebook.tar  238,83s user 3,56s system 99% cpu 4:03,16 total
 ```
+:::note
+-k → keep original file
 
-> `-k` → keep original file
-
-> gzip uses a single CPU thread at its default level (≈ level 6)
+gzip uses a single CPU thread at its default level (≈ level 6)
+:::
 
 **-** `zstd`
 
@@ -181,9 +185,11 @@ jupyter_notebook.tar : 24.79%   (5560227328 => 1378450873 bytes, jupyter_noteboo
 zstd -T0 -22 jupyter_notebook.tar  4759,54s user 19,32s system 188% cpu 42:11,68 total
 ```
 
-> `-T0` → use all CPU threads
+:::note
+-T0 → use all CPU threads
 
-> `-22` → request maximum compression (automatically reduced to `-19` by zstd)
+-22 → request maximum compression (automatically reduced to -19 by zstd)
+:::
 
 #### 3. Transfer to VPS
 
