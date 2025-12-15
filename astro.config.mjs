@@ -19,7 +19,7 @@ export default defineConfig({
         authors: {
             danielcristho: {
             name: "Daniel Pepuho",
-            url: "https://github.com/danielcristho",
+            url: "https://www.linkedin.com/in/daniel-pepuho",
             title: 'IT Infra. Lost in the Cloud(s)',
             picture: 'https://avatars.githubusercontent.com/u/69733783?s=200',
             },
@@ -58,7 +58,7 @@ export default defineConfig({
             "x.com": "https://twitter.com/chrstdan",
             rss: `${BLOG_URL}/rss.xml`,
         },
-        }),
+    }),
 
     compress(),
 
