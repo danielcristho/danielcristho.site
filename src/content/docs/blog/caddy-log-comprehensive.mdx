@@ -14,6 +14,27 @@ authors:
 
 ![Cover Image](https://res.cloudinary.com/diunivf9n/image/upload/v1755923140/caddy-lb-docker_peicwm.png)
 
+<div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
+  <strong>This post is part of Caddy Series:</strong>
+  <ol style="margin-top: 0.75rem; padding-left: 1.25rem;">
+    <li>
+      <a href="https://danielcristho.site/blog/dockerizing-go-api-caddy">
+        Dockerizing Go API and Caddy
+      </a>
+    </li>
+    <li>
+      <a href="https://danielcristho.site/blog/go-caddy-load-balancer">
+        Exploring Load Balancing in Caddy Using Docker
+      </a>
+    </li>
+    <li>
+      <a href="https://danielcristho.site/blog/caddy-log-comprehensive">
+      Exploring Logging in Caddy
+      </a>
+    </li>
+  </ol>
+</div>
+
 At some point, I realized that ***‘it works’*** is not enough. I need to know ***how it works*** too.”
 
 When something slows down or fails, the question is no longer ***“is the service running?”*** but:
@@ -464,7 +485,7 @@ log {
 With IP masking enabled, the change is subtle but important:
 
 ```sh
-{"level":"info","ts":1765994419.4105134,"logger":"http.log.access.log0","msg":"handled request","request":{"remote_ip":"172.21.0.1","remote_port":"58562","client_ip":"172.21.0.0","proto":"HTTP/1.1","method":"GET","host":"localhost:8082","uri":"/","headers":{"Accept":["*/*"],"User-Agent":["curl/7.81.0"]}},"bytes_read":0,"user_id":"","duration":0.00146917,"size":20,"status":200,"resp_headers":{"Content-Type":["text/plain; charset=utf-8"],"Date":["Wed, 17 Dec 2025 18:00:19 GMT"],"Via":["1.1 Caddy"],"Content-Length":["20"]}}```
+{"level":"info","ts":1765994419.4105134,"logger":"http.log.access.log0","msg":"handled request","request":{"remote_ip":"172.21.0.1","remote_port":"58562","client_ip":"172.21.0.0","proto":"HTTP/1.1","method":"GET","host":"localhost:8082","uri":"/","headers":{"Accept":["*/*"],"User-Agent":["curl/7.81.0"]}},"bytes_read":0,"user_id":"","duration":0.00146917,"size":20,"status":200,"resp_headers":{"Content-Type":["text/plain; charset=utf-8"],"Date":["Wed, 17 Dec 2025 18:00:19 GMT"],"Via":["1.1 Caddy"],"Content-Length":["20"]}}
 ```
 
 ```sh 
