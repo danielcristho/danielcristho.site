@@ -27,12 +27,12 @@ const fullUrl = `https://danielcristho.site/${slug}`;
 
 {isBlogPost && (
   <>
-    <div style="margin-top: 3rem;">
-      <Giscus />
-    </div>
-
     <div style="margin-top: 2rem;">
       <ShareButtons title={title} url={fullUrl} />
+    </div>
+    
+    <div style="margin-top: 3rem;">
+      <Giscus />
     </div>
   </>
 )}
