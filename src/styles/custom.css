@@ -626,9 +626,8 @@ a:focus-visible {
     border-color: rgba(46, 133, 85, 0.3) !important;
   }
 }
-/* Additional Mobile Performance Optimizations */
 
-/* Reduce animations on mobile for better performance */
+/* Reduce animations on mobile for performance */
 @media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
   .hero strong[style*="animation"] {
     animation-duration: 2s !important;
