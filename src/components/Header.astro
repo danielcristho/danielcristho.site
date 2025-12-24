@@ -13,8 +13,21 @@ import ThemeSelect from "./starlight/ThemeSelect.astro";
   
   <div class="center-group">
       <nav class="blog-links">
-          <a href="/blog">Blog</a>
-          <a href="https://docs.danielcristho.site">Docs</a>
+          <a 
+            href="/blog"
+            class="animated-underline"
+            aria-current={Astro.url.pathname.startsWith('/blog') ? 'page' : undefined}
+          >
+            Blog
+          </a>
+          <a 
+            href="https://docs.danielcristho.site"
+            class="animated-underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs
+          </a>
       </nav>
       <Search {...Astro.props} />
   </div>
@@ -53,7 +66,7 @@ import ThemeSelect from "./starlight/ThemeSelect.astro";
 
   .blog-links a {
     font-size: 120%;   /**Font size */
-    color: #2e8555; /**Font colour */
+    color: #2e8555 !important;
   }
 
   .search-mobile {

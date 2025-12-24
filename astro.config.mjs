@@ -43,7 +43,7 @@ export default defineConfig({
             "./src/styles/gruvbox.css"
         ],
         components: {
-            Sidebar: "starlight-blog/overrides/Sidebar.astro",
+            Sidebar: "./src/components/starlight/Sidebar.astro",
             TableOfContents: "./src/components/TableOfContents.astro",
             Header: "./src/components/Header.astro",
             Head: "./src/components/Head.astro",
