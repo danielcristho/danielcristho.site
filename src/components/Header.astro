@@ -28,6 +28,13 @@ import ThemeSelect from "./starlight/ThemeSelect.astro";
           >
             Docs
           </a>
+          <a 
+            href="/about"
+            class="animated-underline"
+            aria-current={Astro.url.pathname === '/about' ? 'page' : undefined}
+          >
+            About
+          </a>
       </nav>
       <Search {...Astro.props} />
   </div>

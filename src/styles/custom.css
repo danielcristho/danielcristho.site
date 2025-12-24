@@ -48,7 +48,6 @@
 	--sl-color-black: #181818;
 }
 
-
 /* Light mode colors. */
 :root[data-theme='light'] {
 	--sl-font-sans: 'XProto Nerd Mono', sans-serif;
@@ -89,7 +88,6 @@
 code, pre {
 	font-family: var(--sl-font-mono) !important;
 }
-
 
 a:not(.sl-sidebar-link):not(.social-icons a):not(.site-title a) {
 	position: relative;
@@ -358,34 +356,6 @@ h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover {
 	box-shadow: 0 4px 12px rgba(46, 133, 85, 0.3);
 }
 
-
-.no-underline::after,
-.logo a::after,
-.brand a::after,
-button a::after,
-.card a::after,
-.sl-sidebar-link,
-.social-icons a,
-.site-title a {
-
-}
-
-.sl-sidebar-link {
-	color: inherit !important;
-}
-
-.sl-sidebar-link:hover {
-	color: inherit !important;
-}
-
-.social-icons a {
-	color: inherit !important;
-}
-
-.site-title a {
-	color: inherit !important;
-}
-
 @media (prefers-reduced-motion: reduce) {
 	a::after,
 	.social-icons a,
@@ -404,4 +374,3 @@ a:focus-visible {
 :root[data-theme="dark"] a:focus-visible {
 	outline-color: #2e8555;
 }
-	
