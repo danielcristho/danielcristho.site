@@ -22,23 +22,27 @@ hero:
           animation: gradientShift 3s ease-in-out infinite;
           transition: all 0.3s ease;
           cursor: default;
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.textShadow='0 0 20px rgba(46, 133, 85, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.textShadow='none'">Daniel</strong>
+        "
+        onmouseover="this.style.transform='scale(1.05)'; this.style.textShadow='0 0 20px rgba(46, 133, 85, 0.5)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.textShadow='none'">
+          Daniel
+        </strong>
       </span>
-      
+
       <style>
         @keyframes gradientShift {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
       </style>
+
       <br/><br/>
+
       A space where I write what I’ve learned — mostly about infrastructure,
       cloud technologies, and server-side. Sometimes, I write personal notes too.
-      <br><br>
+
+      <br/><br/>
+
       <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
         <a href="/blog" style="
           display: flex;
@@ -52,21 +56,11 @@ hero:
           text-decoration: none;
           font-size: 0.9rem;
           font-weight: 500;
-          transition: background 0.15s ease, border-color 0.15s ease;
-        "
-        onmouseover="
-          this.style.background='rgba(46, 133, 85, 0.12)';
-          this.style.borderColor='rgba(46, 133, 85, 0.4)';
-        "
-        onmouseout="
-          this.style.background='rgba(46, 133, 85, 0.08)';
-          this.style.borderColor='rgba(46, 133, 85, 0.25)';
         ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
             <polyline points="14,2 14,8 20,8"/>
+            <path d="m10 13 2 2 4-4"/>
           </svg>
           See latest post
         </a>
@@ -83,26 +77,15 @@ hero:
           text-decoration: none;
           font-size: 0.9rem;
           font-weight: 500;
-          transition: background 0.15s ease, border-color 0.15s ease;
-        "
-        onmouseover="
-          this.style.background='rgba(46, 133, 85, 0.12)';
-          this.style.borderColor='rgba(46, 133, 85, 0.4)';
-        "
-        onmouseout="
-          this.style.background='rgba(46, 133, 85, 0.08)';
-          this.style.borderColor='rgba(46, 133, 85, 0.25)';
         ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
           More about me
         </a>
-
       </div>
+
       <p style="margin-top: 20px;">
         Reach me on:
         <br>
@@ -147,3 +130,6 @@ hero:
       </p>
     </div>
 ---
+import FloatingImages from '../../../src/components/FloatingImages.astro';
+
+<FloatingImages />

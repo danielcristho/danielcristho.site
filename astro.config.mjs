@@ -33,7 +33,7 @@ export default defineConfig({
     starlight({
         favicon: "/favicon.svg",
         lastUpdated: true,
-        title: "danielcristho.",
+        title: "dc.",
         editLink: {
             baseUrl:
             "https://github.com/danielcristho/danielcristho.site/edit/main",

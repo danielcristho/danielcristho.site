@@ -374,3 +374,412 @@ a:focus-visible {
 :root[data-theme="dark"] a:focus-visible {
 	outline-color: #2e8555;
 }
+/* Ensure hero section has relative positioning for floating images */
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Additional subtle decorative elements - HOMEPAGE ONLY */
+[data-template="splash"] .hero .hero-html::before {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  top: -20%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(46, 133, 85, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.05;
+  }
+}
+
+/* Ensure hero-html has relative positioning - HOMEPAGE ONLY */
+[data-template="splash"] .hero .hero-html {
+  position: relative;
+}
+/* Floating animations for FloatingImages component */
+@keyframes float1 {
+  0%, 100% {
+    transform: rotate(15deg) translateY(0px) translateX(0px);
+  }
+  33% {
+    transform: rotate(18deg) translateY(-6px) translateX(3px);
+  }
+  66% {
+    transform: rotate(12deg) translateY(-3px) translateX(-2px);
+  }
+}
+
+@keyframes float2 {
+  0%, 100% {
+    transform: rotate(-12deg) translateY(0px) translateX(0px);
+  }
+  40% {
+    transform: rotate(-15deg) translateY(-5px) translateX(-3px);
+  }
+  80% {
+    transform: rotate(-9deg) translateY(-2px) translateX(2px);
+  }
+}
+
+/* Ensure hero section has relative positioning for floating images */
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+/* Mobile Responsive Optimizations */
+
+/* Homepage responsive styles */
+@media (max-width: 768px) {
+  /* Hero section mobile optimization */
+  .hero .hero-html {
+    padding: 1rem 0.5rem;
+    text-align: center;
+  }
+  
+  .hero h1 {
+    font-size: 2rem !important;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  
+  .hero .hero-html p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Card buttons mobile responsive */
+  .hero .hero-html div[style*="display: flex"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: stretch;
+  }
+  
+  .hero .hero-html a[href="/blog"],
+  .hero .hero-html a[href="/about"] {
+    justify-content: center !important;
+    padding: 0.6rem 1rem !important;
+    font-size: 0.95rem !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Social links mobile */
+  .hero .hero-html p[style*="margin-top: 20px"] {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  
+  .hero .hero-html p a {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0 0.3rem;
+  }
+}
+
+/* About page responsive styles */
+@media (max-width: 768px) {
+  /* About page content */
+  .sl-markdown-content h1 {
+    font-size: 2rem !important;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .sl-markdown-content h2 {
+    font-size: 1.5rem !important;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .sl-markdown-content p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Technology cards mobile responsive */
+  .sl-markdown-content div[style*="display: grid"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    margin: 1.5rem 0;
+  }
+  
+  .sl-markdown-content div[style*="background: rgba(46, 133, 85"] {
+    padding: 0.75rem !important;
+    font-size: 0.85rem !important;
+    text-align: center;
+  }
+  
+  /* Contact links mobile */
+  .sl-markdown-content a[href^="mailto"],
+  .sl-markdown-content a[href^="https://github.com"],
+  .sl-markdown-content a[href^="https://www.linkedin.com"],
+  .sl-markdown-content a[href^="https://drive.google.com"] {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0 0.3rem 0.5rem 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet responsive styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero h1 {
+    font-size: 2.5rem !important;
+  }
+  
+  .hero .hero-html div[style*="display: flex"] {
+    justify-content: center;
+  }
+  
+  .hero .hero-html a[href="/blog"],
+  .hero .hero-html a[href="/about"] {
+    padding: 0.5rem 1.2rem !important;
+  }
+  
+  /* About page tablet */
+  .sl-markdown-content div[style*="display: grid"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  .hero .hero-html {
+    padding: 0.75rem 0.25rem;
+  }
+  
+  .hero .hero-html p {
+    font-size: 0.9rem;
+  }
+  
+  .hero .hero-html a[href="/blog"],
+  .hero .hero-html a[href="/about"] {
+    padding: 0.7rem 0.8rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  /* About page small mobile */
+  .sl-markdown-content div[style*="display: grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  
+  .sl-markdown-content h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  .sl-markdown-content h2 {
+    font-size: 1.3rem !important;
+  }
+}
+
+/* Improve touch targets for mobile */
+@media (max-width: 768px) {
+  a, button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .hero .hero-html a {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* Optimize font loading for mobile */
+@media (max-width: 768px) {
+  body, .sl-markdown-content {
+    font-display: swap;
+  }
+}
+
+/* Dark mode mobile optimizations */
+@media (max-width: 768px) {
+  :root[data-theme="dark"] .hero .hero-html,
+  :root[data-theme="dark"] .sl-markdown-content {
+    background-color: var(--sl-color-black);
+  }
+  
+  :root[data-theme="dark"] .hero .hero-html a[href="/blog"],
+  :root[data-theme="dark"] .hero .hero-html a[href="/about"] {
+    background: rgba(46, 133, 85, 0.15) !important;
+    border-color: rgba(46, 133, 85, 0.3) !important;
+  }
+}
+/* Additional Mobile Performance Optimizations */
+
+/* Reduce animations on mobile for better performance */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .hero strong[style*="animation"] {
+    animation-duration: 2s !important;
+  }
+  
+  .floating-image {
+    animation: none !important;
+  }
+}
+
+/* Improve text readability on small screens */
+@media (max-width: 480px) {
+  .hero .hero-html,
+  .sl-markdown-content {
+    line-height: 1.6 !important;
+    word-spacing: 0.1em;
+  }
+  
+  .hero .hero-html br {
+    display: none;
+  }
+  
+  .hero .hero-html br + br {
+    display: block;
+    content: "";
+    margin: 1rem 0;
+  }
+}
+
+/* Optimize hero image for mobile */
+@media (max-width: 768px) {
+  .hero .hero-image {
+    margin: 1rem auto;
+    max-width: 200px;
+  }
+  
+  .hero .hero-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 50%;
+  }
+}
+
+/* Mobile-first navigation improvements */
+@media (max-width: 768px) {
+  .sl-nav-toggle {
+    z-index: 1000;
+  }
+  
+  .sl-sidebar {
+    font-size: 0.95rem;
+  }
+  
+  .sl-sidebar-link {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+}
+
+/* Improve mobile scrolling performance */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Mobile-specific hover states (touch devices) */
+@media (hover: none) and (pointer: coarse) {
+  .hero .hero-html a[href="/blog"]:active,
+  .hero .hero-html a[href="/about"]:active {
+    background: rgba(46, 133, 85, 0.2) !important;
+    transform: scale(0.98);
+  }
+  
+  .sl-markdown-content div[style*="background: rgba(46, 133, 85"]:active {
+    background: rgba(46, 133, 85, 0.2) !important;
+    transform: scale(0.98);
+  }
+}
+
+/* Optimize font sizes for better mobile readability */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: clamp(1.75rem, 5vw, 2.5rem) !important;
+  }
+  
+  .hero .hero-html p {
+    font-size: clamp(0.9rem, 3vw, 1rem);
+  }
+  
+  .sl-markdown-content h1 {
+    font-size: clamp(1.75rem, 5vw, 2.5rem) !important;
+  }
+  
+  .sl-markdown-content h2 {
+    font-size: clamp(1.3rem, 4vw, 1.8rem) !important;
+  }
+}
+
+/* Improve mobile form elements and inputs */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Mobile-specific spacing improvements */
+@media (max-width: 768px) {
+  .hero .hero-html {
+    padding: 1.5rem 1rem;
+  }
+  
+  .sl-markdown-content {
+    padding: 1rem;
+  }
+  
+  .hero .hero-html div[style*="margin-top: 1.5rem"] {
+    margin-top: 1rem !important;
+  }
+}
+
+/* Ensure proper viewport handling */
+@media (max-width: 768px) {
+  .hero,
+  .sl-main {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+}
+
+/* Mobile accessibility improvements */
+@media (max-width: 768px) {
+  /* Larger tap targets */
+  a, button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Better focus indicators for mobile */
+  a:focus-visible,
+  button:focus-visible {
+    outline: 3px solid #2e8555;
+    outline-offset: 2px;
+  }
+}

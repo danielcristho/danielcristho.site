@@ -1,0 +1,94 @@
+---
+// src/components/FloatingImages.astro
+---
+
+<div class="floating-images-container">
+  <div class="floating-image image-1">
+    <img 
+      src="https://res.cloudinary.com/diunivf9n/image/upload/v1766579087/morning_retro_nceycg.png" 
+      alt="Workspace" 
+      width="280" 
+      height="280"
+      draggable="false"
+      oncontextmenu="return false;"
+      onselectstart="return false;"
+      onmousedown="return false;"
+    />
+  </div>
+  <div class="floating-image image-2">
+    <img 
+      src="https://res.cloudinary.com/diunivf9n/image/upload/v1766579089/me_retro_gpsxct.png" 
+      alt="Portrait" 
+      width="280" 
+      height="280"
+      draggable="false"
+      oncontextmenu="return false;"
+      onselectstart="return false;"
+      onmousedown="return false;"
+    />
+  </div>
+</div>
+
+<style>
+  .floating-images-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allow clicks to pass through */
+    overflow: hidden;
+    z-index: -1; /* Behind content */
+  }
+
+  .floating-image {
+    position: absolute;
+    filter: grayscale(80%) blur(0.3px) brightness(0.8);
+    opacity: 0.4;
+    border-radius: 0.8rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .floating-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0.8rem;
+    /* Anti-download protections */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+  }
+
+  .image-1 {
+    top: 18%;
+    right: 28%;
+    width: 280px;
+    height: 280px;
+    transform: rotate(15deg);
+    animation: float1 8s ease-in-out infinite;
+  }
+
+  .image-2 {
+    top: 50%;
+    right: 32%;
+    width: 280px;
+    height: 280px;
+    transform: rotate(15deg);
+    animation: float2 10s ease-in-out infinite reverse;
+  }
+
+  /* Hide on mobile and tablet */
+  @media (max-width: 1024px) {
+    .floating-images-container {
+      display: none;
+    }
+  }
+</style>
