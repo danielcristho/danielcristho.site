@@ -11,8 +11,30 @@ hero:
   tagline: |
     <div>
       <span style="font-size: 1.15em;">
-        I'm <strong><u style="color: #2e8555;">Daniel</u></strong>
+        I'm <strong style="
+          background: linear-gradient(45deg, #2e8555, #4ade80, #2e8555);
+          background-size: 200% 200%;
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          text-decoration: underline;
+          text-decoration-color: #2e8555;
+          animation: gradientShift 3s ease-in-out infinite;
+          transition: all 0.3s ease;
+          cursor: default;
+        " onmouseover="this.style.transform='scale(1.05)'; this.style.textShadow='0 0 20px rgba(46, 133, 85, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.textShadow='none'">Daniel</strong>
       </span>
+      
+      <style>
+        @keyframes gradientShift {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+      </style>
       <br/><br/>
       A space where I write what I’ve learned — mostly about infrastructure,
       cloud technologies, and server-side. Sometimes, I write personal notes too.
