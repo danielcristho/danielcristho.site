@@ -92,29 +92,35 @@ export default async function handler(req, res) {
       });
     }
 
-    // Use the correct /pageviews endpoint
+    // Use the correct /metrics endpoint with type=url to get per-page data
     const response = await makeUmamiRequest(
-      `/api/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}`
+      `/api/websites/${websiteId}/metrics?type=url&startAt=${startAt}&endAt=${endAt}`
     );
     
     if (!response || !response.ok) {
       return res.status(200).json({ 
         pageviews: 0,
         slug: slug,
-        error: 'Could not fetch pageviews data'
+        error: 'Could not fetch metrics data'
       });
     }
 
     const data = await response.json();
     
-    // The pageviews endpoint returns total pageviews, not per-page
-    // We need to use a different approach for per-page data
+    // Find the specific page in the results
+    // data should be an array like: [{"x": "/blog/post-slug", "y": 124}, ...]
+    const targetUrls = [`/blog/${slug}`, `/blog/${slug}/`];
     let totalViews = 0;
-    let debugInfo = { dataStructure: data };
+    let debugInfo = { foundUrls: [], totalItems: Array.isArray(data) ? data.length : 0 };
     
-    if (data && data.pageviews && Array.isArray(data.pageviews)) {
-      // Sum up all pageviews from the time series data
-      totalViews = data.pageviews.reduce((sum, item) => sum + (item.y || 0), 0);
+    if (data && Array.isArray(data)) {
+      for (const item of data) {
+        // Check if this item matches our target URLs
+        if (targetUrls.includes(item.x)) {
+          totalViews += item.y || 0;
+          debugInfo.foundUrls.push({ url: item.x, views: item.y });
+        }
+      }
     }
     
     return res.status(200).json({ 
