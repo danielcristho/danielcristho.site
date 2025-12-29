@@ -93,17 +93,17 @@ export default async function handler(req, res) {
       }
     }
 
-    // Test pages endpoint to see all available pages
-    const pagesEndpoint = `/api/websites/${websiteId}/pages?startAt=${startAt}&endAt=${endAt}`;
-    const pagesResponse = await makeUmamiRequest(pagesEndpoint);
+    // Test metrics endpoint to see all available pages
+    const metricsEndpoint = `/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=url`;
+    const metricsResponse = await makeUmamiRequest(metricsEndpoint);
     
-    if (pagesResponse && pagesResponse.ok) {
-      const pagesData = await pagesResponse.json();
-      results['all_pages'] = {
+    if (metricsResponse && metricsResponse.ok) {
+      const metricsData = await metricsResponse.json();
+      results['metrics_urls'] = {
         success: true,
-        dataType: Array.isArray(pagesData) ? 'array' : typeof pagesData,
-        length: Array.isArray(pagesData) ? pagesData.length : 'N/A',
-        sample: Array.isArray(pagesData) ? pagesData.slice(0, 5) : pagesData
+        dataType: Array.isArray(metricsData) ? 'array' : typeof metricsData,
+        length: Array.isArray(metricsData) ? metricsData.length : 'N/A',
+        sample: Array.isArray(metricsData) ? metricsData.slice(0, 10) : metricsData
       };
     }
 

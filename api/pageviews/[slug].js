@@ -92,24 +92,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // Try both URL formats (with and without trailing slash)
+    // Try to get page-specific data using metrics endpoint
+    const response = await makeUmamiRequest(
+      `/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=url`
+    );
+    
+    if (!response || !response.ok) {
+      return res.status(200).json({ 
+        pageviews: 0,
+        slug: slug,
+        error: 'Could not fetch metrics data'
+      });
+    }
+
+    const data = await response.json();
+    
+    // Find the specific page in the results
     const targetUrls = [`/blog/${slug}`, `/blog/${slug}/`];
     let totalViews = 0;
-    let debugInfo = {};
+    let debugInfo = { foundUrls: [], totalItems: Array.isArray(data) ? data.length : 0 };
     
-    for (const url of targetUrls) {
-      const response = await makeUmamiRequest(
-        `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
-      );
-      
-      if (response && response.ok) {
-        const data = await response.json();
-        debugInfo[url] = { success: true, pageviews: data?.pageviews || 0 };
-        if (data && data.pageviews) {
-          totalViews += data.pageviews;
+    if (data && Array.isArray(data)) {
+      for (const item of data) {
+        if (targetUrls.includes(item.x)) {
+          totalViews += item.y || 0;
+          debugInfo.foundUrls.push({ url: item.x, views: item.y });
         }
-      } else {
-        debugInfo[url] = { success: false, status: response?.status || 'no response' };
       }
     }
     
