@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     
     return res.status(200).json({ 
       success: true,
-      pageviews: data.pageviews?.value || 0,
+      pageviews: data.pageviews || 0,  // Fix: langsung ambil data.pageviews
       slug,
       debug: { 
         url,

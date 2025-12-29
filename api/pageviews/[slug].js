@@ -88,7 +88,8 @@ export default async function handler(req, res) {
       
       if (response && response.ok) {
         const data = await response.json();
-        totalViews += data.pageviews?.value || 0;
+        const views = data.pageviews || 0;  // Fix: langsung ambil data.pageviews
+        totalViews += views;
       }
     }
     
