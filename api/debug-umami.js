@@ -87,8 +87,8 @@ export default async function handler(req, res) {
         };
       } else {
         results[`stats_${url}`] = {
-          success: false,
-          status: response?.status || 'no response'
+            success: false,
+            status: response?.status || 'no response'
         };
       }
     }
