@@ -2,7 +2,7 @@
 
 [![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
-My personal website and blog where I write about DevOps, Kubernetes, and infrastructure stuff. Built with Astro and Starlight.
+My personal website and blog where I write about DevOps, server-side, and infrastructure stuff. Built with Astro and Starlight.
 
 ```sh
 pnpm create astro@latest -- --template danielcristho/danielcristho.site
@@ -23,7 +23,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 - Astro v4 + Starlight
 - Starlight Blog v0.4.0
 - Tailwind CSS
-- Neon DB / Supabase + Prisma
+- Neon DB or Supabase (PostgreSQL serverless) + Prisma
 - Umami Analytics
 - Giscus Comments
 
@@ -124,7 +124,7 @@ UMAMI_PASSWORD=your-umami-password
 # Database Connection Examples:
 
 # Neon DB
-DATABASE_URL="postgresql://username:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
+DATABASE_URL="postgresql://username:password@ep-xxx.<your best region>.<your provider>.neon.tech/neondb?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
 
 or 
 
@@ -132,7 +132,7 @@ or
 DATABASE_URL="postgresql://postgres.xxx:password@aws-1-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&pool_timeout=20&connect_timeout=60"
 ```
 
-**Why Neon?** Better connection pooling, Vercel-optimized, and fewer deployment issues compared to Supabase.
+**Why Neon?** Better connection pooling and fewer deployment issues compared to Supabase.
 
 ### Deployment
 
