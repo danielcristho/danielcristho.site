@@ -79,22 +79,23 @@ export default async function handler(req, res) {
       const endAt = endDate.getTime();
 
       // Fetch read completion events from Umami API
-      const response = await makeUmamiRequest(
-        `/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&url=/blog/${slug}/&event=read_completed`
-      );
-
-      if (!response || !response.ok) {
-        return res.status(200).json({ 
-          reads: 0,
-          slug: slug,
-          error: 'Could not fetch read completion data'
-        });
+      // Try both with and without trailing slash
+      const urls = [`/blog/${slug}`, `/blog/${slug}/`];
+      let totalReads = 0;
+      
+      for (const url of urls) {
+        const response = await makeUmamiRequest(
+          `/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&url=${url}&event=read_completed`
+        );
+        
+        if (response && response.ok) {
+          const data = await response.json();
+          totalReads += data.events?.length || 0;
+        }
       }
-
-      const data = await response.json();
       
       return res.status(200).json({ 
-        reads: data.events?.length || 0,
+        reads: totalReads,
         slug: slug,
         period: '30 days'
       });
