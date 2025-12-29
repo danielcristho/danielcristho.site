@@ -23,7 +23,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 - Astro v4 + Starlight
 - Starlight Blog v0.4.0
 - Tailwind CSS
-- Supabase + Prisma
+- Neon DB / Supabase + Prisma
 - Umami Analytics
 - Giscus Comments
 
@@ -102,25 +102,37 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 If you want the analytics features, you'll need to set up Umami:
 
 1. Fork the [Umami repo](https://github.com/umami-software/umami)
-2. Create a Supabase project (Choose the best region)
+
+2. **Choose a database provider** (Neon recommended):
+
 3. Deploy your forked Umami to Vercel with these env vars:
-   - `DATABASE_URL` - Use the **Connection Pooling** URL from Supabase (not direct connection)
+   - `DATABASE_URL` - Your database connection string (see examples below)
    - `NEXTAUTH_SECRET` - Generate with `openssl rand -base64 32`
    - `NEXTAUTH_URL` - Your Vercel app URL
 
 4. Add your website in the Umami dashboard
+
 5. Update your `.env` file:
 
 ```env
 # Umami Analytics
 PUBLIC_UMAMI_URL=https://your-umami.vercel.app
 PUBLIC_UMAMI_WEBSITE_ID=your-website-id
-
 UMAMI_USERNAME=admin
 UMAMI_PASSWORD=your-umami-password
+
+# Database Connection Examples:
+
+# Neon DB
+DATABASE_URL="postgresql://username:password@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
+
+or 
+
+# Supabase
+DATABASE_URL="postgresql://postgres.xxx:password@aws-1-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&pool_timeout=20&connect_timeout=60"
 ```
 
-**Important**: Use Supabase's Connection Pooling URL (port 6543), not the direct connection. This prevents deployment errors.
+**Why Neon?** Better connection pooling, Vercel-optimized, and fewer deployment issues compared to Supabase.
 
 ### Deployment
 
@@ -144,7 +156,13 @@ authors: ["danielcristho"]
 
 **Analytics not working**: Make sure you're testing on a production build, not the dev server. Analytics are disabled in development.
 
-**Vercel deployment fails**: Check that you're using Supabase's Connection Pooling URL, not the direct connection URL.
+**Vercel deployment fails**:
+
+- For Neon: Check connection string format and SSL parameters
+- For Supabase: Use Connection Pooling URL (port 6543), not direct connection
+- Try redeploying after updating DATABASE_URL
+
+**Database connection errors**: Neon DB generally has fewer connection issues than Supabase for Vercel deployments.
 
 ## License
 
@@ -155,3 +173,5 @@ MIT Copyright (c) 2024-present
 │ ◠ ◡ ◠  Good luck out there, astronaut! 🚀
 ╰─────╯
 ```
+
+See the analytics here: [Umami](https://umami-beige-one.vercel.app/share/J6EoRF5wjWHBFXBL)
