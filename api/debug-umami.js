@@ -1,4 +1,4 @@
-// Shared authentication utility
+// Debug Umami API endpoints
 let authToken = null;
 let tokenExpiry = 0;
 
@@ -60,65 +60,64 @@ async function makeUmamiRequest(endpoint, options = {}) {
 }
 
 export default async function handler(req, res) {
-  const { slug } = req.query;
-  
   try {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
     
-    if (!websiteId || !slug) {
-      return res.status(500).json({ error: 'Missing configuration' });
-    }
-
-    // Calculate date range (last 30 days)
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
-
     const startAt = startDate.getTime();
     const endAt = endDate.getTime();
 
-    // Get authentication token first
-    const token = await getUmamiAuthToken();
-    if (!token) {
-      return res.status(200).json({ 
-        pageviews: 0,
-        slug: slug,
-        error: 'Authentication failed'
-      });
-    }
+    // Test different endpoints and URL formats
+    const testUrls = ['/blog/2025-in-review', '/blog/2025-in-review/'];
+    const results = {};
 
-    // Try both URL formats (with and without trailing slash)
-    const targetUrls = [`/blog/${slug}`, `/blog/${slug}/`];
-    let totalViews = 0;
-    
-    for (const url of targetUrls) {
-      const response = await makeUmamiRequest(
-        `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
-      );
+    // Test stats endpoint for specific URLs
+    for (const url of testUrls) {
+      const endpoint = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`;
+      const response = await makeUmamiRequest(endpoint);
       
       if (response && response.ok) {
         const data = await response.json();
-        if (data && data.pageviews && data.pageviews.value) {
-          totalViews += data.pageviews.value;
-        }
+        results[`stats_${url}`] = {
+          success: true,
+          data: data,
+          pageviews: data?.pageviews?.value || 0
+        };
+      } else {
+        results[`stats_${url}`] = {
+          success: false,
+          status: response?.status || 'no response'
+        };
       }
     }
+
+    // Test pages endpoint to see all available pages
+    const pagesEndpoint = `/api/websites/${websiteId}/pages?startAt=${startAt}&endAt=${endAt}`;
+    const pagesResponse = await makeUmamiRequest(pagesEndpoint);
     
-    return res.status(200).json({ 
-      pageviews: totalViews,
-      slug: slug,
-      period: '30 days',
-      debug: {
-        foundItems: data ? data.length : 0,
-        targetUrls
-      }
+    if (pagesResponse && pagesResponse.ok) {
+      const pagesData = await pagesResponse.json();
+      results['all_pages'] = {
+        success: true,
+        dataType: Array.isArray(pagesData) ? 'array' : typeof pagesData,
+        length: Array.isArray(pagesData) ? pagesData.length : 'N/A',
+        sample: Array.isArray(pagesData) ? pagesData.slice(0, 5) : pagesData
+      };
+    }
+
+    return res.status(200).json({
+      success: true,
+      websiteId,
+      dateRange: { startAt, endAt },
+      results
     });
 
   } catch (error) {
-    return res.status(200).json({ 
-      pageviews: 0,
-      slug: slug,
-      error: 'Could not fetch page view data'
+    return res.status(500).json({
+      error: error.message,
+      stack: error.stack
     });
   }
 }
