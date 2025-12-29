@@ -69,10 +69,12 @@ export default async function handler(req, res) {
     const startAt = startDate.getTime();
     const endAt = endDate.getTime();
 
-    // Try the correct endpoints based on documentation
+    // Try different endpoints to find per-page data
     const endpoints = [
       `/api/websites/${websiteId}/urls?startAt=${startAt}&endAt=${endAt}`,
       `/api/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}`,
+      `/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${endAt}&type=url`,
+      `/api/reports/${websiteId}/pages?startAt=${startAt}&endAt=${endAt}`,
     ];
 
     const results = {};
