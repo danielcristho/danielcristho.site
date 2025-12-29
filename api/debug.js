@@ -1,4 +1,9 @@
 export default async function handler(req, res) {
+  // Check if debug is enabled via environment variable
+  if (process.env.ENABLE_DEBUG !== 'true') {
+    return res.status(404).json({ error: 'Debug endpoint disabled' });
+  }
+
   try {
     // Check environment variables
     const umamiUrl = process.env.PUBLIC_UMAMI_URL;

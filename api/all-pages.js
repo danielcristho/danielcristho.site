@@ -60,9 +60,9 @@ async function makeUmamiRequest(endpoint, options = {}) {
 }
 
 export default async function handler(req, res) {
-  // Disable debug endpoint in production
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Debug endpoint disabled in production' });
+  // Check if debug is enabled via environment variable
+  if (process.env.ENABLE_DEBUG !== 'true') {
+    return res.status(404).json({ error: 'Debug endpoint disabled' });
   }
 
   try {
