@@ -1,18 +1,11 @@
 import { defineConfig } from "astro/config";
 import starlightBlog from "starlight-blog";
 import starlight from "@astrojs/starlight";
-import partytown from "@astrojs/partytown";
-import compress from "astro-compress";
-import robotsTxt from "astro-robots-txt";
-import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
-import vercel from "@astrojs/vercel/serverless";
 import { BLOG_URL } from "./src/contants";
 
 export default defineConfig({
     site: BLOG_URL,
-    output: "hybrid",
-    adapter: vercel(),
     integrations: [
     tailwind(),
 
@@ -64,17 +57,13 @@ export default defineConfig({
             rss: `${BLOG_URL}/rss.xml`,
         },
     }),
-
-    compress(),
-
-    robotsTxt(),
-    
-    sitemap(),
-    
-    partytown({
-        config: {
-        forward: ["dataLayer.push"],
-            },
-        }),
     ],
+    vite: {
+        define: {
+            'process.env.PUBLIC_UMAMI_URL': JSON.stringify(process.env.PUBLIC_UMAMI_URL),
+            'process.env.PUBLIC_UMAMI_WEBSITE_ID': JSON.stringify(process.env.PUBLIC_UMAMI_WEBSITE_ID),
+            'process.env.UMAMI_USERNAME': JSON.stringify(process.env.UMAMI_USERNAME),
+            'process.env.UMAMI_PASSWORD': JSON.stringify(process.env.UMAMI_PASSWORD),
+        }
+    }
 });
