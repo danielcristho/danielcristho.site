@@ -9,131 +9,220 @@ prev: false
 
 hero:
   tagline: |
-    <div>
-      <span style="font-size: 1.15em;">
-        Hello! I'm <strong style="
+    <div class="about-hero">
+      <div class="intro-text">
+        Hello! I'm <span class="name-highlight">Daniel Pepuho</span> — you can call me <span class="name-highlight name-delay">Daniel</span>
+      </div>
+
+      <div class="about-content">
+        <p>
+          Born in 2002 in Nabire, Papua. Since high school, I've been curious about technology and how things work under the hood especially when stuff breaks or doesn't go according to plan.          
+          Over time, that curiosity grew into a focus on infrastructure, cloud, and DevOps practices. I write here when something finally clicks for me. Mostly to help myself remember and understand them better.
+        </p>
+
+        <p>
+          Most posts are about infrastructure, cloud, and server-side topics etc, sometimes mixed with personal notes. I love contributing to open source from time to time on GitHub. 
+          This blog isn't a portfolio, just a place where I write and grow. BTW, this blog runs on Astro and Starlight-Blog, if you're curious, you can see the project <a class="green-link" href="https:github.com/danielcristho/danielcristho.site"><u>here</u></a>.
+        </p>
+
+        <p>
+          Outside of tech, I enjoy reading about history and learning more about Papuan culture. I love to listen music especially hip-hop and R&B, where storytelling matters. J. Cole, Kanye West, Lauryn Hill, MURIA, and MF DOOM quietly shape how I think and write. 
+          I love the vibez of island music and reggae. Black Brothers, FIJI, Onetox, Dezine, Dave B., Maoli, Common Kings, and many others. I grew up listening to their songs.
+        </p>
+
+        <p class="closing-note">
+          Still learning, still connecting.
+        </p>
+      </div>
+
+      <div class="tools-section">
+        <h3 class="tools-title">Tools I often work with:</h3>
+        <div class="tools-grid">
+          <span class="tool-tag">Docker</span>
+          <span class="tool-tag">Kubernetes</span>
+          <span class="tool-tag">Ansible</span>
+          <span class="tool-tag">Terraform</span>
+          <span class="tool-tag">Python</span>
+        </div>
+      </div>
+
+      <style>
+        .about-hero {
+          text-align: center;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 0 1rem;
+        }
+
+        .intro-text {
+          font-size: clamp(1rem, 2.5vw, 1.15rem);
+          margin-bottom: 2rem;
+          line-height: 1.5;
+        }
+
+        .name-highlight {
+          font-weight: bold;
           background: linear-gradient(45deg, #2e8555, #4ade80, #2e8555);
           background-size: 200% 200%;
           background-clip: text;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          text-decoration: underline;
-          text-decoration-color: #2e8555;
           animation: gradientShift 3s ease-in-out infinite;
           transition: all 0.3s ease;
           cursor: default;
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.textShadow='0 0 20px rgba(46, 133, 85, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.textShadow='none'">Daniel Pepuho</strong> — you can call me <strong style="
-          background: linear-gradient(45deg, #2e8555, #4ade80, #2e8555);
-          background-size: 200% 200%;
-          background-clip: text;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          text-decoration: underline;
-          text-decoration-color: #2e8555;
-          animation: gradientShift 3s ease-in-out infinite 1.5s;
-          transition: all 0.3s ease;
-          cursor: default;
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.textShadow='0 0 20px rgba(46, 133, 85, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.textShadow='none'">Daniel</strong>
-      </span>
-      
-      <style>
+          display: inline-block;
+        }
+
+        .name-delay {
+          animation-delay: 1.5s;
+        }
+
+        .name-highlight:hover {
+          transform: scale(1.05);
+          text-shadow: 0 0 20px rgba(46, 133, 85, 0.5);
+        }
+
         @keyframes gradientShift {
-          0%, 100% {
-            background-position: 0% 50%;
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        .about-content {
+          font-size: clamp(0.875rem, 2vw, 1rem);
+          line-height: 1.65;
+          opacity: 0.9;
+          margin-bottom: 2.5rem;
+          max-width: 700px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .about-content p {
+          margin-bottom: 1.5rem;
+        }
+
+        .closing-note {
+          font-style: italic;
+          opacity: 0.8;
+          margin-top: 2rem !important;
+        }
+
+        .green-link {
+          color: #2e8555;
+          font-weight: 500;
+          text-decoration: underline;
+          text-decoration-thickness: 2px;
+          text-underline-offset: 3px;
+          text-decoration-color: #2e8555;
+          transition: all 0.2s ease;
+        }
+
+        .green-link:hover {
+          opacity: 0.8;
+          text-decoration-thickness: 2.5px;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+          .green-link {
+            color: #4ade80;
+            text-decoration-color: #4ade80;
           }
-          50% {
-            background-position: 100% 50%;
+        }
+
+        .tools-section {
+          margin-top: 2rem;
+        }
+
+        .tools-title {
+          font-size: clamp(0.875rem, 2vw, 0.9rem);
+          line-height: 1.65;
+          opacity: 0.9;
+          margin-bottom: 1.5rem;
+          font-weight: normal;
+        }
+
+        .tools-grid {
+          display: flex;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          justify-content: center;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        .tool-tag {
+          padding: 0.5rem 1rem;
+          background: rgba(46, 133, 85, 0.08);
+          border: 1px solid rgba(46, 133, 85, 0.25);
+          border-radius: 0.4rem;
+          color: #2e8555;
+          font-size: clamp(0.7rem, 1.5vw, 0.75rem);
+          font-weight: 500;
+          transition: all 0.2s ease;
+          cursor: default;
+          display: inline-block;
+        }
+
+        .tool-tag:hover {
+          background: rgba(46, 133, 85, 0.15);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(46, 133, 85, 0.2);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+          .about-hero {
+            padding: 0 0.5rem;
+          }
+
+          .about-content {
+            text-align: left;
+          }
+
+          .tools-grid {
+            justify-content: center;
+            gap: 0.5rem;
+          }
+
+          .tool-tag {
+            padding: 0.4rem 0.8rem;
+          }
+        }
+
+        /* Tablet optimizations */
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .about-hero {
+            padding: 0 1.5rem;
+          }
+
+          .about-content {
+            max-width: 600px;
+          }
+        }
+
+        /* Desktop left alignment */
+        @media (min-width: 1025px) {
+          .about-hero {
+            text-align: left;
+            max-width: 1200px;
+            margin: 0;
+            padding: 0;
+          }
+
+          .about-content {
+            margin-left: 0;
+            margin-right: 0;
+            text-align: left;
+          }
+
+          .tools-grid {
+            justify-content: flex-start;
+            margin: 0;
           }
         }
       </style>
-      <br/><br/>
-      I've been interested in technology since high school. Over time, that curiosity grew into a focus on infrastructure, cloud technologies, and server-side.
-      I write things down once they finally make sense to me, not to teach, but to remember, reflect, and understand them better.
-
-      <br/><br/>
-
-      I’m also interested to learn history, local culture, and the places I come from. I love to listen music especially hip-hop and R&B, where storytelling matter. J. Cole, Kanye West, Lauryn Hill, and MF DOOM quietly shape how I think and write. 
-      I love the vibez of island reggae. B. Brothers, FIJI, Onetox, Dezine, Dave B., Maoli, Common Kings, and many others. I grew up listening to their songs.
-      
-      <br/><br/>
-
-      Tools I often work with:
-
-      <br/><br/>
-      <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.5rem; justify-content: flex-start;">
-        <!-- Docker -->
-        <div style="
-            padding: 0.5rem 1rem;
-            background: rgba(46, 133, 85, 0.08);
-            border: 1px solid rgba(46, 133, 85, 0.25);
-            border-radius: 0.4rem;
-            color: #2e8555;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
-        " onmouseover="this.style.background='rgba(46, 133, 85, 0.15)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46, 133, 85, 0.2)'" onmouseout="this.style.background='rgba(46, 133, 85, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Docker
-        </div>
-                <!-- Kubernetes -->
-        <div style="
-            padding: 0.5rem 1rem;
-            background: rgba(46, 133, 85, 0.08);
-            border: 1px solid rgba(46, 133, 85, 0.25);
-            border-radius: 0.4rem;
-            color: #2e8555;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
-        " onmouseover="this.style.background='rgba(46, 133, 85, 0.15)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46, 133, 85, 0.2)'" onmouseout="this.style.background='rgba(46, 133, 85, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Kubernetes
-        </div>
-        <!-- Ansible -->
-        <div style="
-            padding: 0.5rem 1rem;
-            background: rgba(46, 133, 85, 0.08);
-            border: 1px solid rgba(46, 133, 85, 0.25);
-            border-radius: 0.4rem;
-            color: #2e8555;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
-        " onmouseover="this.style.background='rgba(46, 133, 85, 0.15)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46, 133, 85, 0.2)'" onmouseout="this.style.background='rgba(46, 133, 85, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Ansible
-        </div>
-        <!-- Terraform -->
-        <div style="
-            padding: 0.5rem 1rem;
-            background: rgba(46, 133, 85, 0.08);
-            border: 1px solid rgba(46, 133, 85, 0.25);
-            border-radius: 0.4rem;
-            color: #2e8555;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
-        " onmouseover="this.style.background='rgba(46, 133, 85, 0.15)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46, 133, 85, 0.2)'" onmouseout="this.style.background='rgba(46, 133, 85, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Terraform
-        </div>
-        <!-- Python -->
-        <div style="
-            padding: 0.5rem 1rem;
-            background: rgba(46, 133, 85, 0.08);
-            border: 1px solid rgba(46, 133, 85, 0.25);
-            border-radius: 0.4rem;
-            color: #2e8555;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
-        " onmouseover="this.style.background='rgba(46, 133, 85, 0.15)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(46, 133, 85, 0.2)'" onmouseout="this.style.background='rgba(46, 133, 85, 0.08)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            Python
-        </div>
-      </div>
     </div>
-
   image:
     file: ../../assets/me-homepage.jpeg
 ---

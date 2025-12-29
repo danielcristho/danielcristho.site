@@ -69,8 +69,8 @@
   .image-1 {
     top: 18%;
     right: 28%;
-    width: 280px;
-    height: 280px;
+    width: clamp(200px, 20vw, 280px);
+    height: clamp(200px, 20vw, 280px);
     transform: rotate(15deg);
     animation: float1 8s ease-in-out infinite;
   }
@@ -78,16 +78,52 @@
   .image-2 {
     top: 50%;
     right: 32%;
-    width: 280px;
-    height: 280px;
+    width: clamp(200px, 20vw, 280px);
+    height: clamp(200px, 20vw, 280px);
     transform: rotate(15deg);
     animation: float2 10s ease-in-out infinite reverse;
   }
 
-  /* Hide on mobile and tablet */
+  @keyframes float1 {
+    0%, 100% { transform: rotate(15deg) translateY(0px); }
+    50% { transform: rotate(15deg) translateY(-20px); }
+  }
+
+  @keyframes float2 {
+    0%, 100% { transform: rotate(15deg) translateY(0px); }
+    50% { transform: rotate(15deg) translateY(20px); }
+  }
+
+  /* Hide on mobile and small tablets */
   @media (max-width: 1024px) {
     .floating-images-container {
       display: none;
+    }
+  }
+
+  /* Adjust positioning for larger screens */
+  @media (min-width: 1400px) {
+    .image-1 {
+      right: 25%;
+      width: 320px;
+      height: 320px;
+    }
+
+    .image-2 {
+      right: 28%;
+      width: 320px;
+      height: 320px;
+    }
+  }
+
+  /* Ultra-wide screen adjustments */
+  @media (min-width: 1800px) {
+    .image-1 {
+      right: 20%;
+    }
+
+    .image-2 {
+      right: 23%;
     }
   }
 </style>

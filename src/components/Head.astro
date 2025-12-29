@@ -1,9 +1,10 @@
 ---
 import type { Props } from '@astrojs/starlight/props';
 import DefaultHead from "@astrojs/starlight/components/Head.astro";
+import { ANALYTICS } from '../contants';
 
 const getBlogPostSlug = (articleSlug: string, customImageFileNameWithExt = '') => ({
-   [ `blog/${articleSlug}`]: `/og/blog/${customImageFileNameWithExt ? customImageFileNameWithExt : articleSlug + '.png'}?v=1`
+    [ `blog/${articleSlug}`]: `/og/blog/${customImageFileNameWithExt ? customImageFileNameWithExt : articleSlug + '.png'}?v=1`
 });
 const defaultOgImage = '/og/default.png?v=1';
 
@@ -19,4 +20,15 @@ const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
 <meta property="twitter:image" content={ogImage} />
 <meta name="author" content="Daniel Pepuho" />
 <link rel="alternate" type="application/rss+xml" title="RSS Feed" href={new URL("rss.xml", Astro.site)} />
+
+<!-- Umami Analytics -->
+{ANALYTICS.ENABLED && (
+  <script
+    async
+    defer
+    data-website-id={ANALYTICS.WEBSITE_ID}
+    src={ANALYTICS.UMAMI_URL + '/script.js'}
+  ></script>
+)}
+
 <DefaultHead {...Astro.props} />

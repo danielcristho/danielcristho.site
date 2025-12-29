@@ -51,6 +51,8 @@ export default defineConfig({
             SocialIcons: "./src/components/SocialIcons.astro",
             ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
             MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
+            ContentPanel: "./src/components/starlight/ContentPanel.astro",
+            PageTitle: "./src/components/starlight/PageTitle.astro",
         },
         social: {
             linkedin: "https://www.linkedin.com/in/daniel-pepuho",
