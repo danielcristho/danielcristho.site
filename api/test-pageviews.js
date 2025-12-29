@@ -1,4 +1,4 @@
-// Shared authentication utility
+// Test pageviews with debug info
 let authToken = null;
 let tokenExpiry = 0;
 
@@ -60,15 +60,10 @@ async function makeUmamiRequest(endpoint, options = {}) {
 }
 
 export default async function handler(req, res) {
-  const { slug } = req.query;
-  
   try {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
+    const slug = "2025-in-review";
     
-    if (!websiteId || !slug) {
-      return res.status(500).json({ error: 'Missing configuration' });
-    }
-
     // Calculate date range (last 30 days)
     const endDate = new Date();
     const startDate = new Date();
@@ -77,32 +72,43 @@ export default async function handler(req, res) {
     const startAt = startDate.getTime();
     const endAt = endDate.getTime();
 
-    // Fetch page views for specific URL from Umami API
-    const urls = [`/blog/${slug}`, `/blog/${slug}/`];
-    let totalViews = 0;
-    
-    for (const url of urls) {
-      const response = await makeUmamiRequest(
-        `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
-      );
-      
-      if (response && response.ok) {
-        const data = await response.json();
-        totalViews += data.pageviews?.value || 0;
-      }
+    // Test exact URL from Umami
+    const url = `/blog/${slug}`;
+    const response = await makeUmamiRequest(
+      `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
+    );
+
+    if (!response || !response.ok) {
+      return res.status(200).json({ 
+        error: 'API call failed',
+        debug: { 
+          hasToken: !!authToken,
+          url,
+          startAt,
+          endAt,
+          responseStatus: response?.status
+        }
+      });
     }
+
+    const data = await response.json();
     
     return res.status(200).json({ 
-      pageviews: totalViews,
-      slug: slug,
-      period: '30 days'
+      success: true,
+      pageviews: data.pageviews?.value || 0,
+      slug,
+      debug: { 
+        url,
+        startAt,
+        endAt,
+        rawData: data
+      }
     });
 
   } catch (error) {
-    return res.status(200).json({ 
-      pageviews: 0,
-      slug: slug,
-      error: 'Could not fetch page view data'
+    return res.status(500).json({ 
+      error: error.message,
+      stack: error.stack
     });
   }
 }
