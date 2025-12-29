@@ -77,11 +77,9 @@ export default async function handler(req, res) {
     const startAt = startDate.getTime();
     const endAt = endDate.getTime();
 
-    // Fetch page views for specific URL from Umami API
-    // Use URL without trailing slash (most common format)
-    const url = `/blog/${slug}`;
+    // Fetch all pages data and filter by URL
     const response = await makeUmamiRequest(
-      `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
+      `/api/websites/${websiteId}/pages?startAt=${startAt}&endAt=${endAt}`
     );
     
     if (!response || !response.ok) {
@@ -94,8 +92,20 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
+    // Find the specific page in the results
+    const targetUrls = [`/blog/${slug}`, `/blog/${slug}/`];
+    let totalViews = 0;
+    
+    if (data && Array.isArray(data)) {
+      for (const page of data) {
+        if (targetUrls.includes(page.x)) {
+          totalViews += page.y || 0;
+        }
+      }
+    }
+    
     return res.status(200).json({ 
-      pageviews: data.pageviews || 0,
+      pageviews: totalViews,
       slug: slug,
       period: '30 days'
     });
