@@ -83,7 +83,7 @@ export default async function handler(req, res) {
         results[`stats_${url}`] = {
           success: true,
           data: data,
-          pageviews: data?.pageviews?.value || 0
+          pageviews: data?.pageviews || 0
         };
       } else {
         results[`stats_${url}`] = {
