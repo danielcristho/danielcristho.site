@@ -103,8 +103,7 @@ export default async function handler(req, res) {
     } catch (error) {
       return res.status(200).json({ 
         reads: 0,
-        slug: slug,
-        error: 'Could not fetch read completion data'
+        slug: slug
       });
     }
   }

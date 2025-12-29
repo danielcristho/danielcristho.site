@@ -60,6 +60,11 @@ async function makeUmamiRequest(endpoint, options = {}) {
 }
 
 export default async function handler(req, res) {
+  // Disable debug endpoint in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Debug endpoint disabled in production' });
+  }
+
   try {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
     

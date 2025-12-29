@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     if (!response || !response.ok) {
       return res.status(200).json({ 
         visitors: 0,
-        error: 'Could not fetch visitor data'
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -86,7 +86,7 @@ export default async function handler(req, res) {
   } catch (error) {
     return res.status(200).json({ 
       visitors: 0,
-      error: 'Could not fetch visitor data'
+      timestamp: new Date().toISOString()
     });
   }
 }

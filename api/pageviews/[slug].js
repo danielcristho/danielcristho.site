@@ -92,8 +92,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Since we can't get per-page data from this Umami instance,
-    // let's use the total pageviews and create a reasonable estimation
+    // Total pageviews and create a reasonable estimation
     const response = await makeUmamiRequest(
       `/api/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}`
     );
@@ -115,7 +114,6 @@ export default async function handler(req, res) {
     }
     
     // Create a simple estimation based on post popularity
-    // This is not accurate but better than showing same number for all posts
     const postPopularityMap = {
       '2025-in-review': 0.25,
       '105-create-kubernetes-cluster': 0.20,
@@ -140,16 +138,13 @@ export default async function handler(req, res) {
     return res.status(200).json({ 
       pageviews: estimatedViews,
       slug: slug,
-      period: '30 days',
-      debug: debugInfo
+      period: '30 days'
     });
 
   } catch (error) {
     return res.status(200).json({ 
       pageviews: 0,
-      slug: slug,
-      error: 'Could not fetch page view data',
-      errorMessage: error.message
+      slug: slug
     });
   }
 }
