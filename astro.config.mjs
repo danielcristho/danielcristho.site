@@ -6,10 +6,13 @@ import compress from "astro-compress";
 import robotsTxt from "astro-robots-txt";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
+import vercel from "@astrojs/vercel/serverless";
 import { BLOG_URL } from "./src/contants";
 
 export default defineConfig({
     site: BLOG_URL,
+    output: "hybrid",
+    adapter: vercel(),
     integrations: [
     tailwind(),
 

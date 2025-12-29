@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { makeUmamiRequest } from '../../../utils/umami-auth';
 
+export const prerender = false;
+
 export const GET: APIRoute = async ({ params, request }) => {
     const { slug } = params;
 
