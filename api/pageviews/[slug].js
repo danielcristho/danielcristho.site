@@ -66,7 +66,12 @@ export default async function handler(req, res) {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
     
     if (!websiteId || !slug) {
-      return res.status(500).json({ error: 'Missing configuration' });
+      return res.status(200).json({ 
+        pageviews: 0,
+        slug: slug,
+        error: 'Missing configuration',
+        debug: { websiteId: !!websiteId, slug: !!slug }
+      });
     }
 
     // Calculate date range (last 30 days)
@@ -90,6 +95,7 @@ export default async function handler(req, res) {
     // Try both URL formats (with and without trailing slash)
     const targetUrls = [`/blog/${slug}`, `/blog/${slug}/`];
     let totalViews = 0;
+    let debugInfo = {};
     
     for (const url of targetUrls) {
       const response = await makeUmamiRequest(
@@ -98,9 +104,12 @@ export default async function handler(req, res) {
       
       if (response && response.ok) {
         const data = await response.json();
+        debugInfo[url] = { success: true, pageviews: data?.pageviews || 0 };
         if (data && data.pageviews) {
           totalViews += data.pageviews;
         }
+      } else {
+        debugInfo[url] = { success: false, status: response?.status || 'no response' };
       }
     }
     
@@ -108,17 +117,15 @@ export default async function handler(req, res) {
       pageviews: totalViews,
       slug: slug,
       period: '30 days',
-      debug: {
-        foundItems: data ? data.length : 0,
-        targetUrls
-      }
+      debug: debugInfo
     });
 
   } catch (error) {
     return res.status(200).json({ 
       pageviews: 0,
       slug: slug,
-      error: 'Could not fetch page view data'
+      error: 'Could not fetch page view data',
+      errorMessage: error.message
     });
   }
 }
