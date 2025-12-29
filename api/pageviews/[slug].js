@@ -78,23 +78,24 @@ export default async function handler(req, res) {
     const endAt = endDate.getTime();
 
     // Fetch page views for specific URL from Umami API
-    const urls = [`/blog/${slug}`, `/blog/${slug}/`];
-    let totalViews = 0;
+    // Use URL without trailing slash (most common format)
+    const url = `/blog/${slug}`;
+    const response = await makeUmamiRequest(
+      `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
+    );
     
-    for (const url of urls) {
-      const response = await makeUmamiRequest(
-        `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&url=${url}`
-      );
-      
-      if (response && response.ok) {
-        const data = await response.json();
-        const views = data.pageviews || 0;  // Fix: langsung ambil data.pageviews
-        totalViews += views;
-      }
+    if (!response || !response.ok) {
+      return res.status(200).json({ 
+        pageviews: 0,
+        slug: slug,
+        error: 'Could not fetch page view data'
+      });
     }
+
+    const data = await response.json();
     
     return res.status(200).json({ 
-      pageviews: totalViews,
+      pageviews: data.pageviews || 0,
       slug: slug,
       period: '30 days'
     });
