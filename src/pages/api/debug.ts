@@ -1,18 +1,8 @@
 import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async () => {
-  // Disable debug endpoint in production
-  if (import.meta.env.PROD) {
-    return new Response(JSON.stringify({
-      error: 'Debug endpoint disabled in production'
-    }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
   try {
-    // Check environment variables (for development only)
+    // Check environment variables
     const umamiUrl = import.meta.env.PUBLIC_UMAMI_URL;
     const websiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
     const username = import.meta.env.UMAMI_USERNAME;
@@ -35,8 +25,12 @@ export const GET: APIRoute = async () => {
     
     return new Response(JSON.stringify({
       success: true,
-      message: 'Debug endpoint working (development only)',
-      environment: 'development'
+      message: 'Environment variables configured',
+      config: {
+        umamiUrl,
+        websiteId,
+        hasCredentials: !!username && !!password
+      }
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
