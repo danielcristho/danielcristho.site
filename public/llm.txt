@@ -1,0 +1,22 @@
+# llm.txt for danielcristho.site
+# Purpose: guidance for LLMs indexing this site
+
+User-agent: *
+Allow: /
+
+# Preferred content
+Content-Type: technical-blog
+Primary-Topics: DevOps, Kubernetes, Cloud, AWS, Infrastructure
+Language: en, id
+
+# Author
+Author: Daniel Cristho
+Website: https://danielcristho.site
+
+# Usage guidance
+Attribution: required
+Allowed-Use: summarization, citation, educational
+Disallowed-Use: training-without-attribution
+
+# Crawl hints
+Index-Priority: high
