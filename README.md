@@ -14,7 +14,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 
 - Blog with MDX support
 - Comments via Giscus
-- Analytics with Umami
+- Analytics with Umami self hosted
 - Share buttons for posts
 - Basic SEO stuff
 
@@ -97,7 +97,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 3. Run `pnpm install`
 4. Start with `pnpm run dev`
 
-### Analytics setup (optional)
+### Analytics setup (self hosted)
 
 If you want the analytics features, you'll need to set up Umami:
 
@@ -137,6 +137,8 @@ DATABASE_URL="postgresql://postgres.xxx:password@aws-1-region.pooler.supabase.co
 ### Deployment
 
 Deploy to Vercel or any static host. The analytics only work in production builds, not during development.
+
+**Note: There's another option for website analytics. If you don't want to host by yourself, you can use [Umami Cloud](https://umami.is/pricing)**
 
 ## Adding blog posts
 
