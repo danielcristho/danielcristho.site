@@ -2,7 +2,7 @@
 import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/components/PageTitle.astro';
 import PageViews from '../PageViews.astro';
-import TotalReads from '../TotalReads.astro';
+// import TotalReads from '../TotalReads.astro';
 
 const { entry } = Astro.props;
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
@@ -16,9 +16,9 @@ const blogSlug = slug.replace('blog/', '');
 
 {isBlogPost && (
   <div class="analytics-section">
-    <PageViews slug={blogSlug} />
-    <span class="separator">•</span>
-    <TotalReads slug={blogSlug} />
+    <PageViews slug={blogSlug} /> 
+    {/* <span class="separator">•</span> */}
+    {/* <TotalReads slug={blogSlug} /> */}
   </div>
 )}
 
