@@ -1,0 +1,472 @@
+---
+title: "AWS EKS: Create Your First Cluster Using AWS CDK"
+date: 2026-01-28
+description: Create EKS (Kubernetes service in AWS) using AWS CDK
+excerpt: About 2 years ago, I’ve been using AWS CDK to manage infrastructure, mostly for smaller workloads like deploying APIs on AWS Lambda. This year, I want to take it a step further by using AWS CDK to create and manage an AWS EKS cluster.
+tags:
+  - AWS
+  - Kubernetes
+  - Python
+authors:
+  - danielcristho
+---
+
+![Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1769574417/eks-cdk_h4qdyv.png)
+
+## TL;DR
+
+**-** Create an EKS cluster using AWS CDK Python
+
+**-** Provision infrastructure via AWS CloudFormation
+
+**-** The setup includes a VPC, EKS control plane, and a managed EC2 node group
+
+**-** Configure IAM access to use `kubectl`
+
+**-** Verify the cluster and clean up resources when done
+
+## Introduction
+
+About 2 years ago, I’ve been using AWS CDK to manage infrastructure, mostly for smaller workloads like deploying APIs on AWS Lambda, you can see the repo here: [cdk-go-simple-restapi](https://github.com/danielcristho/cdk-go-simple-restapi). This year, I want to take it a step further by using AWS CDK to create and manage an AWS EKS cluster.
+
+I’ll be writing a short series of posts around this topic, starting with the basics. In this first post we’ll focus on building a minimal EKS cluster using AWS CDK as the foundation for the next parts of the series.
+
+## Why AWS CDK for EKS?
+
+Amazon EKS already provides multiple ways to create and manage clusters, from the AWS Console to CloudFormation and Terraform. However, when infrastructure starts to grow in complexity, the way it’s defined and maintained becomes just as important as the resources themselves.
+
+CDK allows you to define infrastructure using familiar programming languages. Instead of managing large YAML or JSON templates, you work with code—loops, conditions, and abstractions included. This makes infrastructure easier to reason about, review, and evolve over time. According to the documentation, AWS CDK supports multiple languages such as Python, Go, TypeScript, JavaScript and C#
+
+For EKS specifically, the kit provides higher-level constructs that abstract away a lot of the boilerplate required to get a cluster running. Networking, IAM roles, and node groups can be defined in a few lines of code while still allowing you to customize the parts that matter.
+
+## How AWS CDK Works with Amazon EKS
+
+![How CDK works with EKS](https://res.cloudinary.com/diunivf9n/image/upload/w_1200,h_300/v1769577234/cdk-eks-arch_m4grer.png)
+
+The diagram above shows us how CDK interacts with AWS services when creating an Amazon EKS cluster.
+
+Everything starts from your CDK application (stack), where infrastructure is defined using a programming language such as Go, TypeScript, or Python. At this stage, no AWS resources are created yet. When you run `cdk synth`, AWS CDK translates your code into a standard AWS CloudFormation template.
+
+This CloudFormation template is then deployed using `cdk deploy`. At this point, AWS CloudFormation becomes responsible for provisioning the infrastructure. It creates all required AWS resources, including the VPC, IAM roles, the EKS control plane, and the managed node group. **AWS CDK itself does not bypass CloudFormation, it simply acts as a higher-level abstraction on top of it**.
+
+Once CloudFormation finishes, the Amazon EKS cluster is fully provisioned and exposes a Kubernetes control plane backed by AWS-managed infrastructure. From this point forward, the cluster behaves like a standard Kubernetes cluster.
+
+Optionally, the CDK can also interact with the Kubernetes API to manage workloads, such as applying Kubernetes manifests or deploying Helm charts. This step usually happens after the cluster is ready and is covered in later parts of this series.
+
+## Setup
+
+In this series, all AWS CDK examples will be written in Python.
+While AWS CDK supports multiple languages such as TypeScript and Go, the underlying concepts and constructs remain the same regardless of the language used.
+
+### Prerequisites
+
+- **AWS account and configured AWS CLI**
+
+    An active AWS account with permissions to create EKS, VPC, IAM, and CloudFormation resources. Installed and configured with valid credentials (`aws configure`).
+
+- **Python 3.10+**
+
+    Used for writing the AWS CDK application in this series.
+
+- **AWS CDK installed**
+
+    Installed globally via npm:
+
+    ```sh
+    $ npm install -g aws-cdk
+    ```
+
+- **kubectl installed**
+
+    Used to interact with the EKS cluster once it is created.
+
+Notes
+
+- This post focuses on creating the EKS cluster. No Kubernetes workloads are deployed yet.
+
+- Make sure your AWS credentials have sufficient permissions before running cdk deploy, as EKS provisioning may take several minutes.
+
+### Project Initialization
+
+We’ll start by creating a new AWS CDK project using Python. AWS CDK provides a project template that sets up the basic structure, dependencies, and configuration needed to get started.
+
+First, create a new directory and initialize a CDK app:
+
+```sh
+$ mkdir cdk-eks
+$ cd cdk-eks
+$ cdk init app --language python
+```
+
+This command generates a basic project structure for a Python-based CDK application. The output after you running `cdk init`
+
+```sh
+Applying project template app for python
+
+# Welcome to your CDK Python project!
+
+This is a blank project for CDK development with Python.
+
+The `cdk.json` file tells the CDK Toolkit how to execute your app.
+
+...
+
+Enjoy!
+
+Executing Creating virtualenv...
+Executing Installing dependencies...
+✅ All done!
+```
+
+After initialization, you should see a structure similar to this:
+
+```sh
+.
+├── app.py
+├── cdk_eks
+│   ├── cdk_eks_stack.py
+│   └── __init__.py
+├── cdk.json
+├── README.md
+├── requirements-dev.txt
+├── requirements.txt
+├── source.bat
+└── tests
+    ├── __init__.py
+    └── unit
+```
+
+**-** `app.py`
+
+The entry point of the CDK application. This is where the stack is instantiated.
+
+**-** `cdk_eks_stack.py`
+
+Contains the definition of the CDK stack where we’ll define the EKS cluster.
+
+**-** `requirements.txt`
+
+Python dependencies for the CDK app.
+
+**-** `cdk.json`
+
+CDK configuration file, including the command used to run the app.
+
+**-** `tests/`
+
+A placeholder for unit tests, which we’ll use in a later post.
+
+**1. Install Dependencies**
+
+Before writing any code, activate the Python virtual environment and install the dependencies. BTW, you need add this one to your `requirements.txt`:  `aws-cdk.lambda-layer-kubectl-v34`.
+
+```sh
+$ source .venv/bin/activate
+$ pip install -r requirements.txt
+```
+
+Keeping dependencies isolated using a virtual environment helps avoid version conflicts and keeps the project reproducible.
+
+**2. Run Bootsrap**
+
+If this is your first time using AWS CDK in the selected AWS account and region, you’ll need to bootstrap the environment:
+
+```sh
+$ cdk bootstrap
+```
+
+This command creates the necessary resources in your AWS account that CDK requires to deploy stacks.
+
+At this point, the project is ready, and we can start defining the EKS cluster using AWS CDK.
+
+### Creating the EKS Cluster
+
+In this section, we’ll define a minimal EKS cluster using AWS CDK. The goal is not to build a production-ready cluster yet, but to create a foundation that we can extend in later posts.
+
+All changes will be made inside the CDK stack file
+
+**1.** Import Required Modules
+
+Open `cdk_eks/cdk_eks_stack.py` and start by importing the required CDK modules:
+
+```py
+from aws_cdk import (
+Stack,
+aws_eks as eks,
+aws_ec2 as ec2,
+)
+
+from aws_cdk.lambda_layer_kubectl_v32 import KubectlV32Layer
+
+from aws_cdk import aws_iam as iam
+
+from constructs import Construct
+```
+
+We’ll use:
+
+- `ec2` for networking (VPC)
+
+- `eks` for creating the EKS cluster and its node groups
+
+**2.** Define the VPC
+
+EKS requires a VPC. For simplicity, we’ll let CDK create one for us:
+
+```py
+class CdkEksStack(Stack):
+
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        
+        kubectl_layer = KubectlV32Layer(self, "KubectlLayer")
+        
+        vpc = ec2.Vpc(
+            self,
+            "EksVpc",
+            max_azs=2 # AZ
+        )
+```
+
+This creates a basic VPC across two Availability Zones, which is sufficient for a minimal cluster.
+
+**3.** Create the EKS Cluster
+
+Next, we define the EKS cluster itself:
+
+```py
+cluster = eks.Cluster(
+    self,
+    "EksCluster",
+    version=eks.KubernetesVersion.V1_32,
+    vpc=vpc,
+    default_capacity=0,
+    kubectl_layer=kubectl_layer
+)
+```
+
+A few important points:
+
+- Kubernetes version is explicitly set to avoid unexpected upgrades.
+
+- `default_capacity=0` disables the default node group so we can define our own.
+
+**4.** Add a Managed Node Group
+
+Now we add a managed node group to run workloads:
+
+```py
+cluster.add_nodegroup_capacity(
+    "ManagedNodeGroup",
+    desired_size=2,
+    min_size=1,
+    max_size=3,
+    instance_types=[ec2.InstanceType("t3.medium")],
+)
+```
+
+This creates:
+
+- A managed EC2-based node group
+
+- Autoscaling between 1 and 3 nodes
+
+- Instance type for testing
+
+**5.** Add IAM
+
+By default, creating an EKS cluster with AWS CDK does not automatically grant Kubernetes access to the IAM identity used to deploy the stack. While the control plane and node group roles are configured, additional IAM-to-Kubernetes RBAC mapping is required to access the cluster using kubectl.
+
+```py
+cluster.aws_auth.add_user_mapping(
+    iam.User.from_user_name(
+    self,
+    "AdminUser",
+    "<REPLACE_WITH_YOUR_IAM>"
+    ),
+    groups=["system:masters"],
+)
+```
+
+Or using Role
+
+```py
+cluster.aws_auth.add_role_mapping(
+    iam.Role.from_role_name(
+    self,
+    "EksAdminRole",
+    "<REPLACE_WITH_YOUR_ROLE>"
+    ),
+    groups=["system:masters"],
+)
+```
+
+Here is the full code:
+
+```py
+from aws_cdk import (
+Stack,
+aws_eks as eks,
+aws_ec2 as ec2,
+)
+
+from aws_cdk.lambda_layer_kubectl_v32 import KubectlV32Layer
+
+from aws_cdk import aws_iam as iam
+
+from constructs import Construct
+
+class CdkEksStack(Stack):
+
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        
+        kubectl_layer = KubectlV32Layer(self, "KubectlLayer")
+        
+        vpc = ec2.Vpc(
+            self,
+            "EksVpc",
+            max_azs=2
+        )
+        
+        cluster = eks.Cluster(
+            self,
+            "EksCluster",
+            version=eks.KubernetesVersion.V1_32,
+            vpc=vpc,
+            default_capacity=0,
+            kubectl_layer=kubectl_layer
+        )
+        
+        cluster.add_nodegroup_capacity(
+            "ManagedNodeGroup",
+            desired_size=2,
+            min_size=1,
+            max_size=3,
+            instance_types=[ec2.InstanceType("t3.medium")],
+        )
+        
+        cluster.aws_auth.add_user_mapping(
+            iam.User.from_user_name(
+            self,
+            "AdminUser",
+            "<YOUR_IAM>"
+            ),
+            groups=["system:masters"],
+        )
+```
+
+At this point, our CDK stack defines:
+
+- A VPC
+
+- An EKS control plane
+
+- A managed node group for worker nodes
+
+All of this is defined as code and will be provisioned via CloudFormation.
+
+**5** Synthesize the Stack
+
+Before deploying, it’s a good idea to check what CDK will generate:
+
+```sh
+$ cdk synth
+```
+
+```sh
+cdk synth 2>&1 | head -50
+
+Resources:
+  KubectlLayer600207B5:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: cc5bb5a423d0f1ccbfa20b3016434049b477f393e38ad2be0e8cba029f2a2373.zip
+      Description: /opt/kubectl/kubectl 1.32.3; /opt/helm/helm 3.17.2
+      LicenseInfo: Apache-2.0
+
+...
+```
+
+This command outputs the CloudFormation template that will be used to create the EKS cluster.
+
+### Deploying the Stack
+
+With the stack definition in place, we can now deploy the EKS cluster using AWS CDK. This step will trigger AWS CloudFormation to provision all required resources.
+
+**1.** Deploy the Stack
+
+Run the following command from the project root:
+
+```sh
+$ cdk deploy
+```
+
+![Deployment](https://res.cloudinary.com/diunivf9n/image/upload/v1769581398/cdkdeploy_cimqpb.png)
+
+During deployment, CDK will:
+
+- Package and upload assets (if any)
+
+- Create or update the CloudFormation stack
+
+- Provision AWS resources such as the VPC, IAM roles, EKS control plane, and managed node group
+
+You’ll be prompted to confirm the deployment, as the stack creates IAM roles and other security-related resources. Review the changes and approve the deployment when prompted.
+
+![CDK Deploy](https://res.cloudinary.com/diunivf9n/image/upload/v1769584708/cdkdeploy_hqxy4n.png)
+
+### Verifying the Cluster
+
+After the deployment completes, the next step is to verify that the EKS cluster has been created successfully and is in a healthy state.
+
+At this point, you should see a CloudFormation stack created by AWS CDK in the AWS Console.
+This stack represents all resources defined in the CDK application, including the VPC, IAM roles, EKS control plane, and the managed node group.
+
+![CDK CloudFormation stack](https://res.cloudinary.com/diunivf9n/image/upload/v1769584707/cdkcf_adjlpw.png)
+
+The stack status should be **CREATE_COMPLETE**, indicating that all resources were provisioned without errors. This also reinforces that AWS CDK relies on CloudFormation as the underlying provisioning engine.
+
+Next, navigate to the Amazon EKS console. You should see the newly created cluster listed and marked as Active.
+
+![EKC Cluster](https://res.cloudinary.com/diunivf9n/image/upload/v1769584707/cdkeks_qxa2fa.png)
+
+**1.** Accessing the Cluster with kubectl
+
+To interact with the cluster, update your kubeconfig:
+
+```sh
+$ aws eks update-kubeconfig --name <cluster-name> --region <region>
+```
+
+Once configured, verify that the nodes are registered:
+
+```sh
+$ kubectl get nodes
+```
+
+![kubectl get nodes](https://res.cloudinary.com/diunivf9n/image/upload/v1769586454/e7af9a7a-a4e1-452d-8938-846211a354a5.png)
+
+### Cleaning Up Resources
+
+This command deletes the CloudFormation stack and all resources created by AWS CDK, including the EKS cluster, node groups, and networking components.
+Since EKS is not covered by the AWS free tier, it’s recommended to clean up resources when they are no longer needed.
+
+```sh
+$ cdk destroy
+```
+
+![Destroy Stack](https://res.cloudinary.com/diunivf9n/image/upload/v1769586819/13a6a7db-e553-4ba3-b445-f9d4711efa7c.png)
+
+## What’s Next?
+
+At this point, we have a fully functional Amazon EKS cluster created and managed using AWS CDK. The cluster is accessible via kubectl, the node group is running, and IAM access has been configured correctly. This gives us a foundation, but so far, the cluster is still empty.
+
+In the next post, we’ll move beyond infrastructure and start running actual workloads on this cluster. Instead of applying raw Kubernetes YAML files manually, we’ll use AWS CDK to deploy workloads in a more structured and repeatable way.
+
+Aight, thanks for taking the time read this post. Here the full code of this post:
+
+[danielcristho/that-i-write/create-kube-cluster](https://github.com/danielcristho/that-i-write/tree/main/eks-cdk/create-kube-cluster)
