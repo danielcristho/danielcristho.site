@@ -27,7 +27,7 @@ authors:
 
 ## Introduction
 
-About 2 years ago, I’ve been using AWS CDK to manage infrastructure, mostly for smaller workloads like deploying APIs on AWS Lambda, you can see the repo here: [cdk-go-simple-restapi](https://github.com/danielcristho/cdk-go-simple-restapi). This year, I want to take it a step further by using AWS CDK to create and manage an AWS EKS cluster.
+About 2 years ago, I’ve been using AWS CDK to manage infrastructure, mostly for smaller workloads like deploying APIs on AWS Lambda. You can see the repo here: [cdk-go-simple-restapi](https://github.com/danielcristho/cdk-go-simple-restapi). This year, I want to take it a step further by using AWS CDK to create and manage an AWS EKS cluster.
 
 I’ll be writing a short series of posts around this topic, starting with the basics. In this first post we’ll focus on building a minimal EKS cluster using AWS CDK as the foundation for the next parts of the series.
 
@@ -467,6 +467,6 @@ At this point, we have a fully functional Amazon EKS cluster created and managed
 
 In the next post, we’ll move beyond infrastructure and start running actual workloads on this cluster. Instead of applying raw Kubernetes YAML files manually, we’ll use AWS CDK to deploy workloads in a more structured and repeatable way.
 
-Aight, thanks for taking the time read this post. Here the full code of this post:
+Aight, thanks for taking the time read this post. Here is the full code of this post:
 
 [danielcristho/that-i-write/create-kube-cluster](https://github.com/danielcristho/that-i-write/tree/main/eks-cdk/create-kube-cluster)
