@@ -24,7 +24,7 @@ export async function GET({ site }) {
       title: post.data.title,
       description: post.data.description ?? post.data.excerpt ?? "",
       pubDate: new Date(post.data.date),
-      link: `/docs/blog/${post.slug}/`,
+      link: `${post.slug}/`,
     })),
   });
 }
