@@ -1,16 +1,11 @@
 ---
 import Default from "starlight-blog/overrides/MarkdownContent.astro";
 import Giscus from "../Giscus.astro";
-import ShareButtons from "../ShareButtons.astro";
 
 const data = Astro.props?.data || {};
 const cover = data.cover;
 
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
-
-const title = data.title || "";
-const slug = data.slug || "";
-const fullUrl = `https://danielcristho.site/${slug}`;
 ---
 
 {cover && (
@@ -26,13 +21,7 @@ const fullUrl = `https://danielcristho.site/${slug}`;
 </Default>
 
 {isBlogPost && (
-  <>
-    <div style="margin-top: 2rem;">
-      <ShareButtons title={title} url={fullUrl} />
-    </div>
-    
-    <div style="margin-top: 3rem;">
-      <Giscus />
-    </div>
-  </>
+  <div style="margin-top: 3rem;">
+    <Giscus />
+  </div>
 )}

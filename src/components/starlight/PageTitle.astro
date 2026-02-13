@@ -2,7 +2,7 @@
 import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/components/PageTitle.astro';
 import PageViews from '../PageViews.astro';
-// import TotalReads from '../TotalReads.astro';
+import ShareButtons from '../ShareButtons.astro';
 
 const { entry } = Astro.props;
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
@@ -10,16 +10,24 @@ const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 // Extract blog slug for analytics
 const slug = entry?.slug || "";
 const blogSlug = slug.replace('blog/', '');
+
+// Get title and full URL for share buttons
+const title = entry?.data?.title || "";
+const fullUrl = Astro.url.href;
 ---
 
 <Default {...Astro.props} />
 
 {isBlogPost && (
-  <div class="analytics-section">
-    <PageViews slug={blogSlug} /> 
-    {/* <span class="separator">•</span> */}
-    {/* <TotalReads slug={blogSlug} /> */}
-  </div>
+  <>
+    <div class="analytics-section">
+      <PageViews slug={blogSlug} /> 
+    </div>
+    
+    <div class="share-section">
+      <ShareButtons title={title} url={fullUrl} />
+    </div>
+  </>
 )}
 
 <style>
@@ -27,9 +35,13 @@ const blogSlug = slug.replace('blog/', '');
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin: 1rem 0 2rem 0;
+    margin: 1rem 0;
     font-size: 0.9rem;
     color: #666;
+  }
+
+  .share-section {
+    margin: 1rem 0 2rem 0;
   }
 
   .separator {
