@@ -15,29 +15,27 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.3.4",
-    "@astrojs/partytown": "^2.0.3",
-    "@astrojs/rss": "^4.0.8",
-    "@astrojs/sitemap": "^3.2.0",
-    "@astrojs/starlight": "^0.13.0",
-    "@astrojs/tailwind": "5.1.0",
-    "@astrojs/vercel": "^9.0.2",
-    "astro": "^4",
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/partytown": "2.1.4",
+    "@astrojs/rss": "^4.0.15",
+    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/starlight": "^0.37.0",
+    "@astrojs/tailwind": "6.0.2",
+    "@astrojs/vercel": "^9.0.4",
+    "astro": "^5.16.4",
     "astro-compress": "^2.2.7",
     "astro-robots-txt": "^1.0.0",
     "lucide-astro": "^0.309.0",
     "markdown-it": "^14.0.0",
-    "react-truncate": "^2.4.0",
     "sanitize-html": "^2.11.0",
     "sharp": "0.33.0",
-    "starlight-blog": "^0.4.0",
+    "starlight-blog": "^0.25.2",
     "starlight-giscus": "^0.8.1",
     "tailwindcss": "3.4.1",
     "typescript": "^5.3.3"
   },
   "devDependencies": {
     "@types/markdown-it": "^13.0.7",
-    "@types/react": "^18.2.47",
     "@types/sanitize-html": "^2.9.5"
   }
 }
