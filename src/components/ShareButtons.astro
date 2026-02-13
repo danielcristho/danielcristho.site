@@ -93,21 +93,21 @@ const xUrl = `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`
 }
 
 .share-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
     background: #2e8555;
     border-radius: 50%;
-    padding: 8px;
+    padding: 6px;
     transition: all 0.2s ease;
     border: none;
     cursor: pointer;
 }
 
 .share-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     fill: white;
     stroke-width: 0;
 }
@@ -135,7 +135,48 @@ const xUrl = `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`
 /* Mobile responsive */
 @media (max-width: 640px) {
     .share-wrapper {
-        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .share-post {
+        font-size: .85rem;
+    }
+    
+    .share-box {
+        gap: .35rem;
+    }
+    
+    .share-btn {
+        width: 28px;
+        height: 28px;
+        padding: 5px;
+    }
+    
+    .share-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Extra small mobile */
+@media (max-width: 400px) {
+    .share-wrapper {
+        gap: 0.4rem;
+    }
+    
+    .share-box {
+        gap: .3rem;
+    }
+    
+    .share-btn {
+        width: 26px;
+        height: 26px;
+        padding: 4px;
+    }
+    
+    .share-btn svg {
+        width: 13px;
+        height: 13px;
     }
 }
 </style>
