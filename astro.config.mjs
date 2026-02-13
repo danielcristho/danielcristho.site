@@ -2,7 +2,7 @@ import { defineConfig } from "astro/config";
 import starlightBlog from "starlight-blog";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
-import { BLOG_URL } from "./src/contants";
+import { BLOG_URL, X_URL, GITHUB_URL, LINKEDIN_URL } from "./src/contants";
 
 export default defineConfig({
     site: BLOG_URL,
@@ -36,7 +36,6 @@ export default defineConfig({
         },
         customCss: [
             "./src/styles/custom.css",
-            "./src/styles/gruvbox.css"
         ],
         components: {
             Sidebar: "./src/components/starlight/Sidebar.astro",
@@ -45,15 +44,14 @@ export default defineConfig({
             Head: "./src/components/Head.astro",
             Footer: "./src/components/Footer.astro",
             SocialIcons: "./src/components/SocialIcons.astro",
-            ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
             MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
             ContentPanel: "./src/components/starlight/ContentPanel.astro",
             PageTitle: "./src/components/starlight/PageTitle.astro",
         },
         social: {
-            linkedin: "https://www.linkedin.com/in/daniel-pepuho",
-            github: "https://github.com/danielcristho",
-            "x.com": "https://twitter.com/chrstdan",
+            linkedin: `${LINKEDIN_URL}`,
+            github: `${GITHUB_URL}`,
+            "x.com": `${X_URL}`,
             rss: `${BLOG_URL}/rss.xml`,
         },
     }),
