@@ -9,23 +9,6 @@ export default defineConfig({
     integrations: [
     tailwind(),
 
-    starlightBlog({
-        pathname: '/blog',
-        rss: true,
-        authors: {
-            danielcristho: {
-            name: "Daniel Pepuho",
-            url: "https://www.linkedin.com/in/daniel-pepuho",
-            title: 'IT Infra. Lost in the Cloud(s)',
-            picture: 'https://avatars.githubusercontent.com/u/69733783?s=200',
-            },
-        },
-        metrics: {
-            readingTime: true,
-            words: "total",
-        },
-    }),
-
     starlight({
         favicon: "/favicon.svg",
         lastUpdated: true,
@@ -36,24 +19,43 @@ export default defineConfig({
         },
         customCss: [
             "./src/styles/custom.css",
+            "./src/styles/hero-title.css",
+        ],
+        plugins: [
+            starlightBlog({
+                pathname: '/blog',
+                rss: true,
+                authors: {
+                    danielcristho: {
+                        name: "Daniel Pepuho",
+                        url: "https://www.linkedin.com/in/daniel-pepuho",
+                        title: 'IT Infra. Lost in the Cloud(s)',
+                        picture: 'https://avatars.githubusercontent.com/u/69733783?s=200',
+                    },
+                },
+                metrics: {
+                    readingTime: true,
+                    words: "total",
+                },
+                recentPostCount: 15,
+                postCount: 10,
+            }),
         ],
         components: {
-            Sidebar: "./src/components/starlight/Sidebar.astro",
             TableOfContents: "./src/components/TableOfContents.astro",
             Header: "./src/components/Header.astro",
             Head: "./src/components/Head.astro",
             Footer: "./src/components/Footer.astro",
             SocialIcons: "./src/components/SocialIcons.astro",
-            MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
             ContentPanel: "./src/components/starlight/ContentPanel.astro",
             PageTitle: "./src/components/starlight/PageTitle.astro",
         },
-        social: {
-            linkedin: `${LINKEDIN_URL}`,
-            github: `${GITHUB_URL}`,
-            "x.com": `${X_URL}`,
-            rss: `${BLOG_URL}/rss.xml`,
-        },
+        social: [
+            { icon: 'linkedin', label: 'LinkedIn', href: `${LINKEDIN_URL}` },
+            { icon: 'github', label: 'GitHub', href: `${GITHUB_URL}` },
+            { icon: 'x.com', label: 'X', href: `${X_URL}` },
+            { icon: 'rss', label: 'RSS', href: `${BLOG_URL}/rss.xml` },
+        ],
     }),
     ],
     vite: {
