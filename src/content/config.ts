@@ -1,12 +1,13 @@
-import { defineCollection, z, type SchemaContext } from "astro:content";
-import { docsAndBlogSchema } from "starlight-blog/schema";
-
-const extendedDocsAndBlogSchema = (context: SchemaContext) =>
-	docsAndBlogSchema(context).extend({
-		excerpt: z.string().optional(),
-		type: z.string().optional(),
-	});
+import { defineCollection } from 'astro:content';
+import { docsLoader } from '@astrojs/starlight/loaders';
+import { docsSchema } from '@astrojs/starlight/schema';
+import { blogSchema } from 'starlight-blog/schema'
 
 export const collections = {
-	docs: defineCollection({ schema: extendedDocsAndBlogSchema }),
+  docs: defineCollection({
+    loader: docsLoader(),
+    schema: docsSchema({
+        extend: (context) => blogSchema(context)
+    })
+  }),
 };
