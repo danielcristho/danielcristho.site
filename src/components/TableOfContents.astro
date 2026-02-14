@@ -1,9 +1,8 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/components/TableOfContents.astro';
 
-const isBlogIndexPage = Astro.props.slug === 'blog';
-const isAnyTagPage = Astro.props.slug.includes('blog/tags');
+const isBlogIndexPage = Astro.props.entry?.slug === 'blog';
+const isAnyTagPage = Astro.props.entry?.slug?.includes('blog/tags');
 ---
 
 {
