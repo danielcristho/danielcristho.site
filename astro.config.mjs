@@ -37,8 +37,8 @@ export default defineConfig({
                     readingTime: true,
                     words: "total",
                 },
-                recentPostCount: 15,
-                postCount: 10,
+                recentPostCount: 10,
+                postCount: 5,
             }),
         ],
         components: {
@@ -49,6 +49,7 @@ export default defineConfig({
             SocialIcons: "./src/components/SocialIcons.astro",
             ContentPanel: "./src/components/starlight/ContentPanel.astro",
             PageTitle: "./src/components/starlight/PageTitle.astro",
+            MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
         },
         social: [
             { icon: 'linkedin', label: 'LinkedIn', href: `${LINKEDIN_URL}` },
