@@ -8,10 +8,11 @@ tags:
     - Linux
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771052060/supervisor-nginx-py_jirxkd.png
 ---
-
-![Post Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1746028746/flask-api-cover_h529yk.png)
-
+  
 ## Intro
 
 Hi there! Flask is great for building APIs quickly. But turning your local project into a publicly accessible web service involves a few extra steps that aren’t always obvious.
@@ -20,13 +21,13 @@ In this guide, I'll show you how to deploy a Flask API using Gunicorn as the WSG
 
 ## Overview
 
-**-** [**Flask**](https://flask.palletsprojects.com/en/stable): The Python microframework we’ll use to build the API.
+- [**Flask**](https://flask.palletsprojects.com/en/stable): The Python microframework we’ll use to build the API.
 
-**-** [**Gunicorn**](https://gunicorn.org): A Python WSGI HTTP server for running Flask in production.
+- [**Gunicorn**](https://gunicorn.org): A Python WSGI HTTP server for running Flask in production.
 
-**-** [**Supervisor**](https://supervisord.org): A process control system to ensure the Gunicorn server stays alive.
+- [**Supervisor**](https://supervisord.org): A process control system to ensure the Gunicorn server stays alive.
 
-**-** [**Nginx**](https://nginx.org): A reverse proxy to handle client requests and route them to Gunicorn.
+- [**Nginx**](https://nginx.org): A reverse proxy to handle client requests and route them to Gunicorn.
 
 ### Project Flow
 
@@ -40,7 +41,7 @@ When a user sends an HTTP request, it first reaches the Nginx reverse proxy. Ngi
 
 Before starting, make sure you have the following installed on your system:
 
-**-** Python 3 and Virtualenv
+- Python 3 and Virtualenv
 
 Check if Python is installed:
 
@@ -71,7 +72,7 @@ Homebrew (macOS):
 $ brew install python
 ```
 
-**-** Nginx
+- Nginx
 
 Ubuntu/Debian:
 

@@ -8,10 +8,12 @@ tags:
     - Read From Book
     - Series
 authors:
-  - danielcristho
+    - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051146/k8s-cover_hndxg8.png
 ---
 
-![Kubernetes Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1744701420/kubernetes-cover_n7dux3.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Kubernetes Series:</strong>
@@ -61,19 +63,19 @@ By the way, Kubernetes is not a _monolithic system_, but rather a _building bloc
 ## ⚡ Kubernetes Features
 There are many features of Kubernetes:
 
-**- Service discovery and load balancing**, means Kubernetes can expose containers using their DNS or IP. Kubernetes can also perform load balancing and distribute traffic within a system.
+- **Service discovery and load balancing**, means Kubernetes can expose containers using their DNS or IP. Kubernetes can also perform load balancing and distribute traffic within a system.
 
-**- Storage orchestration**, Kubernetes automatically installs storage systems, either on-premises or cloud services.
+- **Storage orchestration**, Kubernetes automatically installs storage systems, either on-premises or cloud services.
 
-**- Deployment and automatic rollback**, Kubernetes will change the current state to the user's desired state at a controlled rate. For example, Kubernetes will automatically create a new container, delete the old container, and adopt its resources into the new container.
+- **Deployment and automatic rollback**, Kubernetes will change the current state to the user's desired state at a controlled rate. For example, Kubernetes will automatically create a new container, delete the old container, and adopt its resources into the new container.
 
-**- Automatic Packing**, Kubernetes is very efficient in the allocation of memory (RAM) and CPU usage for each container.
+- **Automatic Packing**, Kubernetes is very efficient in the allocation of memory (RAM) and CPU usage for each container.
 
-**- Recovery**, Kubernetes can restart failed containers, replace containers, and shut down containers that do not respond and do not provide services to users.
+- **Recovery**, Kubernetes can restart failed containers, replace containers, and shut down containers that do not respond and do not provide services to users.
 
-**- Managing secrets and configurations**, Kubernetes stores and manages sensitive information, such as passwords, OAuth tokens, and SSH keys, so this information can be updated without creating container images and exposing existing secrets.
+- **Managing secrets and configurations**, Kubernetes stores and manages sensitive information, such as passwords, OAuth tokens, and SSH keys, so this information can be updated without creating container images and exposing existing secrets.
 
-**- Providing PaaS services**, Kubernetes provides features such as deployment, scaling, load balancing, logging, and monitoring, although **Kubernetes runs at the container level rather than the hardware level**.
+- **Providing PaaS services**, Kubernetes provides features such as deployment, scaling, load balancing, logging, and monitoring, although **Kubernetes runs at the container level rather than the hardware level**.
 
 ## 😌 The following features are not available!?
 
@@ -81,18 +83,18 @@ There are many features of Kubernetes:
 
 There are some features not included or provided by Kubernetes, for example:
 
-**-** Kubernetes aims to support all variations of workloads (including stateless or stateful, and data processing), so as long as the application is running on containers, there is no limit to the applications that can be supported.
+- Kubernetes aims to support all variations of workloads (including stateless or stateful, and data processing), so as long as the application is running on containers, there is no limit to the applications that can be supported.
 
-**-** Kubernetes does not provide a CI/CD workflow mechanism.
+- Kubernetes does not provide a CI/CD workflow mechanism.
 
-**-** Kubernetes does not provide application-level services such as middleware (e.g. message buses), data processing frameworks (e.g. Spark), databases (e.g. MySQL), caches, or cluster storage systems (e.g. Ceph) as an integrated service. But all of these components can run on Kubernetes.
+- Kubernetes does not provide application-level services such as middleware (e.g. message buses), data processing frameworks (e.g. Spark), databases (e.g. MySQL), caches, or cluster storage systems (e.g. Ceph) as an integrated service. But all of these components can run on Kubernetes.
 
-**-** Kubernetes does not provide or require a configuration language like [Jsonnet](https://jsonnet.org), as it provides a declarative API that can be used with different types of declarative specifications.
+- Kubernetes does not provide or require a configuration language like [Jsonnet](https://jsonnet.org), as it provides a declarative API that can be used with different types of declarative specifications.
 
-**-** Kubernetes does not provide or adapt a configuration for the machine's maintenance, management, or self-healing to any particular specification.
+- Kubernetes does not provide or adapt a configuration for the machine's maintenance, management, or self-healing to any particular specification.
 
 Reference:
 
-**-** KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
+- KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
 
 Thank you for reading this post.😀

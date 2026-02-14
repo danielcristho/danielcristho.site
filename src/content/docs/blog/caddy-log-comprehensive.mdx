@@ -10,9 +10,10 @@ tags:
   - Go
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771050579/docker-caddy_dbxzph.png
 ---
-
-![Cover Image](https://res.cloudinary.com/diunivf9n/image/upload/v1755923140/caddy-lb-docker_peicwm.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Caddy Series:</strong>
@@ -39,11 +40,11 @@ At some point, I realized that ***‘it works’*** is not enough. I need to kno
 
 When something slows down or fails, the question is no longer ***“is the service running?”*** but:
 
-**-** Which component handled this request?
+- Which component handled this request?
 
-**-** How long did it take?
+- How long did it take?
 
-**-** Did the proxy retry or switch upstreams?
+- Did the proxy retry or switch upstreams?
 
 **Without clear answers, even a simple issue can turn into a long time debugging😆. This is where logging stops being a checkbox feature and starts becoming a core part of system design.**
 
@@ -59,9 +60,9 @@ The first issue is noise. Default logs tend to mix everything together: health c
 
 The second issue is missing context. When a request goes through a reverse proxy with load balancing, the most interesting part is often not the request itself, but what happens behind the scenes:
 
-**-** How long did the upstream take to respond?
+- How long did the upstream take to respond?
 
-**-** Was there a retry or a fallback?
+- Was there a retry or a fallback?
 
 Without this information, debugging becomes guesswork. A 502 response tells you that something failed, but not where or why.
 
@@ -75,31 +76,31 @@ Like most web servers, Caddy separates access logs from error logs. **Access log
 
 Access logs describe the lifecycle of an incoming request:
 
-**-** who made the request
+- who made the request
 
-**-** what was requested
+- what was requested
 
-**-** how the server responded
+- how the server responded
 
-**-** how long it took
+- how long it took
 
 This is where most operational insights come from. When properly configured, access logs can tell you:
 
-**-** which upstream handled a request
+- which upstream handled a request
 
-**-** how traffic is distributed
+- how traffic is distributed
 
-**-** where latency is introduced
+- where latency is introduced
 
 **2.** Error Logs
 
 Error logs focus on failures and exceptional cases:
 
-**-** upstream connection errors
+- upstream connection errors
 
-**-** timeouts
+- timeouts
 
-**-** TLS or protocol issues
+- TLS or protocol issues
 
 These logs are usually quieter, but they become critical when things break. They complement access logs by explaining why a request failed, not just that it failed.
 
@@ -182,9 +183,9 @@ To make access logs enable JSON logging globally in the Caddyfile you can put `o
 
 At this point:
 
-**-** logs are emitted to stdout
+- logs are emitted to stdout
 
-**-** Docker captures them automatically
+- Docker captures them automatically
 
 Once the stack is running, send a few requests:
 
@@ -310,9 +311,9 @@ Now if you see the logs again, there is an unhealthy upstream:
 
 This message is emitted by Caddy’s active health checker. It indicates that:
 
-**-** `worker_2` is no longer reachable
+- `worker_2` is no longer reachable
 
-**-** the failure happens during health check probes
+- the failure happens during health check probes
 
 ## Customizing Log Output
 
@@ -364,9 +365,9 @@ $ docker logs load_balancer
 
 There is no universally “correct” log format.
 
-**-** `JSON` works best when logs are consumed by tools or pipelines.
+- `JSON` works best when logs are consumed by tools or pipelines.
 
-**-** `Console` works better when you are actively watching logs and debugging in real time.
+- `Console` works better when you are actively watching logs and debugging in real time.
 
 ### Shaping Logs Without Changing Their Meaning
 
@@ -374,13 +375,13 @@ Caddy also allows fine-grained control over how log fields are named and formatt
 
 For example, you can:
 
-**-** rename common fields
+- rename common fields
 
-**-** control timestamp formats
+- control timestamp formats
 
-**-** standardize duration units
+- standardize duration units
 
-**-** normalize log levels
+- normalize log levels
 
 ```json
 ... 
@@ -410,11 +411,11 @@ What Changed?
 
 The structure of the log is still JSON, but key fields are now normalized:
 
-**-** level is uppercase (INFO)
+- level is uppercase (INFO)
 
-**-** readable timestamps and localized
+- readable timestamps and localized
 
-**-** duration is expressed in milliseconds instead of fractional seconds
+- duration is expressed in milliseconds instead of fractional seconds
 
 This makes the log easier to read during debugging.
 
@@ -499,20 +500,20 @@ Filtering is not about producing minimal logs. It’s about producing `intention
 
 I only apply filters after understanding:
 
-**-** which fields I actually use
+- which fields I actually use
 
-**-** which ones are never read
+- which ones are never read
 :::
 
 ## TL;DR
 
-**-** Access logs show what happened to a request.
+- Access logs show what happened to a request.
 
-**-** Debug logs show how requests are routed.
+- Debug logs show how requests are routed.
 
-**-** Error logs show what fails behind the scenes.
+- Error logs show what fails behind the scenes.
 
-**-** Filtering and formatting reduce noise without hiding behavior.
+- Filtering and formatting reduce noise without hiding behavior.
 
 Aight, that's all. Thank you for taking your time to read this post.
 
@@ -522,6 +523,6 @@ Happy logging!🧐
 
 References:
 
-**-** [Caddy Documentation: log](https://caddyserver.com/docs/caddyfile/directives/log#log)
+- [Caddy Documentation: log](https://caddyserver.com/docs/caddyfile/directives/log#log)
 
-**-** [Caddy Documentation: How Logging Works](https://caddyserver.com/docs/logging)
+- [Caddy Documentation: How Logging Works](https://caddyserver.com/docs/logging)

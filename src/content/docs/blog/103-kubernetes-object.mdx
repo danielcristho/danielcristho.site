@@ -8,10 +8,12 @@ tags:
     - Read From Book
     - Series
 authors:
-  - danielcristho
+    - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051146/k8s-cover_hndxg8.png
 ---
 
-![Kubernetes Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1744701420/kubernetes-cover_n7dux3.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Kubernetes Series:</strong>
@@ -94,16 +96,16 @@ There are two methods to provide Persistent Volumes (PV)
 
 ##### 1. Static
 
-**-** The cluster administrator manually creates PVs by defining them in YAML manifests.
-**-** These PVs are available for binding with any PVC that matches their configuration.
+- The cluster administrator manually creates PVs by defining them in YAML manifests.
+- These PVs are available for binding with any PVC that matches their configuration.
 
 ##### 2. Dynamic
 
-**-** Kubernetes automatically provisions PVs based on the PVCs submitted by users.
+- Kubernetes automatically provisions PVs based on the PVCs submitted by users.
 
-**-** The cluster uses a `StorageClass` to determine the storage backend and provision the appropriate PV.
+- The cluster uses a `StorageClass` to determine the storage backend and provision the appropriate PV.
 
-**-** This method simplifies administration by eliminating the need for pre-created PVs.
+- This method simplifies administration by eliminating the need for pre-created PVs.
 
 ### 4. Namespace
 
@@ -115,6 +117,6 @@ Namespaces are ideal for multi-tenant environments or to avoid naming collisions
 
 References:
 
-**-** KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
+- KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
 
-**-** Kubernetes Objects Guide. https://phoenixnap.com/kb/kubernetes-objects.
+- Kubernetes Objects Guide. https://phoenixnap.com/kb/kubernetes-objects.

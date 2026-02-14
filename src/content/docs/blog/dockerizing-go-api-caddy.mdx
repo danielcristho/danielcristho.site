@@ -11,9 +11,10 @@ tags:
   - Series
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771052467/caddy-go-docker_atkpgc.png
 ---
-
-![Cover Image](https://res.cloudinary.com/diunivf9n/image/upload/v1755401605/go-caddy-docker_zooyhi.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Caddy Series:</strong>
@@ -105,7 +106,7 @@ $ go mod init example.com/go-api
 
 > This command creates a Go module (go.mod) named example.com/go-api, which helps manage dependencies and makes the project reproducible.
 
-**-** Next, create a new file `main.go` and define a simple HTTP server using Chi as the router.
+- Next, create a new file `main.go` and define a simple HTTP server using Chi as the router.
 
 The server exposes two routes:
 
@@ -130,13 +131,13 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 **3.** In the main function, we:
 
-> **-** Initialize the Chi router and register both routes.
+> - Initialize the Chi router and register both routes.
 
-> **-** Configure an HTTP server to listen on port 8081.
+> - Configure an HTTP server to listen on port 8081.
 
-> **-** Run the server in a goroutine and listen for shutdown signals (SIGINT, SIGTERM).
+> - Run the server in a goroutine and listen for shutdown signals (SIGINT, SIGTERM).
 
-> **-** Gracefully shut down the server with a 5-second timeout when a termination signal is received.
+> - Gracefully shut down the server with a 5-second timeout when a termination signal is received.
 
 ```go
 func main() {
@@ -240,19 +241,19 @@ func main() {
 }
 ```
 
-**-** Then, try run the main.go using `go run`:
+- Then, try run the main.go using `go run`:
 
 ```go
 $ go run main.go
 ```
 
-**-** After that, you should see this message in the terminal:
+- After that, you should see this message in the terminal:
 
 ```
 Server started at :8081
 ```
 
-**-** Finally, you can test the API using `curl` or access from the browser on `http://127.0.0.1:8081`:
+- Finally, you can test the API using `curl` or access from the browser on `http://127.0.0.1:8081`:
 
 ```bash
 $ curl 127.0.0.1:8081
@@ -290,11 +291,11 @@ RUN go mod download
 RUN CGO_ENABLED=0 go build -o /go/bin/app
 ```
 
-**-** In the builder stage, we use the official Go image to compile our code.
+- In the builder stage, we use the official Go image to compile our code.
 
-**-** We copy the entire project into the container and run `go mod download` to fetch dependencies.
+- We copy the entire project into the container and run `go mod download` to fetch dependencies.
 
-**-** Then we build the binary with `CGO_ENABLED=0` to ensure it’s statically compiled and portable. The binary is placed in `/go/bin/app`.
+- Then we build the binary with `CGO_ENABLED=0` to ensure it’s statically compiled and portable. The binary is placed in `/go/bin/app`.
 
 ```dockerfile
 # Second stage: final image
@@ -310,11 +311,11 @@ ENV PORT 8081
 CMD ["/app"]
 ```
 
-**-** In the final stage, only the compiled binary is copied over from the builder stage. This keeps the image small because source code, dependencies, and build tools are excluded.
+- In the final stage, only the compiled binary is copied over from the builder stage. This keeps the image small because source code, dependencies, and build tools are excluded.
 
-**-** We expose port 8081 so Docker knows which port the app listens on.
+- We expose port 8081 so Docker knows which port the app listens on.
 
-**-** `CMD ["/app"]` runs the binary as the container’s main process.
+- `CMD ["/app"]` runs the binary as the container’s main process.
 
 Here the full code:
 
@@ -394,20 +395,20 @@ services:
 
 `go-api` service
 
-**-** Built from your local Dockerfile.
+- Built from your local Dockerfile.
 
-**-** The Go API will listen on :8081, but only Caddy can access it.
+- The Go API will listen on :8081, but only Caddy can access it.
 
 `caddy` service
 
-**-** Uses the official lightweight [caddy:2.10-alpine](https://hub.docker.com/_/caddy) image.
+- Uses the official lightweight [caddy:2.10-alpine](https://hub.docker.com/_/caddy) image.
 
-**-** `ports: "8082:80"` -> exposes port 80 from the container to port 8082 on your host machine.
+- `ports: "8082:80"` -> exposes port 80 from the container to port 8082 on your host machine.
 So when you open `http://127.0.0.1:8082`, requests are routed through Caddy.
 
-**-** The Caddyfile is mounted so you can configure reverse proxy behavior.
+- The Caddyfile is mounted so you can configure reverse proxy behavior.
 
-**-** `depends_on` ensures Caddy waits for the Go API container to start.
+- `depends_on` ensures Caddy waits for the Go API container to start.
 
 ### Step 5: Test the Setup
 
@@ -463,8 +464,8 @@ Feel free to explore further by adding more features to your API or by setting u
 
 References:
 
-**-** [Docker Documentation](https://docs.docker.com)
+- [Docker Documentation](https://docs.docker.com)
 
-**-** [Docker Compose Documenation](https://docs.docker.com/compose)
+- [Docker Compose Documenation](https://docs.docker.com/compose)
 
-**-** [Caddy Documentation](https://caddyserver.com/docs)
+- [Caddy Documentation](https://caddyserver.com/docs)

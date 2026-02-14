@@ -8,12 +8,10 @@ tags:
     - Linux
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051070/docker-cover_xfbprr.png
 ---
-
-<img
-  src="https://res.cloudinary.com/diunivf9n/image/upload/v1764817920/docker-cover_jazhiq.png"
-  style={{ width: "100%", maxWidth: "900px" }}
-/>
 
 Docker images are already compressed when you push them to registries like [Docker Hub](https://hub.docker.com), [GHCR](ghcr.io), [AWS ECR](https://aws.amazon.com/ecr), etc.
 
@@ -23,13 +21,13 @@ So why would anyone compress an image again by using [gzip](https://www.gzip.org
 
 Because in the real world, engineers often need to:
 
-**-** move images between servers (air-gapped networks),
+- move images between servers (air-gapped networks),
 
-**-** migrates registries,
+- migrates registries,
 
-**-** backup image to object,
+- backup image to object,
 
-**-** load or save images repeatedly in Continuous Integration (CI) pipelines.
+- load or save images repeatedly in Continuous Integration (CI) pipelines.
 
 In these cases, `docker save` produces a raw `.tar` file often huge.
 Compressing that tarball can cut transfer and storage time by 50-80%.
@@ -40,13 +38,13 @@ Compressing that tarball can cut transfer and storage time by 50-80%.
 
 Like I said before, you need to compress your image to:
 
-**-** transfer image between SSH or local network (LAN),
+- transfer image between SSH or local network (LAN),
 
-**-** work with offline or air-gapped servers,
+- work with offline or air-gapped servers,
 
-**-** backup images to object storage,
+- backup images to object storage,
 
-**-** migrate to new registry.
+- migrate to new registry.
 
 :::note
 Skip compression when images are pushed directly to registry like DockerHub, registries are handled that.
@@ -56,37 +54,37 @@ Skip compression when images are pushed directly to registry like DockerHub, reg
 
 To get a realistic number, we will test three images:
 
-**-** [alpine](https://hub.docker.com/layers/library/alpine/latest/images/sha256-9eec16c5eada75150a82666ba0ad6df76b164a6f8582ba5cb964c0813fa56625)-> ~8MB
+- [alpine](https://hub.docker.com/layers/library/alpine/latest/images/sha256-9eec16c5eada75150a82666ba0ad6df76b164a6f8582ba5cb964c0813fa56625)-> ~8MB
 
-**-** [maridb:10.6.18](https://hub.docker.com/layers/library/mariadb/10.6.18/images/sha256-23492dcccccd10285fd946f2d07956aed1dbd56f34d153d7de367840fc0afa88) -> ~396MB
+- [maridb:10.6.18](https://hub.docker.com/layers/library/mariadb/10.6.18/images/sha256-23492dcccccd10285fd946f2d07956aed1dbd56f34d153d7de367840fc0afa88) -> ~396MB
 
-**-** [Custom Jupyterlab image](https://hub.docker.com/repository/docker/danielcristh0/datascience-notebook/tags/python-3.10.11/sha256-7d1c9ee5ee5d2ad2051f5a2e56d0861e28ced6b8a76ce0928075426b3762b79d) -> ~5.4GB
+- [Custom Jupyterlab image](https://hub.docker.com/repository/docker/danielcristh0/datascience-notebook/tags/python-3.10.11/sha256-7d1c9ee5ee5d2ad2051f5a2e56d0861e28ced6b8a76ce0928075426b3762b79d) -> ~5.4GB
 
 ### Environment
 
 #### 1. Local Computer
 
-**-** CPU: 4 cores / 8 threads
+- CPU: 4 cores / 8 threads
 
-**-** Storage: NVMe SSD
+- Storage: NVMe SSD
 
-**-** OS: Ubuntu 22.04
+- OS: Ubuntu 22.04
 
-**-** Docker Version: 27x
+- Docker Version: 27x
 
-**-** Tools: `gzip`, `zstd`, `time`, `scp`
+- Tools: `gzip`, `zstd`, `time`, `scp`
 
 #### 2. VPS
 
-**-** CPU: 4 cores / 8 threads
+- CPU: 4 cores / 8 threads
 
-**-** Storage: VirtIO-backed SSD
+- Storage: VirtIO-backed SSD
 
-**-** OS: Ubuntu 22.04
+- OS: Ubuntu 22.04
 
-**-** Docker Version: 27x
+- Docker Version: 27x
 
-**-** Tools: `gzip`, `zstd`, `time`
+- Tools: `gzip`, `zstd`, `time`
 
 ### Command used
 
@@ -129,7 +127,7 @@ total 5,6G
 
 #### 2. Compress the image (local machine)
 
-**-** `gzip`
+- `gzip`
 
 ```sh
 time gzip -k <image>.tar
@@ -158,7 +156,7 @@ gzip -k jupyter_notebook.tar  238,83s user 3,56s system 99% cpu 4:03,16 total
 gzip uses a single CPU thread at its default level (≈ level 6)
 :::
 
-**-** `zstd`
+- `zstd`
 
 ```sh
 time zstd -T0 -19 <image>.tar
@@ -195,7 +193,7 @@ zstd -T0 -22 jupyter_notebook.tar  4759,54s user 19,32s system 188% cpu 42:11,68
 
 #### 3. Transfer to VPS
 
-**-** `gzip`
+- `gzip`
 
 ```sh
 time scp <image_name>.tar.gz user@vps:/tmp/
@@ -220,7 +218,7 @@ jupyter_notebook.tar.gz  100% 1765MB   3.4MB/s   08:35
 scp jupyter_notebook.tar.gz onomi@myserver:/tmp/  5,03s user 10,42s system 2% cpu 8:38,50 total
 ```
 
-**-** `zstd`
+- `zstd`
 
 ```sh
 time scp <image_name>.tar.zst user@vps:/tmp/
@@ -249,7 +247,7 @@ scp jupyter_notebook.tar.zst onomi@myserver:/tmp/  3,94s user 7,64s system 1% cp
 
 Now the compressed images are transferred to the VPS, the next step is to decompress them and load the Docker image into the remote server.
 
-**-** `gzip`
+- `gzip`
 
 ```sh
 time gzip -dk <image>.tar.gz
@@ -277,7 +275,7 @@ user    0m48.466s
 sys     0m13.408s
 ```
 
-**-** `zstd`
+- `zstd`
 
 ```sh
 time zstd -d <image>.tar.zst
@@ -372,23 +370,23 @@ After running all compression, transfer, decompression, and loading tests across
 
 #### Use zstd when you want
 
-**-** The smallest compressed Docker images
+- The smallest compressed Docker images
 
-**-** Fast decompression
+- Fast decompression
 
-**-** Faster transfers across networks
+- Faster transfers across networks
 
-**-** Long-term backups
+- Long-term backups
 
 #### Use gzip when you want
 
-**-** Fast compression
+- Fast compression
 
-**-** Low CPU usage
+- Low CPU usage
 
-**-** Simple, predictable behavior
+- Simple, predictable behavior
 
-**-** Occasional small image transfers
+- Occasional small image transfers
 
 ## Conclusion
 
@@ -396,19 +394,19 @@ If you need to compress Docker images, here’s the quick answer:
 
 Use `zstd` when you want
 
-**-** Smaller archive sizes (around 20-50% smaller than `gzip`)
+- Smaller archive sizes (around 20-50% smaller than `gzip`)
 
-**-** Faster decompression
+- Faster decompression
 
-**-** Faster network transfers
+- Faster network transfers
 
 Use gzip when you want:
 
-**-** Fast compression
+- Fast compression
 
-**-** Low CPU usage
+- Low CPU usage
 
-**-** Simplicity
+- Simplicity
 
 Aight, that's all. Thank you for taking your time to read this post.
 

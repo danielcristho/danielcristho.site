@@ -8,23 +8,24 @@ tags:
   - Kubernetes
   - Python
   - Series
+cover:
+  alt: AWS EKS with CDK cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1770998967/tes_bg_aap3z1.png
 authors:
   - danielcristho
 ---
 
-![Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1769574417/eks-cdk_h4qdyv.png)
-
 ## TL;DR
 
-**-** Create an EKS cluster using AWS CDK Python
+- Create an EKS cluster using AWS CDK Python
 
-**-** Provision infrastructure via AWS CloudFormation
+- Provision infrastructure via AWS CloudFormation
 
-**-** The setup includes a VPC, EKS control plane, and a managed EC2 node group
+- The setup includes a VPC, EKS control plane, and a managed EC2 node group
 
-**-** Configure IAM access to use `kubectl`
+- Configure IAM access to use `kubectl`
 
-**-** Verify the cluster and clean up resources when done
+- Verify the cluster and clean up resources when done
 
 ## Introduction
 
@@ -137,23 +138,23 @@ After initialization, you should see a structure similar to this:
     └── unit
 ```
 
-**-** `app.py`
+- `app.py`
 
 The entry point of the CDK application. This is where the stack is instantiated.
 
-**-** `cdk_eks_stack.py`
+- `cdk_eks_stack.py`
 
 Contains the definition of the CDK stack where we’ll define the EKS cluster.
 
-**-** `requirements.txt`
+- `requirements.txt`
 
 Python dependencies for the CDK app.
 
-**-** `cdk.json`
+- `cdk.json`
 
 CDK configuration file, including the command used to run the app.
 
-**-** `tests/`
+- `tests/`
 
 A placeholder for unit tests, which we’ll use in a later post.
 

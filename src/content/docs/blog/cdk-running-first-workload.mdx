@@ -10,21 +10,23 @@ tags:
   - Series
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1770998967/tes_bg_aap3z1.png
 ---
-
-![Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1769574417/eks-cdk_h4qdyv.png)
 
 ## TL;DR
 
-**-** Created an EKS cluster and deployed a workload using AWS CDK
+- Created an EKS cluster and deployed a workload using AWS CDK
 
-**-** Separated stack between infrastructure and application
+- Separated stack between infrastructure and application
 
-**-** Defined Kubernetes resources (ConfigMap, Deployment, Service) in code
+- Defined Kubernetes resources (ConfigMap, Deployment, Service) in code
 
-**-** Learned why `cdk deploy --all` is often required to apply updates
+- Learned why `cdk deploy --all` is often required to apply updates
 
 Now that we have a running EKS cluster created with AWS CDK, it’s time to deploy our first workload. In this post, we’ll define Kubernetes resources using AWS CDK, deploy a simple web workload to the cluster, and expose it so it can be accessed externally.
+
 
 This will give us a practical foundation before moving on to ingress, scaling, and Karpenter in later posts.
 
@@ -50,15 +52,15 @@ running-first-workloads/
 └── tests
 ```
 
-**-** `eks/eks_stack.py`
+- `eks/eks_stack.py`
 
 Defines the core EKS infrastructure, including the VPC, EKS control plane, managed node group, and IAM access configuration. This stack is responsible only for the cluster itself.
 
-**-** `workloads/running_first_workloads_stack.py`
+- `workloads/running_first_workloads_stack.py`
 
 Defines Kubernetes resources that run on top of the existing cluster. In this post, this includes the ConfigMap, Deployment, and Service for the Caddy web server.
 
-**-** `app.py`
+- `app.py`
 
 Acts as the entry point that wires the two stacks together. The EKS cluster created in `eks_stack.py` is passed into the workload stack, allowing workloads to be deployed without recreating the cluster.
 
@@ -85,15 +87,15 @@ Unlike the cluster stack, this stack does not create any AWS infrastructure. Ins
 
 For our first workload, we’ll deploy Caddy, a lightweight and modern web server. Caddy is a good fit for this example because it behaves like a real-world application component while remaining simple enough to focus on Kubernetes and CDK concepts rather than application logic.
 
+- A ConfigMap to store the Caddy configuration
+
+- A Deployment to run the Caddy containers
+
+- A Service to expose the application externally
+
 ![Caddy Logo](https://dqah5woojdp50.cloudfront.net/original/2X/2/2b89c6fe7adba5e337228d4d01bbfbd1fcdf15f3.png)
 
 > Image Source: Caddy Community
-
-**-** A ConfigMap to store the Caddy configuration
-
-**-** A Deployment to run the Caddy containers
-
-**-** A Service to expose the application externally
 
 All of these resources are defined using `cluster.add_manifest()` in the workload stack. CDK takes care of applying the manifests to the cluster in the correct order, allowing us to focus on how the workload is structured rather than how it is manually deployed.
 
@@ -132,11 +134,11 @@ The next step is to run the application containers. In Kubernetes, this is done 
 
 In this example, the Deployment is responsible for:
 
-**-** Running the Caddy container image
+- Running the Caddy container image
 
-**-** Mounting the ConfigMap as a volume
+- Mounting the ConfigMap as a volume
 
-**-** Managing multiple replicas for availability
+- Managing multiple replicas for availability
 
 ```py
         # Caddy Deployment
@@ -197,11 +199,11 @@ In this example, the Deployment is responsible for:
 
 Let’s do some break down:
 
-**-** `replicas: 2`: Runs two instances of the Caddy container, providing basic availability and allowing us to observe how Kubernetes distributes traffic.
+- `replicas: 2`: Runs two instances of the Caddy container, providing basic availability and allowing us to observe how Kubernetes distributes traffic.
 
-**-** `container image`: Uses the official caddy:2 image
+- `container image`: Uses the official caddy:2 image
 
-**-** `volumeMounts and volumes`: The ConfigMap created earlier is mounted into the container at `/etc/caddy`, which is where Caddy expects its configuration file by default.
+- `volumeMounts and volumes`: The ConfigMap created earlier is mounted into the container at `/etc/caddy`, which is where Caddy expects its configuration file by default.
 
 ### Service: Exposing the Application
 
@@ -480,11 +482,11 @@ $ cdk deploy --all
 
 CDK will:
 
-**-** Deploy the EKS infrastructure first
+- Deploy the EKS infrastructure first
 
-**-** Wait for the cluster to become available
+- Wait for the cluster to become available
 
-**-** Apply the Kubernetes manifests defined in the workload stack
+- Apply the Kubernetes manifests defined in the workload stack
 
 :::note
 If you want to deploy only a specific stack, you can target it by name:
@@ -546,11 +548,11 @@ $ cdk deploy RunningFirstWorkloadsStack
 
 At first glance, this looks like the correct approach—after all, only the workload code has changed. However, after the deployment completes, nothing appears to have changed:
 
-**-** The running pods are still the same
+- The running pods are still the same
 
-**-** No rolling update is triggered
+- No rolling update is triggered
 
-**-** The application response still returns Hello from Caddy v1
+- The application response still returns Hello from Caddy v1
 
 In other words, from the cluster’s point of view, the workload has not been updated.
 
@@ -568,15 +570,15 @@ $ cdk deploy --all
 
 This time, the behavior is different:
 
-**-** The EKS stack is re-evaluated
+- The EKS stack is re-evaluated
 
-**-** The Kubernetes provider is refreshed
+- The Kubernetes provider is refreshed
 
-**-** The updated manifests are applied to the cluster
+- The updated manifests are applied to the cluster
 
-**-** A rolling update is triggered on the Deployment
+- A rolling update is triggered on the Deployment
 
-**-** New pods are created with the updated configuration
+- New pods are created with the updated configuration
 
 After the rollout completes, the application now responds with:
 
@@ -590,11 +592,9 @@ This setup it’s still just the beginning.
 
 In the next posts, we’ll continue building on top of this foundation by exploring more production-oriented patterns, including:
 
-**-** CDK for more
-
-**-** Ingress
-
-**-** Autoscaling with Karpenter
+- CDK for more
+- Ingress
+- Autoscaling with Karpenter
 
 Each of these topics will build directly on the cluster and workload we’ve created, moving the setup closer to a production-ready environment.
 

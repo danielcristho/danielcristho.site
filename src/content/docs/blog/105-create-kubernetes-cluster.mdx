@@ -9,10 +9,12 @@ tags:
     - Read From Book
     - Series
 authors:
-  - danielcristho
+    - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051146/k8s-cover_hndxg8.png
 ---
 
-![Kubernetes Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1744701420/kubernetes-cover_n7dux3.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Kubernetes Series:</strong>
@@ -51,11 +53,11 @@ In this part of the Kubernetes series, we will explore how to create a Kubernete
 
 We will cover three different ways to create a Kubernetes cluster:
 
-**-** Kind (Kubernetes in Docker) - A lightweight way to run Kubernetes clusters locally for testing and development.
+- Kind (Kubernetes in Docker) - A lightweight way to run Kubernetes clusters locally for testing and development.
 
-**-** K3D (K3S in Docker) - A more lightweight Kubernetes distribution, optimized for local development and CI/CD workflows.
+- K3D (K3S in Docker) - A more lightweight Kubernetes distribution, optimized for local development and CI/CD workflows.
 
-**-** EKS (Amazon Elastic Kubernetes Service) - A managed Kubernetes service provided by AWS for running Kubernetes workloads in the cloud.
+- EKS (Amazon Elastic Kubernetes Service) - A managed Kubernetes service provided by AWS for running Kubernetes workloads in the cloud.
 
 Each approach has its own use cases, advantages, and trade-offs. Let's dive into each one and see how to set up a cluster.
 
@@ -67,15 +69,15 @@ Kind (Kubernetes in Docker) is one of the simplest ways to spin up a Kubernetes 
 
 ### Prerequisites
 
-**-** Docker installed on your machine. ([installation guide](https://docs.docker.com/engine/install))
+- Docker installed on your machine. ([installation guide](https://docs.docker.com/engine/install))
 
-**-** KIND CLI installed. ([installation guide](https://kind.sigs.k8s.io/docs/user/quick-start/#installation))
+- KIND CLI installed. ([installation guide](https://kind.sigs.k8s.io/docs/user/quick-start/#installation))
 
-**-** Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
+- Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
 
 ### Create a Cluster with Kind
 
-**-** Create a new Kind cluster:
+- Create a new Kind cluster:
 
 ```bash
 $  kind create cluster --name kind-cluster
@@ -106,7 +108,7 @@ CoreDNS is running at https://127.0.0.1:43417/api/v1/namespaces/kube-system/serv
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
-**-** List available nodes:
+- List available nodes:
 
 ```bash
 $ kubectl get nodes
@@ -117,7 +119,7 @@ kind-cluster-control-plane   Ready    control-plane   75s   v1.31.0
 
 ### Create Simple Deployment
 
-**-** Use the `kubectl create deployment` command to define and start a deployment:
+- Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $  kubectl create deployment nginx --image=nginx
@@ -125,7 +127,7 @@ $  kubectl create deployment nginx --image=nginx
 deployment.apps/nginx created
 ```
 
-**-** Check deployment status using `kubectl get deployment` command:
+- Check deployment status using `kubectl get deployment` command:
 
 ```bash
 $ kubectl get deployment
@@ -134,7 +136,7 @@ NAME    READY   UP-TO-DATE   AVAILABLE   AGE
 nginx   0/1     1            0           29s
 ```
 
-**-** Expose the deployment:
+- Expose the deployment:
 
 ```bash
 $ kubectl expose deployment nginx --port=80 --type=LoadBalancer
@@ -142,7 +144,7 @@ $ kubectl expose deployment nginx --port=80 --type=LoadBalancer
 service/nginx exposed
 ```
 
-**-** Verify the Pod status and then try to access Nginx using your browser:
+- Verify the Pod status and then try to access Nginx using your browser:
 
 ```bash
 $ kubectl get pods
@@ -153,7 +155,7 @@ nginx-676b6c5bbc-wd87x   1/1     Running   0          12m
 
 ![Access Nginx](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/xtltv33114mzja34rr1g.png)
 
-**-** Delete the cluster when no longer needed
+- Delete the cluster when no longer needed
 
 ```bash
 $  kind delete cluster --name kind-cluster
@@ -170,15 +172,15 @@ K3D is a tool that allows you to run lightweight Kubernetes clusters using K3S i
 
 ### Prerequisites
 
-**-** Docker installed on your machine. ([installation guide](https://docs.docker.com/engine/install))
+- Docker installed on your machine. ([installation guide](https://docs.docker.com/engine/install))
 
-**-** K3D CLI installed. ([installation guide](https://k3d.io/stable/#installation))
+- K3D CLI installed. ([installation guide](https://k3d.io/stable/#installation))
 
-**-** Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
+- Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
 
 ### Create a Cluster with K3D
 
-**-** Create a new K3D cluster:
+- Create a new K3D cluster:
 
 ```bash
 $ k3d cluster create my-k3d-cluster
@@ -205,7 +207,7 @@ INFO[0018] You can now use it like this:
 kubectl cluster-info
 ```
 
-**-** Check the cluster status:
+- Check the cluster status:
 
 ```bash
 $ kubectl cluster-info
@@ -218,7 +220,7 @@ roxy
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
-**-** List available nodes:
+- List available nodes:
 
 ```bash
 $ kubectl get nodes
@@ -229,13 +231,13 @@ k3d-my-k3d-cluster-server-0   Ready    control-plane,master   2m33s   v1.30.4+k3
 
 ### Create Simple Deployment
 
-**-** Use the `kubectl create deployment` command to define and start a deployment:
+- Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $ kubectl create deployment httpd --image=httpd
 ```
 
-**-** Check deployment status using `kubectl get deployment`  command:
+- Check deployment status using `kubectl get deployment`  command:
 
 ```bash
 $ kubectl get deployment
@@ -244,7 +246,7 @@ NAME    READY   UP-TO-DATE   AVAILABLE   AGE
 httpd   0/1     1            0           45s
 ```
 
-**-** Verify the Pod status:
+- Verify the Pod status:
 
 ```bash
 $  kubectl get pods
@@ -253,17 +255,17 @@ NAME                     READY   STATUS    RESTARTS   AGE
 httpd-56f946b8c8-84ww8   1/1     Running   0          9m11s
 ```
 
-**-** Expose the deployment:
+- Expose the deployment:
 
 ```bash
 $ kubectl expose deployment httpd --port=80 --type=LoadBalancer
 ```
 
-**-** Try to access using browser:
+- Try to access using browser:
 
 ![Access HTTPD](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/hcz2h6s89xmovj5zxpv5.png)
 
-**-** Delete the cluster when no longer needed:
+- Delete the cluster when no longer needed:
 
 ```bash
 $ k3d cluster delete my-k3d-cluster
@@ -284,11 +286,11 @@ Amazon Elastic Kubernetes Service (EKS) is a fully managed Kubernetes service on
 
 ### Prerequisites
 
-**-** AWS CLI installed and configured. ([installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
+- AWS CLI installed and configured. ([installation guide](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
 
-**-** EKSCTL CLI installed. ([installation guide](https://eksctl.io/installation))
+- EKSCTL CLI installed. ([installation guide](https://eksctl.io/installation))
 
-**-** Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
+- Kubectl CLI installed. ([installation guide](https://kubernetes.io/docs/tasks/tools))
 
 ### Create a cluster on EKS
 
@@ -319,11 +321,11 @@ $ eksctl create cluster  \
 "us-east-1" region is ready
 ```
 
-**-** Access AWS console, navigate to the EKS service and you can see the cluster is successfully created.
+- Access AWS console, navigate to the EKS service and you can see the cluster is successfully created.
 
 ![After cluster creation](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/u6fea9eyql10rn2kvp9f.png)
 
-**-** List available nodes:
+- List available nodes:
 
 ```bash
 kubectl get nodes
@@ -334,7 +336,7 @@ ip-192-168-xx-yy.ec2.internal   Ready    <none>   17m   v1.30.8-eks-aeac57
 
 ### Create Simple Deployment
 
-**-** Use the `kubectl create deployment` command to define and start a deployment:
+- Use the `kubectl create deployment` command to define and start a deployment:
 
 ```bash
 $ kubectl create deployment nginx --image=nginx
@@ -342,7 +344,7 @@ $ kubectl create deployment nginx --image=nginx
 deployment.apps/nginx create
 ```
 
-**-** Check deployment status using `kubectl get deployment` command:
+- Check deployment status using `kubectl get deployment` command:
 
 ```bash
 $  kubectl get deployment
@@ -351,7 +353,7 @@ NAME     READY   UP-TO-DATE   AVAILABLE   AGE
 nginx    1/1     1            1           23s
 ```
 
-**-** Verify the Pod status:
+- Verify the Pod status:
 
 ```bash
 $ kubectl get pods
@@ -360,17 +362,17 @@ NAME                     READY   STATUS         RESTARTS   AGE
 nginx-bf5d5cf98-9dld5    1/1     Running        0          43s
 ```
 
-**-** Expose the service:
+- Expose the service:
 
 ```bash
 $ kubectl expose deployment nginx --type=LoadBalancer --port=80 --name=nginx-service
 ```
 
-**-** Try to access using the browser:
+- Try to access using the browser:
 
 ![Access the service](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/s3c2ul7c18ntg8x5tq4r.png)
 
-**-** Delete the cluster when no longer needed:
+- Delete the cluster when no longer needed:
 
 ```bash
 $  eksctl delete cluster --name cluster-1 --region us-east-1
@@ -397,6 +399,6 @@ Thanks for reading this post. Stay tuned!
 
 References:
 
-**-** KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
+- KUBERNETES UNTUK PEMULA. https://github.com/ngoprek-kubernetes/buku-kubernetes-pemula.
 
-**-** How do I install AWS EKS CLI (eksctl)?. https://learn.arm.com/install-guides/eksctl
+- How do I install AWS EKS CLI (eksctl)?. https://learn.arm.com/install-guides/eksctl

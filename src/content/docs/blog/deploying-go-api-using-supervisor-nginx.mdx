@@ -8,9 +8,10 @@ tags:
     - Linux
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771052238/supervisor-nginx-go_v88jfo.png
 ---
-
-![Go, Supervisor & Nginx Cover](https://res.cloudinary.com/diunivf9n/image/upload/v1744701309/go-supervisor-nginx-cover_very7d.png)
 
 ## Intro
 
@@ -18,9 +19,9 @@ Hi! In this post, I'll show you how to deploy a Go API using Supervisor to manag
 
 Before we dive into the deployment steps, let's briefly discuss why we're using Supervisor and Nginx.
 
-**-** Supervisor is a process control system that helps manage and monitor applications running in the background. It ensures that your Go API stays up and automatically restarts it if it crashes. [See the full documentation](https://supervisord.org/introduction.html)
+- Supervisor is a process control system that helps manage and monitor applications running in the background. It ensures that your Go API stays up and automatically restarts it if it crashes. [See the full documentation](https://supervisord.org/introduction.html)
 
-**-** Nginx is a high-performance web server that can also function as a reverse proxy, making it ideal for serving our Go API to the internet. [See the full documentation](https://nginx.org/en)
+- Nginx is a high-performance web server that can also function as a reverse proxy, making it ideal for serving our Go API to the internet. [See the full documentation](https://nginx.org/en)
 
 ### 🤔 Why Choose Supervisor Over Other Options?
 
@@ -43,7 +44,7 @@ Use Supervisor when you want a  non-containerized way to manage a Go service, wi
 
 Before starting, make sure you have the following installed on your system:
 
-**-** Go
+- Go
 
 	```bash
 	$ go version
@@ -53,7 +54,7 @@ Before starting, make sure you have the following installed on your system:
 
 	If not installed, download it from [the official site](https://go.dev/dl).
 
-**-** Supervisor
+- Supervisor
 
 - Ubuntu/Debian
 
@@ -87,7 +88,7 @@ Before starting, make sure you have the following installed on your system:
 	$ sudo systemctl enable supervisor
 	```
 
-**-** Nginx
+- Nginx
 
 - Ubuntu/Debian
 

@@ -11,10 +11,10 @@ tags:
   - Series
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771050579/docker-caddy_dbxzph.png 
 ---
-
-
-![Cover Images](https://res.cloudinary.com/diunivf9n/image/upload/v1755923140/caddy-lb-docker_peicwm.png)
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Caddy Series:</strong>
@@ -299,7 +299,7 @@ After updating your `Caddyfile`, make sure to restart your Caddy container with 
 
 To demonstrate the Least Connection algorithm, you'll need to modify your Go code to simulate a long-running request. This will allow you to see how Caddy intelligently routes traffic away from the busy worker.
 
-**-** `Update Your Go Code`
+- `Update Your Go Code`
 
 Open your `src/main.go` file and add a new handler that will simulate a task with a significant delay. This will act as our "long-running request."
 
@@ -331,7 +331,7 @@ func main() {
 }
 ```
 
-**-** `Rebuild and Run Docker Compose`
+- `Rebuild and Run Docker Compose`
 
 After updating your code, you must rebuild and run your containers to apply the changes.
 
@@ -339,7 +339,7 @@ After updating your code, you must rebuild and run your containers to apply the 
 $ docker-compose up -d --build
 ```
 
-**-** `Test the Scenario`
+- `Test the Scenario`
 
 Now, you can test the Least Connection algorithm using two separate terminals.
 
@@ -447,20 +447,20 @@ curl http://127.0.0.1:8082
 
 Throughout this post, we've explored the core capabilities of Caddy as a powerful web server and a flexible load balancer. Using a simple Docker setup, we were able to quickly demonstrate five different load balancing algorithms, each with its own unique advantages:
 
-**-** **Round Robin**: The classic, simple approach for evenly distributing traffic in a predictable sequence.
+- **Round Robin**: The classic, simple approach for evenly distributing traffic in a predictable sequence.
 
-**-** **Weighted Round Robin**: A smarter version of Round Robin that allows you to prioritize traffic to more powerful servers.
+- **Weighted Round Robin**: A smarter version of Round Robin that allows you to prioritize traffic to more powerful servers.
 
-**-** **Least Connection**: A dynamic algorithm that routes traffic based on real-time load, preventing a single server from becoming a bottleneck.
+- **Least Connection**: A dynamic algorithm that routes traffic based on real-time load, preventing a single server from becoming a bottleneck.
 
-**-** **IP Hash**: The ideal choice for session stickiness, ensuring a consistent user experience by always routing a client to the same backend server.
+- **IP Hash**: The ideal choice for session stickiness, ensuring a consistent user experience by always routing a client to the same backend server.
 
-**-** **Random**: A straightforward and fast algorithm for scattering traffic across servers, effective for a large pool of homogenous workers.
+- **Random**: A straightforward and fast algorithm for scattering traffic across servers, effective for a large pool of homogenous workers.
 
 This hands-on experience proved that Caddy is not just a simple web server but a robust tool for building scalable and reliable applications. Caddy's elegant syntax and powerful features make it an excellent choice for anyone looking to simplify their server configurations without sacrificing control or performance. Whether you're a seasoned developer or just starting, Caddy offers a smooth and intuitive experience that can handle everything from a single website to a complex, distributed application.
 
 References:
 
-**-** [Caddy Documentation: Reverse Proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
+- [Caddy Documentation: Reverse Proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)
 
-**-** [Caddy Community Wiki](https://caddy.community)
+- [Caddy Community Wiki](https://caddy.community)

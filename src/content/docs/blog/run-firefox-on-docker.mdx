@@ -8,9 +8,10 @@ tags:
     - Linux
 authors:
   - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771050240/firefox-docker_sr03q7.png 
 ---
-
-![Cover Image](https://res.cloudinary.com/diunivf9n/image/upload/v1763206437/vnc-firefox_qb7bvv.png)
 
 Docker isn’t just for serve your code, appliactions. you can actually run a full desktop app inside it. In this project, I containerized Firefox with a virtual desktop and made it accessible through a browser using noVNC.
 
@@ -20,13 +21,13 @@ Docker isn’t just for serve your code, appliactions. you can actually run a fu
 
 It creates a lightweight container that:
 
-**-** Runs a minimal desktop environment (`Fluxbox`)
+- Runs a minimal desktop environment (`Fluxbox`)
 
-**-** Launches Firefox
+- Launches Firefox
 
-**-** Serves a VNC display using `x11vnc`
+- Serves a VNC display using `x11vnc`
 
-**-** Exposes that desktop through `noVNC` (so you can open it in your web browser)
+- Exposes that desktop through `noVNC` (so you can open it in your web browser)
 
 You can literally open Firefox running inside Docker, from your browser tab.
 All using a single `docker compose up`.
@@ -105,15 +106,15 @@ services:
 
 Everything is managed by `supervisord`, which runs:
 
-**-** `Xvfb` - virtual framebuffer display
+- `Xvfb` - virtual framebuffer display
 
-**-** `x11vnc` - provides VNC access
+- `x11vnc` - provides VNC access
 
-**-** `fluxbox` - lightweight window manager (WM)
+- `fluxbox` - lightweight window manager (WM)
 
-**-** `firefox` - your GUI browser
+- `firefox` - your GUI browser
 
-**-** `novnc_proxy` - web socket bridge
+- `novnc_proxy` - web socket bridge
 
 Example `supervisord.conf`:
 
@@ -186,11 +187,11 @@ $ docker compose up --build -d
 
 **2** Access it by using your browser or VNC client. Using `dummypass` as password:
 
-**-** Using noVNC Web: `http://localhost:6080`
+- Using noVNC Web: `http://localhost:6080`
 
 ![noVNC Access](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/9ivebvy7nku1luu3vh8n.gif)
 
-**-** Open any VNC viewer (e.g., RealVNC, TigerVNC, Remmina), then connect to: `localhost:5901`
+- Open any VNC viewer (e.g., RealVNC, TigerVNC, Remmina), then connect to: `localhost:5901`
 
 ![VNC viewwer](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/pazgjw1zzwint87vnlwi.gif)
 
@@ -198,25 +199,27 @@ $ docker compose up --build -d
 
 While this is mostly a fun experiment, it can be used for:
 
-**-** Headless browser testing environments
+- Headless browser testing environments
 
-**-** Remote browsing (isolated Firefox)
+- Remote browsing (isolated Firefox)
 
-**-** Demonstrating GUI automation setups
+- Demonstrating GUI automation setups
 
-**NB**: 😎 This post is part of my **“Container Stuffs”** open-source project on GitHub. Upcoming labs include:
+:::note
+😎 This post is part of my **“Container Stuffs”** open-source project on GitHub. Upcoming labs include:
 
-**-** PostgreSQL master–replica setup
+- PostgreSQL master–replica setup
 
-**-** Redis Sentinel cluster
+- Redis Sentinel cluster
 
-**-** Multi-node Docker Swarm simulations
+- Multi-node Docker Swarm simulations
 
-**-** and more to come!
+- and more to come!
 
 ![Container Stuff](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/n5g8udk80m4xd47d679g.png)
 
 [**danielcristho/container-stuffs**](https://github.com/danielcristho/container-stuffs)
+:::
 
 ## Conclusion
 
@@ -226,10 +229,10 @@ Projects like this prove that containers aren’t limited to APIs, databases, an
 
 Running Firefox inside Docker with noVNC shows how:
 
-**-** system-level components (Xvfb, window managers, VNC)
+- system-level components (Xvfb, window managers, VNC)
 
-**-** web technologies (WebSockets, noVNC)
+- web technologies (WebSockets, noVNC)
 
-**-** and container orchestration (Docker + Compose) can blend together to create something both useful and fun. 
+- and container orchestration (Docker + Compose) can blend together to create something both useful and fun. 
 
 Cheers, and happy containerizing! 🐳
