@@ -2,13 +2,14 @@ import { defineConfig } from "astro/config";
 import starlightBlog from "starlight-blog";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
+import compress from 'astro-compress'
 import { BLOG_URL, X_URL, GITHUB_URL, LINKEDIN_URL } from "./src/contants";
 
 export default defineConfig({
     site: BLOG_URL,
     integrations: [
+    compress(),
     tailwind(),
-
     starlight({
         favicon: "/favicon.svg",
         lastUpdated: true,
