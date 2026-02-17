@@ -4,8 +4,8 @@ date: 2023-08-28
 description: Create ansible playbook to install docker on remote server.
 excerpt: Let’s create Ansible Playbook to install Docker on remote server.
 tags:
-    - Ansible
-    - Docker
+  - Ansible
+  - Docker
 authors:
   - danielcristho
 ---
@@ -37,6 +37,7 @@ Then create a new file called `hosts`, where the name is defined on `ansible.cfg
 [example-server]
 0.0.0.0 ansible_user=root
 ```
+
 NB: Don't forget to change the IP Address and host name.
 
 After setup the Ansible configuration setting & inventory file, let's create a **YAML** file called `playbook.yml`
@@ -51,7 +52,9 @@ After setup the Ansible configuration setting & inventory file, let's create a *
     - config
     - docker
 ```
+
 Then create roles directory:
+
 - Config, On this directory I will create a directory called tasks. After that, I should create yaml file called `main.yml` to run update, upgrade & install many dependencies.
 
 ```yml
@@ -90,7 +93,7 @@ Then create roles directory:
 
 - Docker, On this directory create 2 directories called `tasks` & `templates`.
 
-On tasks directory create new file called `main.yml`. This file contains *Docker installation, Docker Compose installation & private registry setup*.
+On tasks directory create new file called `main.yml`. This file contains _Docker installation, Docker Compose installation & private registry setup_.
 
 ```yml
 ---
@@ -129,7 +132,7 @@ On tasks directory create new file called `main.yml`. This file contains *Docker
   ansible.builtin.get_url:
     url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
     dest: /usr/local/bin/docker-compose
-    mode: '755'
+    mode: "755"
 
 - name: Create Docker-Compose symlink
   ansible.builtin.command:
@@ -148,15 +151,19 @@ On tasks directory create new file called `main.yml`. This file contains *Docker
     state: restarted
     enabled: true
 ```
+
 In the template, create a template file using a jinja file named `daemon.j2`. This file contains configuration for private registry settings (optional).
+
 ```json
 {
-    "insecure-registries" : ["http://0.0.0.0:5000"]
+  "insecure-registries": ["http://0.0.0.0:5000"]
 }
 ```
+
 NB: Field the IP using your remote server private IP
 
 After all setup, Your project directory should look like this:
+
 ```bash
 $ tree
 .
@@ -174,10 +181,13 @@ $ tree
 ```
 
 ## Test & Run
+
 Okay, now test Your `playbook.yml` file using this command.
+
 ```bash
 $ ansible-playbook --syntax-check playbook.yml
 ```
+
 If You don't have any errors, run the playbook using this command.
 
 ```bash
@@ -208,6 +218,7 @@ Wait until finish.
 ```
 
 ## Conclusion
+
 In this post, I just show you how to install Docker in a specific version using Ansible Playbook when you have one or more servers.
 
 Thank You for reading this post, If You have suggestions or questions please leave them below. Thanks

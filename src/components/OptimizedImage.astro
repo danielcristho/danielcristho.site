@@ -1,0 +1,33 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  class?: string;
+}
+
+const { src, alt, width, height, class: className } = Astro.props;
+
+// Optimize Cloudinary URLs
+const optimizeSrc = (url: string) => {
+  if (url.includes('cloudinary.com')) {
+    // Add auto format and quality optimization
+    return url.replace('/upload/', '/upload/f_auto,q_auto,w_auto,dpr_auto/');
+  }
+  return url;
+};
+
+const optimizedSrc = optimizeSrc(src);
+---
+
+<img
+  src={optimizedSrc}
+  alt={alt}
+  width={width}
+  height={height}
+  loading="lazy"
+  decoding="async"
+  class={className}
+  style="max-width: 100%; height: auto;"
+/>

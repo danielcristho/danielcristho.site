@@ -4,17 +4,16 @@ date: 2025-02-01
 excerpt: In this part of the Kubernetes series, we will explore how to create a Kubernetes cluster in different environments. Whether you’re running Kubernetes locally or in the cloud, understanding how to set up a cluster is fundamental to deploying and managing containerized applications efficiently.
 description: Create Kubernetes cluster in several ways.
 tags:
-    - Kubernetes
-    - AWS
-    - Read From Book
-    - Series
+  - Kubernetes
+  - AWS
+  - Read From Book
+  - Series
 authors:
-    - danielcristho
+  - danielcristho
 cover:
   alt: Cover image
   image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051146/k8s-cover_hndxg8.png
 ---
-
 
 <div style="margin: 2rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
   <strong>This post is part of Kubernetes Series:</strong>
@@ -31,7 +30,7 @@ cover:
     </li>
     <li>
       <a href="https://danielcristho.site/blog/103-kubernetes-object">
-      Kubernetes 103: Object
+        Kubernetes 103: Object
       </a>
     </li>
     <li>
@@ -237,7 +236,7 @@ k3d-my-k3d-cluster-server-0   Ready    control-plane,master   2m33s   v1.30.4+k3
 $ kubectl create deployment httpd --image=httpd
 ```
 
-- Check deployment status using `kubectl get deployment`  command:
+- Check deployment status using `kubectl get deployment` command:
 
 ```bash
 $ kubectl get deployment

@@ -30,15 +30,15 @@ cover:
     </li>
     <li>
       <a href="https://danielcristho.site/blog/caddy-log-comprehensive">
-      Exploring Logging in Caddy
+        Exploring Logging in Caddy
       </a>
     </li>
   </ol>
 </div>
 
-At some point, I realized that ***‘it works’*** is not enough. I need to know ***how it works*** too.”
+At some point, I realized that **_‘it works’_** is not enough. I need to know **_how it works_** too.”
 
-When something slows down or fails, the question is no longer ***“is the service running?”*** but:
+When something slows down or fails, the question is no longer **_“is the service running?”_** but:
 
 - Which component handled this request?
 
@@ -122,22 +122,21 @@ If you need the full context, you can refer to here:
 [https://danielcristho.site/blog/go-caddy-load-balancer#the-project-setup](https://danielcristho.site/blog/go-caddy-load-balancer#the-project-setup)
 :::
 
-
 ### Logging in a Docker-Based Load Balancer
 
 When running Caddy inside Docker, the most practical logging strategy is to write logs to `stdout` and let Docker handle log collection.
 
 When you first run the stack:
 
-```sh 
-$ docker compose up -d --build 
+```sh
+$ docker compose up -d --build
 
 $ docker logs load_balancer
 ```
 
 You’ll mostly see logs like:
 
-```sh 
+```sh
 {"level":"info","ts":1765883971.5864136,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
 {"level":"info","ts":1765883971.586685,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":16911289958,"previous":9223372036854775807}
 {"level":"info","ts":1765883971.586744,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
@@ -189,7 +188,7 @@ At this point:
 
 Once the stack is running, send a few requests:
 
-```sh 
+```sh
 curl http://localhost:8082
 curl http://localhost:8082
 curl http://localhost:8082
@@ -197,7 +196,7 @@ curl http://localhost:8082
 
 You should see responses like:
 
-```sh 
+```sh
 Hello from worker_1
 Hello from worker_2
 Hello from worker_3
@@ -220,7 +219,7 @@ Now check the logs again:
 
 To make the logs more readable you can use `jq`:
 
-```sh 
+```sh
 docker logs -f load_balancer 2>&1 | jq -R 'fromjson? | {level, logger, msg, request: {method: .request.method, uri: .request.uri}, status, duration}'
 ```
 
@@ -261,7 +260,7 @@ Earlier, we saw that standard access logs don’t explicitly show which backend 
 
 By enabling debug mode, Caddy reveals how routing decisions are made internally.
 
-```json 
+```json
 {
     log {
         level DEBUG
@@ -272,10 +271,15 @@ By enabling debug mode, Caddy reveals how routing decisions are made internally.
 
 In this mode, a single request produces logs like this, you can see which upstream that handled request `"dial":"worker_3:8081"`:
 
-```json 
-{"level":"debug","logger":"http.handlers.reverse_proxy","msg":"selected upstream","dial":"worker_3:8081","total_upstreams":3}
-``` 
-
+```json
+{
+  "level": "debug",
+  "logger": "http.handlers.reverse_proxy",
+  "msg": "selected upstream",
+  "dial": "worker_3:8081",
+  "total_upstreams": 3
+}
+```
 
 ## Simulating Failure (Error Logs)
 
@@ -283,21 +287,22 @@ So far, everything looks fine. Requests succees and access logs show no anomalie
 
 Real systems rarely fail all at once. They fail partially one backend goes down, a health check starts failing, or a connection becomes unstable. In this setup, stopping one worker is enough:
 
-```sh 
+```sh
 $ docker stop worker_2
 ```
 
 Try to hit the URL again:
 
-```sh 
+```sh
 $ curl http://localhost:8082
 ```
 
-```sh 
+```sh
 Hello from worker_3
 Hello from worker_1
 Hello from worker_3
 ```
+
 From the client’s perspective, nothing breaks. Requests are still served, and responses keep coming back from the remaining healthy workers. This is exactly what we expect from a load balancer.
 
 Now if you see the logs again, there is an unhealthy upstream:
@@ -321,7 +326,7 @@ Up to this point, all examples use JSON access logs. They are structured, machin
 
 Caddy allows you to control how logs are encoded, not just what gets logged. This is useful when the goal shifts from processing logs to reading them.
 
-### Console Logs 
+### Console Logs
 
 Besides json, Caddy also provides a console encoder. It formats logs in a more friendly way while still preserving structure.
 
@@ -348,16 +353,16 @@ Besides json, Caddy also provides a console encoder. It formats logs in a more f
 ```
 
 ```sh
-$ docker restart load_balancer 
+$ docker restart load_balancer
 ```
 
 After restarting the container, access logs will look like this:
 
-```sh 
+```sh
 $ docker logs load_balancer
 ```
 
-```sh 
+```sh
 2025/12/17 17:31:44.788 INFO    http.log.access.log0    handled request {"request": {"remote_ip": "172.21.0.1", "remote_port": "36598", "client_ip": "172.21.0.1", "proto": "HTTP/1.1", "method": "GET", "host": "localhost:8082", "uri": "/", "headers": {"User-Agent": ["curl/7.81.0"], "Accept": ["*/*"]}}, "bytes_read": 0, "user_id": "", "duration": 0.001321876, "size": 20, "status": 200, "resp_headers": {"Date": ["Wed, 17 Dec 2025 17:31:44 GMT"], "Content-Length": ["20"], "Content-Type": ["text/plain; charset=utf-8"], "Via": ["1.1 Caddy"]}}
 ```
 
@@ -384,7 +389,7 @@ For example, you can:
 - normalize log levels
 
 ```json
-... 
+...
 {
     log {
         output stdout
@@ -431,7 +436,7 @@ Access logs often include fields that are technically correct but not relevant, 
 
 If headers are not part of your debugging workflow, you can remove them:
 
-```json 
+```json
 ...
 log {
     format filter {
@@ -443,13 +448,13 @@ log {
 
 With the request field removed entirely, access logs become significantly smaller:
 
-```sh 
+```sh
 {"level":"info","msg":"handled request","duration":0.001026852,"size":20,"status":200}
 ```
 
 In other cases, it’s enough to remove only specific nested fields:
 
-```json 
+```json
 ...
 log {
     format filter {
@@ -465,7 +470,6 @@ Instead of deleting the entire request, selectively removing fields gives a bett
 ```sh
 "headers": {"User-Agent": ["curl/7.81.0"], "Accept": ["*/*"]}
 ```
-
 
 ### Obscuring Sensitive Information
 
@@ -489,13 +493,13 @@ With IP masking enabled, the change is subtle but important:
 {"level":"info","ts":1765994419.4105134,"logger":"http.log.access.log0","msg":"handled request","request":{"remote_ip":"172.21.0.1","remote_port":"58562","client_ip":"172.21.0.0","proto":"HTTP/1.1","method":"GET","host":"localhost:8082","uri":"/","headers":{"Accept":["*/*"],"User-Agent":["curl/7.81.0"]}},"bytes_read":0,"user_id":"","duration":0.00146917,"size":20,"status":200,"resp_headers":{"Content-Type":["text/plain; charset=utf-8"],"Date":["Wed, 17 Dec 2025 18:00:19 GMT"],"Via":["1.1 Caddy"],"Content-Length":["20"]}}
 ```
 
-```sh 
+```sh
 "client_ip": "172.21.0.0"
 ```
 
 The request remains traceable across logs, but the exact client address is no longer exposed.
 
-:::note 
+:::note
 Filtering is not about producing minimal logs. It’s about producing `intentional` logs.
 
 I only apply filters after understanding:
@@ -503,7 +507,7 @@ I only apply filters after understanding:
 - which fields I actually use
 
 - which ones are never read
-:::
+  :::
 
 ## TL;DR
 

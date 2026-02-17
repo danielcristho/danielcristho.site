@@ -11,17 +11,17 @@ async function getUmamiAuthToken() {
     const umamiApiUrl = process.env.PUBLIC_UMAMI_URL;
     const username = process.env.UMAMI_USERNAME;
     const password = process.env.UMAMI_PASSWORD;
-    
+
     if (!umamiApiUrl || !username || !password) {
       return null;
     }
 
-    const baseUrl = umamiApiUrl.replace(/\/(login)?$/, '');
-    
+    const baseUrl = umamiApiUrl.replace(/\/(login)?$/, "");
+
     const response = await fetch(`${baseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
     if (!response.ok) return null;
@@ -30,8 +30,8 @@ async function getUmamiAuthToken() {
     if (!data.token) return null;
 
     authToken = data.token;
-    tokenExpiry = Date.now() + (23 * 60 * 60 * 1000);
-    
+    tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
+
     return authToken;
   } catch (error) {
     return null;
@@ -43,16 +43,16 @@ async function makeUmamiRequest(endpoint, options = {}) {
   if (!token) return null;
 
   const umamiApiUrl = process.env.PUBLIC_UMAMI_URL;
-  const baseUrl = umamiApiUrl.replace(/\/(login)?$/, '');
+  const baseUrl = umamiApiUrl.replace(/\/(login)?$/, "");
 
   try {
     return await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
   } catch (error) {
     return null;
@@ -61,13 +61,13 @@ async function makeUmamiRequest(endpoint, options = {}) {
 
 export default async function handler(req, res) {
   // Check if debug is enabled via environment variable
-  if (process.env.ENABLE_DEBUG !== 'true') {
-    return res.status(404).json({ error: 'Debug endpoint disabled' });
+  if (process.env.ENABLE_DEBUG !== "true") {
+    return res.status(404).json({ error: "Debug endpoint disabled" });
   }
 
   try {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
-    
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
@@ -88,14 +88,14 @@ export default async function handler(req, res) {
         const data = await response.json();
         results[endpoint] = {
           success: true,
-          dataType: Array.isArray(data) ? 'array' : typeof data,
-          length: Array.isArray(data) ? data.length : 'N/A',
-          sample: Array.isArray(data) ? data.slice(0, 5) : data
+          dataType: Array.isArray(data) ? "array" : typeof data,
+          length: Array.isArray(data) ? data.length : "N/A",
+          sample: Array.isArray(data) ? data.slice(0, 5) : data,
         };
       } else {
         results[endpoint] = {
           success: false,
-          status: response?.status || 'no response'
+          status: response?.status || "no response",
         };
       }
     }
@@ -104,13 +104,12 @@ export default async function handler(req, res) {
       success: true,
       websiteId,
       dateRange: { startAt, endAt },
-      results
+      results,
     });
-
   } catch (error) {
     return res.status(500).json({
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
   }
 }

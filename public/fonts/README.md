@@ -3,8 +3,9 @@
 This is an archived font from the Nerd Fonts release v3.4.0.
 
 For more information see:
-* https://github.com/ryanoasis/nerd-fonts/
-* https://github.com/ryanoasis/nerd-fonts/releases/latest/
+
+- https://github.com/ryanoasis/nerd-fonts/
+- https://github.com/ryanoasis/nerd-fonts/releases/latest/
 
 # 0xProto
 
@@ -18,10 +19,10 @@ Version: 2.300
 
 ### TL;DR
 
-* Pick your font family:
-  * If you are limited to monospaced fonts (because of your terminal, etc) then pick a font with `Nerd Font Mono` (or `NFM`).
-  * If you want to have bigger icons (usually around 1.5 normal letters wide) pick a font without `Mono` i.e. `Nerd Font` (or `NF`). Most terminals support this, but ymmv.
-  * If you work in a proportional context (GUI elements or edit a presentation etc) pick a font with `Nerd Font Propo` (or `NFP`).
+- Pick your font family:
+  - If you are limited to monospaced fonts (because of your terminal, etc) then pick a font with `Nerd Font Mono` (or `NFM`).
+  - If you want to have bigger icons (usually around 1.5 normal letters wide) pick a font without `Mono` i.e. `Nerd Font` (or `NF`). Most terminals support this, but ymmv.
+  - If you work in a proportional context (GUI elements or edit a presentation etc) pick a font with `Nerd Font Propo` (or `NFP`).
 
 ### Ligatures
 
@@ -35,14 +36,13 @@ Once you narrow down your font choice of family (`Droid Sans`, `Inconsolata`, et
 
 #### `Option 1: Download already patched font`
 
- * For a stable version download a font package from the [release page](https://github.com/ryanoasis/nerd-fonts/releases)
- * Direct links for [0xProto.zip](https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.zip) or [0xProto.tar.xz](https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.tar.xz)
+- For a stable version download a font package from the [release page](https://github.com/ryanoasis/nerd-fonts/releases)
+- Direct links for [0xProto.zip](https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.zip) or [0xProto.tar.xz](https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.tar.xz)
 
 #### `Option 2: Patch your own font`
 
- * Patch your own variations with the various options provided by the font patcher (i.e. not include all symbols for smaller font size)
+- Patch your own variations with the various options provided by the font patcher (i.e. not include all symbols for smaller font size)
 
 For more information see: [The FAQ](https://github.com/ryanoasis/nerd-fonts/wiki/FAQ-and-Troubleshooting#which-font)
 
-[SIL-RFN]:http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web_fonts_and_RFNs#14cbfd4a
-
+[SIL-RFN]: http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web_fonts_and_RFNs#14cbfd4a

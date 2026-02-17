@@ -27,7 +27,6 @@ cover:
 
 Now that we have a running EKS cluster created with AWS CDK, it’s time to deploy our first workload. In this post, we’ll define Kubernetes resources using AWS CDK, deploy a simple web workload to the cluster, and expose it so it can be accessed externally.
 
-
 This will give us a practical foundation before moving on to ingress, scaling, and Karpenter in later posts.
 
 ## Defining Kubernetes manifests in CDK
@@ -45,7 +44,7 @@ running-first-workloads/
 ├── requirements.txt
 ├── eks
 │   ├── __init__.py
-│   └── eks_stack.py # 1. Create EKS cluster 
+│   └── eks_stack.py # 1. Create EKS cluster
 ├── workloads
 │   ├── __init__.py
 │   └── running_first_workloads_stack.py # 2. Running workload
@@ -262,15 +261,15 @@ class CdkEksStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        
+
         kubectl_layer = KubectlV32Layer(self, "KubectlLayer")
-        
+
         vpc = ec2.Vpc(
             self,
             "EksVpc",
             max_azs=2 # AZ
         )
-        
+
         self.cluster = eks.Cluster(
             self,
             "EksCluster",
@@ -279,7 +278,7 @@ class CdkEksStack(Stack):
             default_capacity=0,
             kubectl_layer=kubectl_layer
         )
-        
+
         self.cluster.add_nodegroup_capacity(
             "ManagedNodeGroup",
             desired_size=2,
@@ -287,7 +286,7 @@ class CdkEksStack(Stack):
             max_size=3,
             instance_types=[ec2.InstanceType("t3.medium")], # 2vcpu/4gi
         )
-        
+
         self.cluster.aws_auth.add_user_mapping(
             iam.User.from_user_name(
             self,
@@ -308,7 +307,7 @@ aws_eks as eks,
 
 from constructs import Construct
 
-import time 
+import time
 
 class RunningFirstWorkloadsStack(Stack):
 
@@ -494,10 +493,11 @@ If you want to deploy only a specific stack, you can target it by name:
 ```sh
 $ cdk deploy EksStack
 
-or 
+or
 
 $ cdk deploy RunningFirstWorkloadsStack
 ```
+
 :::
 
 ## Verify Deployment

@@ -5,9 +5,7 @@ export async function GET({ site }) {
   // Ambil semua konten di collection "docs"
   const allDocs = await getCollection("docs");
 
-  const posts = allDocs.filter((entry) =>
-    entry.id.startsWith("blog/")
-  );
+  const posts = allDocs.filter((entry) => entry.id.startsWith("blog/"));
 
   // Sort by newest first
   posts.sort((a, b) => {

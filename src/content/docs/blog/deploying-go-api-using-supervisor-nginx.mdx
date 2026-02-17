@@ -4,8 +4,8 @@ date: 2025-03-20
 excerpt: Hi! In this post, I'll show you how to deploy a Go API using Supervisor to manage the process and Nginx as a web server to serve it.
 description: Deploy a Golang API with Supervisor and serve it through Nginx.
 tags:
-    - Go
-    - Linux
+  - Go
+  - Linux
 authors:
   - danielcristho
 cover:
@@ -27,16 +27,16 @@ Before we dive into the deployment steps, let's briefly discuss why we're using 
 
 You might wonder why we use Supervisor instead of alternatives like [Systemd](https://systemd.io), [PM2](https://pm2.keymetrics.io), or containerized solutions like [Docker](https://www.docker.com/get-started). Here’s a quick comparison:
 
-|Tools |Pros | Cons|
-|---------|----------------------|-------|
-| Supervisor | Simple setup, great for managing multiple processes, easy log management| Requires manual config|
-| Systemd | Native to Linux, faster startup	| More complex setup, harder to debug |
-| PM2 | Built for Node.js, supports process monitoring | Not ideal for Go applications |
-| Docker | Isolated environment, easy deployment, scalable | More setup overhead, requires container knowledge |
+| Tools      | Pros                                                                     | Cons                                              |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------- |
+| Supervisor | Simple setup, great for managing multiple processes, easy log management | Requires manual config                            |
+| Systemd    | Native to Linux, faster startup                                          | More complex setup, harder to debug               |
+| PM2        | Built for Node.js, supports process monitoring                           | Not ideal for Go applications                     |
+| Docker     | Isolated environment, easy deployment, scalable                          | More setup overhead, requires container knowledge |
 
 ### When Should You Use Supervisor?
 
-Use Supervisor when you want a  non-containerized way to manage a Go service, with features like auto-restart and log management, without dealing with systemd’s complexity or Docker’s extra overhead.
+Use Supervisor when you want a non-containerized way to manage a Go service, with features like auto-restart and log management, without dealing with systemd’s complexity or Docker’s extra overhead.
 
 ## Setup and Run a Simple Go API
 
@@ -46,80 +46,80 @@ Before starting, make sure you have the following installed on your system:
 
 - Go
 
-	```bash
-	$ go version
+  ```bash
+  $ go version
 
-	go version go1.24.0 linux/amd64
-	```
+  go version go1.24.0 linux/amd64
+  ```
 
-	If not installed, download it from [the official site](https://go.dev/dl).
+  If not installed, download it from [the official site](https://go.dev/dl).
 
 - Supervisor
 
 - Ubuntu/Debian
 
-	```bash
-	$ sudo apt update
-	$ sudo apt install supervisor -y
-	```
+  ```bash
+  $ sudo apt update
+  $ sudo apt install supervisor -y
+  ```
 
 - CentOS/RHEL
 
-	```bash
-	$ sudo yum install supervisor -y
-	```
+  ```bash
+  $ sudo yum install supervisor -y
+  ```
 
 - Homebrew (macOS)
 
-	```bash
-	$ brew install supervisor
-	```
+  ```bash
+  $ brew install supervisor
+  ```
 
-	After installation, check if Supervisor is running:
+  After installation, check if Supervisor is running:
 
-	```bash
-	$ sudo systemctl status supervisor
-	```
+  ```bash
+  $ sudo systemctl status supervisor
+  ```
 
-	If it’s not running, start and enable it:
+  If it’s not running, start and enable it:
 
-	```bash
-	$ sudo systemctl start supervisor
-	$ sudo systemctl enable supervisor
-	```
+  ```bash
+  $ sudo systemctl start supervisor
+  $ sudo systemctl enable supervisor
+  ```
 
 - Nginx
 
 - Ubuntu/Debian
 
-	```bash
-	$ sudo apt install nginx -y
-	```
+  ```bash
+  $ sudo apt install nginx -y
+  ```
 
 - CentOS/RHEL
 
-	```bash
-	$ sudo yum install nginx -y
-	```
+  ```bash
+  $ sudo yum install nginx -y
+  ```
 
 - Homebrew (macOS)
 
-	```bash
-	$ brew install nginx
-	```
+  ```bash
+  $ brew install nginx
+  ```
 
-	After installation, check if Nginx is running:
+  After installation, check if Nginx is running:
 
-	```bash
-	$ sudo systemctl status nginx
-	```
+  ```bash
+  $ sudo systemctl status nginx
+  ```
 
-	If it’s not running, start and enable it:
+  If it’s not running, start and enable it:
 
-	```bash
-	$ sudo systemctl start nginx
-	$ sudo systemctl enable nginx
-	```
+  ```bash
+  $ sudo systemctl start nginx
+  $ sudo systemctl enable nginx
+  ```
 
 ### Initialize a New Go Project
 

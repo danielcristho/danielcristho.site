@@ -20,21 +20,21 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 
 ## Built with
 
-- Astro v4 + Starlight
-- Starlight Blog v0.4.0
-- Tailwind CSS
-- Neon DB or Supabase (PostgreSQL serverless) + Prisma
+- Astro v5 + Starlight
+- Starlight Blog v0.25.2
+- Tailwind CSS (not fully)
+- Neon DB (PostgreSQL serverless) + Prisma
 - Umami Analytics
 - Giscus Comments
 
 ## Analytics API
 
-| Endpoint                | Method | What it does                         |
-| :---------------------- | :----- | :----------------------------------- |
-| `/api/visitors`         | GET    | Current visitors count               |
-| `/api/pageviews/[slug]` | GET    | Page views for a post                |
-| `/api/reads/[slug]`     | GET    | Read completions for a post          |
-| `/api/reads/[slug]`     | POST   | Track when someone finishes reading  |
+| Endpoint                | Method | What it does                        |
+| :---------------------- | :----- | :---------------------------------- |
+| `/api/visitors`         | GET    | Current visitors count              |
+| `/api/pageviews/[slug]` | GET    | Page views for a post               |
+| `/api/reads/[slug]`     | GET    | Read completions for a post         |
+| `/api/reads/[slug]`     | POST   | Track when someone finishes reading |
 
 ## Project structure
 
@@ -80,13 +80,13 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 
 ## Commands
 
-| Command                 | Action                                      |
-| :---------------------- | :------------------------------------------ |
-| `pnpm install`          | Install dependencies                        |
-| `pnpm run dev`          | Start dev server at `localhost:4321`        |
-| `pnpm run build`        | Build for production                        |
-| `pnpm run preview`      | Preview production build                    |
-| `pnpm run astro ...`    | Run Astro CLI commands                      |
+| Command              | Action                               |
+| :------------------- | :----------------------------------- |
+| `pnpm install`       | Install dependencies                 |
+| `pnpm run dev`       | Start dev server at `localhost:4321` |
+| `pnpm run build`     | Build for production                 |
+| `pnpm run preview`   | Preview production build             |
+| `pnpm run astro ...` | Run Astro CLI commands               |
 
 ## Setup
 
@@ -126,7 +126,7 @@ UMAMI_PASSWORD=your-umami-password
 # Neon DB
 DATABASE_URL="postgresql://username:password@ep-xxx.<your best region>.<your provider>.neon.tech/neondb?sslmode=require&channel_binding=require&pgbouncer=true&connection_limit=1"
 
-or 
+or
 
 # Supabase
 DATABASE_URL="postgresql://postgres.xxx:password@aws-1-region.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&pool_timeout=20&connect_timeout=60"

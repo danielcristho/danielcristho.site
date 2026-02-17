@@ -4,8 +4,8 @@ date: 2024-12-25
 excerpt: Hi, in this post, we will use Libvirt with Terraform to provision 2 KVM locally and after that, we will Deploy Flask App & PostgreSQL using Ansible.
 description: Create VM using Terraform and Deploy Flask Using Ansible.
 tags:
-    - Ansible
-    - Docker
+  - Ansible
+  - Docker
 authors:
   - danielcristho
 cover:
@@ -516,7 +516,7 @@ $ vim main.yml
   ansible.builtin.get_url:
     url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
     dest: /usr/local/bin/docker-compose
-    mode: '755'
+    mode: "755"
 
 - name: Create Docker-Compose symlink
   ansible.builtin.command:
@@ -612,7 +612,7 @@ db_port: 5433
 db_user: admin
 db_password: dbPassword
 db_name: todo
-db_host:  192.168.122.15
+db_host: 192.168.122.15
 ```
 
 Next, create `config.py.j2` to `templates`. This file will replace the old config file from Flask project:
@@ -632,18 +632,18 @@ PROD_DB = f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}'
 Next, create `docker-compose.yml.j2` to templates. With this file we will create a container using `docker compose`:
 
 ```yml
-version: '3.7'
+version: "3.7"
 services:
   flask:
-     build: flask
-     container_name: app
-     restart: unless-stopped
-     ports:
-       - 5000:5000
-     environment:
-       - DEBUG=0
-     networks:
-       - flask_network
+    build: flask
+    container_name: app
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    environment:
+      - DEBUG=0
+    networks:
+      - flask_network
 
 networks:
   flask_network:
@@ -784,4 +784,4 @@ Finally we have created 2 VMs and deploy Flask Project with database.
 
 Thank you for reading this article. Feel free to leave a comment if you have any questions, suggestions, or feedback.
 
-*NB*: Project Repo: [danielcristho/that-i-write/terrafrom-ansible-flask](https://github.com/danielcristho/that-i-write/tree/main/terrafrom-ansible-flask)
+_NB_: Project Repo: [danielcristho/that-i-write/terrafrom-ansible-flask](https://github.com/danielcristho/that-i-write/tree/main/terrafrom-ansible-flask)

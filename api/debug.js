@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   // Check if debug is enabled via environment variable
-  if (process.env.ENABLE_DEBUG !== 'true') {
-    return res.status(404).json({ error: 'Debug endpoint disabled' });
+  if (process.env.ENABLE_DEBUG !== "true") {
+    return res.status(404).json({ error: "Debug endpoint disabled" });
   }
 
   try {
@@ -10,33 +10,32 @@ export default async function handler(req, res) {
     const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
     const username = process.env.UMAMI_USERNAME;
     const password = process.env.UMAMI_PASSWORD;
-    
+
     if (!umamiUrl || !websiteId || !username || !password) {
       return res.status(500).json({
-        error: 'Missing environment variables',
+        error: "Missing environment variables",
         config: {
           umamiUrl: !!umamiUrl,
           websiteId: !!websiteId,
           username: !!username,
-          password: !!password
-        }
+          password: !!password,
+        },
       });
     }
-    
+
     return res.status(200).json({
       success: true,
-      message: 'Environment variables configured',
+      message: "Environment variables configured",
       config: {
         umamiUrl,
         websiteId,
-        hasCredentials: !!username && !!password
-      }
+        hasCredentials: !!username && !!password,
+      },
     });
-    
   } catch (error) {
     return res.status(500).json({
-      error: 'Debug endpoint failed',
-      message: error.message
+      error: "Debug endpoint failed",
+      message: error.message,
     });
   }
 }

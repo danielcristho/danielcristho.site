@@ -4,15 +4,15 @@ date: 2025-04-30
 excerpt: Hi there! Flask is great for building APIs quickly. But turning your local project into a publicly accessible web service involves a few extra steps that aren’t always obvious.
 description: Deploy a Flask API with Gunicorn, Supervisor and serve it through Nginx.
 tags:
-    - Python
-    - Linux
+  - Python
+  - Linux
 authors:
   - danielcristho
 cover:
   alt: Cover image
   image: https://res.cloudinary.com/diunivf9n/image/upload/v1771052060/supervisor-nginx-py_jirxkd.png
 ---
-  
+
 ## Intro
 
 Hi there! Flask is great for building APIs quickly. But turning your local project into a publicly accessible web service involves a few extra steps that aren’t always obvious.
@@ -382,7 +382,7 @@ Here are a few quick troubleshooting tips:
 > 502 Bad Gateway: Usually means Gunicorn isn't running or the Nginx config has the wrong port.
 
 > Supervisor status shows STOPPED: Check your config file paths and the logs:
-`sudo tail -f /var/log/flask-api.err.log`
+> `sudo tail -f /var/log/flask-api.err.log`
 
 > Permission errors: Ensure all paths used by Supervisor and Gunicorn are accessible by the appropriate user.
 

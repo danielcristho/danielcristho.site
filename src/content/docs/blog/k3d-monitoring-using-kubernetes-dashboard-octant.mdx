@@ -4,13 +4,13 @@ date: 2025-01-03
 excerpt: In this blog, I will explore two popular monitoring tools for Kubernetes.
 description: Monitoring Kubernetes services using Kubernetes Dashboard or Octant.
 tags:
-    - Kubernetes
-    - Docker
+  - Kubernetes
+  - Docker
 authors:
   - danielcristho
 cover:
   alt: Cover image
-  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051616/k3d-k8s-octant_v4pnwp.png 
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1771051616/k3d-k8s-octant_v4pnwp.png
 ---
 
 K3D is a lightweight wrapper around k3s that allows you to run Kubernetes clusters inside Docker containers. While K3D is widely used for local development and testing, effective monitoring of services running on Kubernetes clusters is essential for debugging, performance tuning, and understanding resource usage.
@@ -83,9 +83,9 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
+  - kind: ServiceAccount
+    name: admin-user
+    namespace: kubernetes-dashboard
 ```
 
 Apply this configuration:
@@ -154,12 +154,12 @@ Finally, you can see the dashboard:
 
 ### Comparison: Kubernetes Dashboard vs Octant
 
-|Feature |Kubernetes Dashboard  | Octant|
-|--------|----------------------|-------|
-|Installation| Requires deployment on the cluster| Local installation|
-|Access| Via web proxy| Localhost|
-|Real-Time Updates|Partial (requires manual refresh)|Full real-time updates|
-|Ease of Setup|Moderate (requires token and RBAC)|Easy (just run the binary)|
+| Feature           | Kubernetes Dashboard               | Octant                     |
+| ----------------- | ---------------------------------- | -------------------------- |
+| Installation      | Requires deployment on the cluster | Local installation         |
+| Access            | Via web proxy                      | Localhost                  |
+| Real-Time Updates | Partial (requires manual refresh)  | Full real-time updates     |
+| Ease of Setup     | Moderate (requires token and RBAC) | Easy (just run the binary) |
 
 ### Conclusion
 

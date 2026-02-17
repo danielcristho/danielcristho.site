@@ -4,8 +4,8 @@ date: 2025-12-02
 description: Compare gzip and zstd to compress Docker image.
 excerpt: Docker images are already compressed when you push them to registries like Docker Hub, GHCR, AWS ECR, etc. So why would anyone compress an image again by using gzip or zstd?
 tags:
-    - Docker
-    - Linux
+  - Docker
+  - Linux
 authors:
   - danielcristho
 cover:
@@ -105,7 +105,6 @@ Digest: sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
 ...
 ```
 
-
 ```sh
 $ docker save alpine:latest -o alpine_latest.tar
 
@@ -150,6 +149,7 @@ $ time gzip -k jupyter_notebook.tar
 
 gzip -k jupyter_notebook.tar  238,83s user 3,56s system 99% cpu 4:03,16 total
 ```
+
 :::note
 -k → keep original file
 
@@ -337,10 +337,10 @@ After running all compression, transfer, decompression, and loading tests across
 > `zstd` consistently produces much smaller output files than `gzip`, especially on medium and large images.
 
 | Image            | Actual Size | gzip Size | zstd Size | Reduction (gzip) | Reduction (zstd) |
-| ---------------- | ------------- | --------- | --------- | ---------------- | ---------------- |
-| alpine:latest    | 8.3 MB        | 3.5 MB    | 3.1 MB    | ~57%             | ~62%             |
-| mariadb:10.6.18  | 384 MB        | 114 MB    | 65 MB     | ~70%             | ~83%             |
-| jupyter-notebook | 5.2 GB        | 1.7 GB    | 1.3 GB    | ~67%             | ~75%             |
+| ---------------- | ----------- | --------- | --------- | ---------------- | ---------------- |
+| alpine:latest    | 8.3 MB      | 3.5 MB    | 3.1 MB    | ~57%             | ~62%             |
+| mariadb:10.6.18  | 384 MB      | 114 MB    | 65 MB     | ~70%             | ~83%             |
+| jupyter-notebook | 5.2 GB      | 1.7 GB    | 1.3 GB    | ~67%             | ~75%             |
 
 > `zstd` gives around 20-50% better compression than gzip.
 
@@ -348,17 +348,17 @@ After running all compression, transfer, decompression, and loading tests across
 
 > `gzip`is faster than `zstd` at compression.
 
-| Image            | gzip (time) | zstd (time) | Notes               |
-| ---------------- | ----------- | ---------------- | -------------- |
-| alpine           | 0.45 s      | 3.7 s            | 8x slower      |
-| mariadb          | 17.9 s      | 90.8 s           | 5x slower      |
-| jupyter-notebook | 243 s       | 42 minutes       | **10x slower** |
+| Image            | gzip (time) | zstd (time) | Notes          |
+| ---------------- | ----------- | ----------- | -------------- |
+| alpine           | 0.45 s      | 3.7 s       | 8x slower      |
+| mariadb          | 17.9 s      | 90.8 s      | 5x slower      |
+| jupyter-notebook | 243 s       | 42 minutes  | **10x slower** |
 
 > `zstd` gives better compression but requires significantly more CPU.
 
 ##### Transfer Speed (via SCP)
 
-> Because `zstd` produces smaller files, transfer times are  2x faster. But on larger files, `zstd` can still lose to `gzip` depending on **CPU and disk performance**.
+> Because `zstd` produces smaller files, transfer times are 2x faster. But on larger files, `zstd` can still lose to `gzip` depending on **CPU and disk performance**.
 
 | Image            | gzip Transfer | zstd Transfer |
 | ---------------- | ------------- | ------------- |

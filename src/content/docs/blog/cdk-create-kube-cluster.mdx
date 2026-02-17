@@ -64,23 +64,23 @@ While AWS CDK supports multiple languages such as TypeScript and Go, the underly
 
 - **AWS account and configured AWS CLI**
 
-    An active AWS account with permissions to create EKS, VPC, IAM, and CloudFormation resources. Installed and configured with valid credentials (`aws configure`).
+  An active AWS account with permissions to create EKS, VPC, IAM, and CloudFormation resources. Installed and configured with valid credentials (`aws configure`).
 
 - **Python 3.10+**
 
-    Used for writing the AWS CDK application in this series.
+  Used for writing the AWS CDK application in this series.
 
 - **AWS CDK installed**
 
-    Installed globally via npm:
+  Installed globally via npm:
 
-    ```sh
-    $ npm install -g aws-cdk
-    ```
+  ```sh
+  $ npm install -g aws-cdk
+  ```
 
 - **kubectl installed**
 
-    Used to interact with the EKS cluster once it is created.
+  Used to interact with the EKS cluster once it is created.
 
 Notes
 
@@ -160,7 +160,7 @@ A placeholder for unit tests, which we’ll use in a later post.
 
 **1. Install Dependencies**
 
-Before writing any code, activate the Python virtual environment and install the dependencies. BTW, you need add this one to your `requirements.txt`:  `aws-cdk.lambda-layer-kubectl-v34`.
+Before writing any code, activate the Python virtual environment and install the dependencies. BTW, you need add this one to your `requirements.txt`: `aws-cdk.lambda-layer-kubectl-v34`.
 
 ```sh
 $ source .venv/bin/activate
@@ -220,9 +220,9 @@ class CdkEksStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        
+
         kubectl_layer = KubectlV32Layer(self, "KubectlLayer")
-        
+
         vpc = ec2.Vpc(
             self,
             "EksVpc",
@@ -322,15 +322,15 @@ class CdkEksStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        
+
         kubectl_layer = KubectlV32Layer(self, "KubectlLayer")
-        
+
         vpc = ec2.Vpc(
             self,
             "EksVpc",
             max_azs=2
         )
-        
+
         cluster = eks.Cluster(
             self,
             "EksCluster",
@@ -339,7 +339,7 @@ class CdkEksStack(Stack):
             default_capacity=0,
             kubectl_layer=kubectl_layer
         )
-        
+
         cluster.add_nodegroup_capacity(
             "ManagedNodeGroup",
             desired_size=2,
@@ -347,7 +347,7 @@ class CdkEksStack(Stack):
             max_size=3,
             instance_types=[ec2.InstanceType("t3.medium")],
         )
-        
+
         cluster.aws_auth.add_user_mapping(
             iam.User.from_user_name(
             self,

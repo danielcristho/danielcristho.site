@@ -4,8 +4,8 @@ date: 2024-12-28
 excerpt: In this post, I’ll show you how to start with K3D, an awesome tool for running lightweight Kubernetes clusters using K3S on Docker. I hope this post will help you quickly set up and understand K3D. Let’s dive in!
 description: Exploring K3S on Local Using K3D.
 tags:
-    - Kubernetes
-    - Docker
+  - Kubernetes
+  - Docker
 authors:
   - danielcristho
 cover:
@@ -51,49 +51,49 @@ Before starting with K3D, make sure you have installed the following prerequisit
 
 - **Docker**
 
-    Follow the Docker [installation guide](https://docs.docker.com/engine/install/) for your operating system. Alternatively, you can simplify the process with these commands:
+  Follow the Docker [installation guide](https://docs.docker.com/engine/install/) for your operating system. Alternatively, you can simplify the process with these commands:
 
-    ```bash
-    $ curl -fsSL https://get.docker.com -o get-docker.sh
-    $ sudo sh get-docker.sh
-    $ sudo usermod -aG docker $USER #add user to the docker group
-    $ docker version
+  ```bash
+  $ curl -fsSL https://get.docker.com -o get-docker.sh
+  $ sudo sh get-docker.sh
+  $ sudo usermod -aG docker $USER #add user to the docker group
+  $ docker version
 
-    Client: Docker Engine - Community
-    Version:           27.4.0
-    API version:       1.47
-    Go version:        go1.22.10
-    Git commit:        bde2b89
-    Built:             Sat Dec  7 10:38:40 2024
-    OS/Arch:           linux/amd64
-    Context:           default
-    ...
-    ```
+  Client: Docker Engine - Community
+  Version:           27.4.0
+  API version:       1.47
+  Go version:        go1.22.10
+  Git commit:        bde2b89
+  Built:             Sat Dec  7 10:38:40 2024
+  OS/Arch:           linux/amd64
+  Context:           default
+  ...
+  ```
 
 - **Kubectl**
 
-    The Kubernetes command-line tool, kubectl, is required to interact with your K3D cluster. Install it by following the instructions on the [official Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/). Or you can follow this step:
+  The Kubernetes command-line tool, kubectl, is required to interact with your K3D cluster. Install it by following the instructions on the [official Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/). Or you can follow this step:
 
-    ```bash
-    $ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    $ sudo install kubectl /usr/local/bin/kubectl
-    $ kubectl version --client
+  ```bash
+  $ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+  $ sudo install kubectl /usr/local/bin/kubectl
+  $ kubectl version --client
 
-    Client Version: v1.32.0
-    Kustomize Version: v5.5.0
-    ```
+  Client Version: v1.32.0
+  Kustomize Version: v5.5.0
+  ```
 
 - **K3D**
 
-    Install K3D by referring the [official documentation](https://k3d.io/stable/#installation) or using the following command:
+  Install K3D by referring the [official documentation](https://k3d.io/stable/#installation) or using the following command:
 
-    ```bash
-    $ curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-    $ k3d --version
+  ```bash
+  $ curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+  $ k3d --version
 
-    k3d version v5.7.4
-    k3s version v1.30.4-k3s1 (default)
-    ```
+  k3d version v5.7.4
+  k3s version v1.30.4-k3s1 (default)
+  ```
 
 NB: I use Ubuntu 22.04 to install the requirements.
 
@@ -239,15 +239,15 @@ servers: 1
 agents: 2
 image: rancher/k3s:v1.30.4-k3s1
 ports:
-- port: 30000-30100:30000-30100
-  nodeFilters:
-  - server:*
+  - port: 30000-30100:30000-30100
+    nodeFilters:
+      - server:*
 options:
   k3s:
     extraArgs:
-    - arg: --disable=traefik
-      nodeFilters:
-      - server:*
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*
 ```
 
 A K3D config to create a cluster named my-cluster with 1 server, 2 agents, K3S version v1.30.4-k3s1, host-to-server port mapping (30000-30100), and Traefik disabled on server nodes.

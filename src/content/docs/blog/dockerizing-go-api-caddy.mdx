@@ -31,7 +31,7 @@ cover:
     </li>
     <li>
       <a href="https://danielcristho.site/blog/caddy-log-comprehensive">
-      Exploring Logging in Caddy
+        Exploring Logging in Caddy
       </a>
     </li>
   </ol>
@@ -41,7 +41,7 @@ Hello! In this post, I'll walk through how to use Caddy as a reverse proxy and D
 
 Before we dive into the deployment steps, let's briefly discuss why Docker and Caddy are an excellent combination.
 
-**- Docker** is a containerization platform that packages your app and all its dependencies into an isolated unit. This guarantees that your app runs consistently everywhere, eliminating the classic *"**it works on my machine**"* problem.
+**- Docker** is a containerization platform that packages your app and all its dependencies into an isolated unit. This guarantees that your app runs consistently everywhere, eliminating the classic _"**it works on my machine**"_ problem.
 
 <img
   src="https://res.cloudinary.com/diunivf9n/image/upload/v1755401332/docker-meme_n1ca7c.png"
@@ -54,7 +54,7 @@ Before we dive into the deployment steps, let's briefly discuss why Docker and C
 
 **- Docker Compose** is a tool for defining and running multi-container Docker applications. Instead of starting each container manually, we can describe the entire stack in a single YAML file.
 
-**- Caddy**  is a modern reverse proxy and web server built using Go. Caddy is renowned for its ease of use, especially its **automatic HTTPS** feature. Its simple configuration makes it an ideal choice for serving our API.
+**- Caddy** is a modern reverse proxy and web server built using Go. Caddy is renowned for its ease of use, especially its **automatic HTTPS** feature. Its simple configuration makes it an ideal choice for serving our API.
 
 ## Requirements
 
@@ -376,18 +376,18 @@ services:
     build: .
     container_name: go-api
     expose:
-      - "8081"                 # Expose port internally (only visible to other services in this network)
+      - "8081" # Expose port internally (only visible to other services in this network)
     restart: unless-stopped
 
   caddy:
     image: caddy:2.10-alpine
     container_name: caddy
     ports:
-      - "8082:80"              # Map host port 8082 -> container port 80
+      - "8082:80" # Map host port 8082 -> container port 80
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
     restart: unless-stopped
-    depends_on: 
+    depends_on:
       - go-api
 ```
 
@@ -404,7 +404,7 @@ services:
 - Uses the official lightweight [caddy:2.10-alpine](https://hub.docker.com/_/caddy) image.
 
 - `ports: "8082:80"` -> exposes port 80 from the container to port 8082 on your host machine.
-So when you open `http://127.0.0.1:8082`, requests are routed through Caddy.
+  So when you open `http://127.0.0.1:8082`, requests are routed through Caddy.
 
 - The Caddyfile is mounted so you can configure reverse proxy behavior.
 
