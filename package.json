@@ -3,6 +3,7 @@
   "type": "module",
   "version": "1.2.0",
   "author": "Daniel Pepuho",
+  "license": "MIT",
   "packageManager": "pnpm@10.29.3",
   "engines": {
     "node": ">=18"
@@ -13,7 +14,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky",
+    "clean": "rm -rf dist .astro node_modules"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -38,6 +41,7 @@
   "devDependencies": {
     "@types/markdown-it": "^13.0.7",
     "@types/sanitize-html": "^2.9.5",
+    "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.7.2"
