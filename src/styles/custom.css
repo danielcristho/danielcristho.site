@@ -141,9 +141,14 @@ pre {
   list-style-type: decimal;
 }
 
-.sl-markdown-content li {
+/* .sl-markdown-content li {
   margin: 0.5rem 0;
+  display: list-item;
 }
+
+.sl-markdown-content li a {
+  display: inline !important;
+} */
 
 /* Paragraph Spacing */
 .sl-markdown-content p {

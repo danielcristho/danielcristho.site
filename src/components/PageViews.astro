@@ -8,11 +8,13 @@ const { slug, showIcon = true } = Astro.props;
 ---
 
 <div class="page-views">
-  {showIcon && (
-    <svg class="view-icon" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-    </svg>
-  )}
+  {
+    showIcon && (
+      <svg class="view-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+      </svg>
+    )
+  }
   <span class="view-count" data-slug={slug}>-</span>
   <span class="view-label">views</span>
 </div>
@@ -20,32 +22,29 @@ const { slug, showIcon = true } = Astro.props;
 <script>
   // Fetch page views for specific post
   async function updatePageViews() {
-    const viewElements = document.querySelectorAll('.view-count[data-slug]');
-    
+    const viewElements = document.querySelectorAll(".view-count[data-slug]");
+
     viewElements.forEach(async (element) => {
-      const slug = element.getAttribute('data-slug');
+      const slug = element.getAttribute("data-slug");
       if (!slug) return;
-      
+
       try {
-        // Fetch page views from API
         const response = await fetch(`/api/pageviews/${slug}`);
         const data = await response.json();
-        
+
         if (data.pageviews !== undefined) {
           element.textContent = data.pageviews.toLocaleString();
         } else {
-          element.textContent = '0';
+          element.textContent = "0";
         }
-        
       } catch (error) {
-        console.log('Could not fetch page views for', slug);
-        element.textContent = '0';
+        element.textContent = "0";
       }
     });
   }
 
   // Update on page load
-  if (document.querySelector('.view-count')) {
+  if (document.querySelector(".view-count")) {
     updatePageViews();
   }
 </script>

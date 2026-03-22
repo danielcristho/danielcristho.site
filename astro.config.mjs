@@ -6,6 +6,7 @@ import compress from "astro-compress";
 import { BLOG_URL, X_URL, GITHUB_URL, LINKEDIN_URL } from "./src/contants";
 
 export default defineConfig({
+  output: "static",
   site: BLOG_URL,
   integrations: [
     compress(),
@@ -60,10 +61,10 @@ export default defineConfig({
   vite: {
     define: {
       "process.env.PUBLIC_UMAMI_URL": JSON.stringify(
-        process.env.PUBLIC_UMAMI_URL,
+        process.env.PUBLIC_UMAMI_URL
       ),
       "process.env.PUBLIC_UMAMI_WEBSITE_ID": JSON.stringify(
-        process.env.PUBLIC_UMAMI_WEBSITE_ID,
+        process.env.PUBLIC_UMAMI_WEBSITE_ID
       ),
       "process.env.UMAMI_USERNAME": JSON.stringify(process.env.UMAMI_USERNAME),
       "process.env.UMAMI_PASSWORD": JSON.stringify(process.env.UMAMI_PASSWORD),
