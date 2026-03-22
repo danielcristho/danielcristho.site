@@ -1,66 +1,79 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
-import Default from 'starlight-blog/overrides/Sidebar.astro';
-import { getCollection } from 'astro:content';
-import { Calendar } from 'lucide-astro';
+import type { Props } from "@astrojs/starlight/props";
+import Default from "starlight-blog/overrides/Sidebar.astro";
+import { getCollection } from "astro:content";
+import { Calendar } from "lucide-astro";
 
 // Get all blog posts and group by year
-const allPosts = await getCollection('docs', ({ id }) => id.startsWith('blog/'));
+const allPosts = await getCollection("docs", ({ id }) =>
+  id.startsWith("blog/")
+);
 const postsByYear = allPosts
-  .filter(post => post.data.date) // Only posts with dates
+  .filter((post) => post.data.date) // Only posts with dates
   .sort((a, b) => {
     const dateA = new Date(a.data.date as string);
     const dateB = new Date(b.data.date as string);
     return dateB.getTime() - dateA.getTime();
   }) // Sort by date desc
-  .reduce((acc, post) => {
-    const year = new Date(post.data.date as string).getFullYear();
-    if (!acc[year]) {
-      acc[year] = [];
-    }
-    acc[year].push(post);
-    return acc;
-  }, {} as Record<number, typeof allPosts>);
+  .reduce(
+    (acc, post) => {
+      const year = new Date(post.data.date as string).getFullYear();
+      if (!acc[year]) {
+        acc[year] = [];
+      }
+      acc[year].push(post);
+      return acc;
+    },
+    {} as Record<number, typeof allPosts>
+  );
 
-const years = Object.keys(postsByYear).map(Number).sort((a, b) => b - a); // Sort years desc
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a); // Sort years desc
 ---
 
 <Default {...Astro.props}>
   <!-- Archive Section - Only show on blog pages -->
-  {Astro.url.pathname.startsWith('/blog') && (
-    <div class="sl-sidebar-group">
-      <details class="sl-sidebar-group" open>
-        <summary class="sl-sidebar-group-label">
-          <Calendar size={16} />
-          Archive
-        </summary>
-        <ul class="sl-sidebar-group-content">
-          {years.map(year => (
-            <li>
-              <details class="sl-sidebar-subgroup">
-                <summary class="sl-sidebar-subgroup-label">
-                  {year} ({postsByYear[year].length})
-                </summary>
-                <ul class="sl-sidebar-subgroup-content">
-                  {postsByYear[year].map(post => (
-                    <li>
-                      <a 
-                        href={`/${post.slug}/`}
-                        class="sl-sidebar-link"
-                        aria-current={Astro.url.pathname === `/${post.slug}/` ? 'page' : undefined}
-                      >
-                        <span class="sl-sidebar-link-text">
-                          {post.data.title}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </li>
-          ))}
-        </ul>
-      </details>
-    </div>
-  )}
+  {
+    Astro.url.pathname.startsWith("/blog") && (
+      <div class="sl-sidebar-group">
+        <details class="sl-sidebar-group" open>
+          <summary class="sl-sidebar-group-label">
+            <Calendar size={16} />
+            Archive
+          </summary>
+          <ul class="sl-sidebar-group-content">
+            {years.map((year) => (
+              <li>
+                <details class="sl-sidebar-subgroup">
+                  <summary class="sl-sidebar-subgroup-label">
+                    {year} ({postsByYear[year].length})
+                  </summary>
+                  <ul class="sl-sidebar-subgroup-content">
+                    {postsByYear[year].map((post) => (
+                      <li>
+                        <a
+                          href={`/${post.slug}/`}
+                          class="sl-sidebar-link"
+                          aria-current={
+                            Astro.url.pathname === `/${post.slug}/`
+                              ? "page"
+                              : undefined
+                          }
+                        >
+                          <span class="sl-sidebar-link-text">
+                            {post.data.title}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    )
+  }
 </Default>

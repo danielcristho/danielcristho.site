@@ -8,11 +8,13 @@ const { slug, showIcon = true } = Astro.props;
 ---
 
 <div class="total-reads">
-  {showIcon && (
-    <svg class="read-icon" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-    </svg>
-  )}
+  {
+    showIcon && (
+      <svg class="read-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+      </svg>
+    )
+  }
   <span class="read-count" data-slug={slug}>-</span>
   <span class="read-label">reads</span>
 </div>
@@ -20,26 +22,25 @@ const { slug, showIcon = true } = Astro.props;
 <script>
   // Fetch total reads for specific post
   async function updateTotalReads() {
-    const readElements = document.querySelectorAll('.read-count[data-slug]');
-    
+    const readElements = document.querySelectorAll(".read-count[data-slug]");
+
     readElements.forEach(async (element) => {
-      const slug = element.getAttribute('data-slug');
+      const slug = element.getAttribute("data-slug");
       if (!slug) return;
-      
+
       try {
         // Fetch read completion count from our API
         const response = await fetch(`/api/reads/${slug}`);
         const data = await response.json();
-        
+
         if (data.reads !== undefined) {
           element.textContent = data.reads.toLocaleString();
         } else {
-          element.textContent = '0';
+          element.textContent = "0";
         }
-        
       } catch (error) {
-        console.log('Could not fetch total reads for', slug);
-        element.textContent = '0';
+        console.log("Could not fetch total reads for", slug);
+        element.textContent = "0";
       }
     });
   }
@@ -47,45 +48,50 @@ const { slug, showIcon = true } = Astro.props;
   // Track read completion when user scrolls to bottom
   function trackReadCompletion() {
     let hasTrackedRead = false;
-    const slug = document.querySelector('.read-count[data-slug]')?.getAttribute('data-slug');
-    
+    const slug = document
+      .querySelector(".read-count[data-slug]")
+      ?.getAttribute("data-slug");
+
     if (!slug) return;
-    
+
     function checkScrollPosition() {
       if (hasTrackedRead) return;
-      
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      
+
       // Consider "read" when user scrolls to 80% of the article
       const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
-      
+
       if (scrollPercentage >= 0.8) {
         hasTrackedRead = true;
-        
+
         // Send read completion event to our API
         fetch(`/api/reads/${slug}`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-          }
-        }).then(() => {
-          console.log('Read completion tracked for:', slug);
-        }).catch((error) => {
-          console.log('Failed to track read completion:', error);
-        });
-        
+            "Content-Type": "application/json",
+          },
+        })
+          .then(() => {
+            console.log("Read completion tracked for:", slug);
+          })
+          .catch((error) => {
+            console.log("Failed to track read completion:", error);
+          });
+
         // Remove scroll listener to prevent multiple triggers
-        window.removeEventListener('scroll', checkScrollPosition);
+        window.removeEventListener("scroll", checkScrollPosition);
       }
     }
-    
-    window.addEventListener('scroll', checkScrollPosition);
+
+    window.addEventListener("scroll", checkScrollPosition);
   }
 
   // Initialize on page load
-  if (document.querySelector('.read-count')) {
+  if (document.querySelector(".read-count")) {
     updateTotalReads();
     trackReadCompletion();
   }

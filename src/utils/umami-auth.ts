@@ -37,7 +37,7 @@ export async function getUmamiAuthToken(): Promise<string | null> {
       console.error(
         "Failed to authenticate with Umami:",
         response.status,
-        errorText,
+        errorText
       );
       return null;
     }
@@ -68,7 +68,7 @@ export function clearAuthToken(): void {
 
 export async function makeUmamiRequest(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<Response | null> {
   const token = await getUmamiAuthToken();
   if (!token) {

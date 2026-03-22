@@ -11,9 +11,9 @@ const { src, alt, width, height, class: className } = Astro.props;
 
 // Optimize Cloudinary URLs
 const optimizeSrc = (url: string) => {
-  if (url.includes('cloudinary.com')) {
+  if (url.includes("cloudinary.com")) {
     // Add auto format and quality optimization
-    return url.replace('/upload/', '/upload/f_auto,q_auto,w_auto,dpr_auto/');
+    return url.replace("/upload/", "/upload/f_auto,q_auto,w_auto,dpr_auto/");
   }
   return url;
 };

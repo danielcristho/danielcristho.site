@@ -1,7 +1,7 @@
 ---
 import Button from "../components/cv/Button.astro";
 import XIcon from "../components/cv/icons/X.astro";
-import { Globe, Mail, Github, Linkedin} from "lucide-astro";
+import { Globe, Mail, Github, Linkedin } from "lucide-astro";
 import { RESUME_DATA } from "../resume-data";
 
 import "../components/cv/globals.css";
@@ -34,7 +34,7 @@ const ogImage = "/og/cv.png?v=1";
 <meta property="twitter:image" content={ogImage} />
 
 <main
-  class="container relative mx-auto scroll-my-12 overflow-auto p-4 print:p-12 md:p-16"
+  class="container relative mx-auto scroll-my-12 overflow-auto p-4 md:p-16 print:p-12"
 >
   <section class="mx-auto w-full max-w-2xl space-y-8 bg-white print:space-y-6">
     <div class="flex items-center justify-between">
@@ -110,7 +110,7 @@ const ogImage = "/og/cv.png?v=1";
 
                     <span class="inline-flex gap-x-1">
                       {work.badges.map((badge) => (
-                        <div class="align-middle text-xs inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold font-mono transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-nowrap border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/60">
+                        <div class="inline-flex items-center text-nowrap rounded-md border border-transparent bg-secondary px-2 py-0.5 align-middle font-mono text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                           {badge}
                         </div>
                       ))}
@@ -123,12 +123,12 @@ const ogImage = "/og/cv.png?v=1";
 
                 <h4 class="font-mono text-sm leading-none">{work.title}</h4>
               </div>
-              <div class="mt-2 text-xs text-pretty font-mono text-sm text-muted-foreground">
+              <div class="mt-2 text-pretty font-mono text-sm text-xs text-muted-foreground">
                 {work.descriptions.map((desc) => (
                   <ul>{desc}</ul>
                 ))}
               </div>
-              <div class="mt-1 text-xs text-pretty font-mono text-muted-foreground italic">
+              <div class="mt-1 text-pretty font-mono text-xs italic text-muted-foreground">
                 Technologies & Framework: {work.usedTechnologies.join(", ")}
               </div>
             </div>
@@ -151,7 +151,7 @@ const ogImage = "/og/cv.png?v=1";
                 </div>
               </div>
               <div
-                class="mt-2 text-xs text-pretty font-mono text-sm text-muted-foreground"
+                class="mt-2 text-pretty font-mono text-sm text-xs text-muted-foreground"
                 class="mt-2"
               >
                 {education.degree}
@@ -168,7 +168,7 @@ const ogImage = "/og/cv.png?v=1";
         {
           RESUME_DATA.skills.map((skill) => {
             return (
-              <div class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold font-mono transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-nowrap border-transparent bg-primary/80 text-primary-foreground hover:bg-primary/60">
+              <div class="inline-flex items-center text-nowrap rounded-md border border-transparent bg-primary/80 px-2 py-0.5 font-mono text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                 {skill}
               </div>
             );
@@ -180,7 +180,7 @@ const ogImage = "/og/cv.png?v=1";
     <section class="print-force-new-page scroll-mb-16">
       <h2 class="text-xl font-bold">Projects</h2>
       <div
-        class="-mx-3 grid grid-cols-1 gap-3 print:grid-cols-3 print:gap-2 md:grid-cols-2 lg:grid-cols-3"
+        class="-mx-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-2"
       >
         {
           RESUME_DATA.projects.map((project) => {
@@ -188,10 +188,10 @@ const ogImage = "/og/cv.png?v=1";
             const link = "link" in project ? project.link.href : undefined;
 
             return (
-              <div class="rounded-lg bg-card text-card-foreground flex flex-col overflow-hidden border border-muted p-3">
+              <div class="flex flex-col overflow-hidden rounded-lg border border-muted bg-card p-3 text-card-foreground">
                 <div class="flex flex-col space-y-1.5">
                   <div class="space-y-1">
-                    <h3 class="text-2xl font-semibold leading-none tracking-tight text-base">
+                    <h3 class="text-2xl text-base font-semibold leading-none tracking-tight">
                       {link ? (
                         <a
                           href={link}
@@ -211,15 +211,15 @@ const ogImage = "/og/cv.png?v=1";
                         .replace("www.", "")
                         .replace("/", "")}
                     </div>
-                    <p class="text-sm text-muted-foreground font-mono text-xs">
+                    <p class="font-mono text-sm text-xs text-muted-foreground">
                       {description}
                     </p>
                   </div>
                 </div>
-                <div class="text-pretty font-mono text-sm text-muted-foreground mt-auto flex">
+                <div class="mt-auto flex text-pretty font-mono text-sm text-muted-foreground">
                   <div class="mt-2 flex flex-wrap gap-1">
                     {techStack.map((tag) => (
-                      <div class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold font-mono transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-nowrap px-1 py-0 text-[10px] border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/60">
+                      <div class="inline-flex items-center text-nowrap rounded-md border border-transparent bg-secondary px-1 px-2 py-0 py-0.5 font-mono text-[10px] text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                         {tag}
                       </div>
                     ))}

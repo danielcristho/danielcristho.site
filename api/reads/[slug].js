@@ -85,7 +85,7 @@ export default async function handler(req, res) {
 
       for (const url of urls) {
         const response = await makeUmamiRequest(
-          `/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&url=${url}&event=read_completed`,
+          `/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&url=${url}&event=read_completed`
         );
 
         if (response && response.ok) {
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
             event: "read_completed",
             timestamp: Date.now(),
           }),
-        },
+        }
       );
 
       if (!response || !response.ok) {

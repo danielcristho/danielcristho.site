@@ -94,7 +94,7 @@ export default async function handler(req, res) {
 
     // Total pageviews and create a reasonable estimation
     const response = await makeUmamiRequest(
-      `/api/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}`,
+      `/api/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}`
     );
 
     if (!response || !response.ok) {
@@ -112,7 +112,7 @@ export default async function handler(req, res) {
     if (data && data.pageviews && Array.isArray(data.pageviews)) {
       totalWebsiteViews = data.pageviews.reduce(
         (sum, item) => sum + (item.y || 0),
-        0,
+        0
       );
     }
 

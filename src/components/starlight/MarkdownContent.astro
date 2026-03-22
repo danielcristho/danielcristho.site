@@ -8,33 +8,40 @@ const cover = data.cover;
 
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 ---
-{cover && (
-  <div style="margin-bottom: 1.5rem;">
-    {cover.image && (
-      <img 
-        src={cover.image} 
-        alt={cover.alt} 
-        style="width:100%;border-radius:12px;" 
-        loading="eager"
-        decoding="async"
-      />
-    )}
-  </div>
-)}
+
+{
+  cover && (
+    <div style="margin-bottom: 1.5rem;">
+      {cover.image && (
+        <img
+          src={cover.image}
+          alt={cover.alt}
+          style="width:100%;border-radius:12px;"
+          loading="eager"
+          decoding="async"
+        />
+      )}
+    </div>
+  )
+}
 
 <Default {...Astro.props}>
   <slot />
 </Default>
 
-{isBlogPost && (
-  <div style="margin-top: 3rem;">
-    <Giscus />
-  </div>
-)}
+{
+  isBlogPost && (
+    <div style="margin-top: 3rem;">
+      <Giscus />
+    </div>
+  )
+}
 
 <script>
-  document.querySelectorAll('.sl-markdown-content img:not([loading])').forEach((img) => {
-    img.setAttribute('loading', 'lazy');
-    img.setAttribute('decoding', 'async');
-  });
+  document
+    .querySelectorAll(".sl-markdown-content img:not([loading])")
+    .forEach((img) => {
+      img.setAttribute("loading", "lazy");
+      img.setAttribute("decoding", "async");
+    });
 </script>

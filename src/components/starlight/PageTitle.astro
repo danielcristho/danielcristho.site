@@ -1,15 +1,15 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
-import Default from '@astrojs/starlight/components/PageTitle.astro';
-import PageViews from '../PageViews.astro';
-import ShareButtons from '../ShareButtons.astro';
+import type { Props } from "@astrojs/starlight/props";
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import PageViews from "../PageViews.astro";
+import ShareButtons from "../ShareButtons.astro";
 
 const { entry } = Astro.props;
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 
 // Extract blog slug for analytics
 const slug = entry?.slug || "";
-const blogSlug = slug.replace('blog/', '');
+const blogSlug = slug.replace("blog/", "");
 
 // Get title and full URL for share buttons
 const title = entry?.data?.title || "";
@@ -18,17 +18,19 @@ const fullUrl = Astro.url.href;
 
 <Default {...Astro.props} />
 
-{isBlogPost && (
-  <>
-    <div class="analytics-section">
-      <PageViews slug={blogSlug} /> 
-    </div>
-    
-    <div class="share-section">
-      <ShareButtons title={title} url={fullUrl} />
-    </div>
-  </>
-)}
+{
+  isBlogPost && (
+    <>
+      <div class="analytics-section">
+        <PageViews slug={blogSlug} />
+      </div>
+
+      <div class="share-section">
+        <ShareButtons title={title} url={fullUrl} />
+      </div>
+    </>
+  )
+}
 
 <style>
   .analytics-section {

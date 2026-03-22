@@ -1,5 +1,5 @@
 ---
-import { ANALYTICS } from '../contants';
+import { ANALYTICS } from "../contants";
 
 interface Props {
   shareUrl?: string;
@@ -9,26 +9,26 @@ interface Props {
 const { shareUrl, showRealtime = true } = Astro.props;
 ---
 
-{ANALYTICS.ENABLED && shareUrl && (
-  <div class="public-stats-container">
-    <h3>Blog Analytics</h3>
-    <iframe 
-      src={shareUrl}
-      width="100%" 
-      height="400"
-      frameborder="0"
-      title="Public Analytics"
-    ></iframe>
-    
-    {showRealtime && (
-      <div class="realtime-stats">
-        <p class="text-sm text-gray-600">
-          Real-time visitors and page views
-        </p>
-      </div>
-    )}
-  </div>
-)}
+{
+  ANALYTICS.ENABLED && shareUrl && (
+    <div class="public-stats-container">
+      <h3>Blog Analytics</h3>
+      <iframe
+        src={shareUrl}
+        width="100%"
+        height="400"
+        frameborder="0"
+        title="Public Analytics"
+      />
+
+      {showRealtime && (
+        <div class="realtime-stats">
+          <p class="text-sm text-gray-600">Real-time visitors and page views</p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 <style>
   .public-stats-container {
@@ -38,12 +38,12 @@ const { shareUrl, showRealtime = true } = Astro.props;
     border-radius: 8px;
     background: #f9fafb;
   }
-  
+
   .public-stats-container h3 {
     margin-bottom: 1rem;
     color: #374151;
   }
-  
+
   .realtime-stats {
     margin-top: 1rem;
     text-align: center;

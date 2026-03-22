@@ -1,0 +1,14 @@
+dist/
+.astro/
+.vercel/
+node_modules/
+pnpm-lock.yaml
+
+# MDX files with complex code blocks that prettier can't parse
+src/content/docs/blog/automating-flask-and-postgres-using-terraform-ansible.mdx
+src/content/docs/blog/caddy-log-comprehensive.mdx
+src/content/docs/blog/run-firefox-on-docker.mdx
+
+# Astro files with complex syntax
+src/content/docs/blog/index.astro
+src/components/TableOfContents.astro

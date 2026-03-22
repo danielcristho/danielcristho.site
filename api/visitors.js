@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     }
 
     const response = await makeUmamiRequest(
-      `/api/websites/${websiteId}/active`,
+      `/api/websites/${websiteId}/active`
     );
 
     if (!response || !response.ok) {
