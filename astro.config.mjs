@@ -3,11 +3,29 @@ import starlightBlog from "starlight-blog";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
 import compress from "astro-compress";
+import { visit } from "unist-util-visit";
 import { BLOG_URL, X_URL, GITHUB_URL, LINKEDIN_URL } from "./src/contants";
+
+// Auto-optimize Cloudinary images in markdown
+const rehypeCloudinaryOptimize = () => (tree) => {
+  visit(tree, "element", (node) => {
+    if (node.tagName === "img" && node.properties?.src) {
+      const src = node.properties.src;
+      if (src.includes("res.cloudinary.com") && !src.includes("/upload/f_")) {
+        node.properties.src = src.replace("/upload/", "/upload/f_auto,q_auto/");
+      }
+      node.properties.loading = "lazy";
+      node.properties.decoding = "async";
+    }
+  });
+};
 
 export default defineConfig({
   output: "static",
   site: BLOG_URL,
+  markdown: {
+    rehypePlugins: [rehypeCloudinaryOptimize],
+  },
   integrations: [
     compress(),
     tailwind(),
