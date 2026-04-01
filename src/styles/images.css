@@ -1,5 +1,5 @@
 :root {
-  --starlight-image-zoom-backdrop-bg: rgba(0, 0, 0, 0.75) !important;
+  --starlight-image-zoom-backdrop-bg: none;
 }
 
 dialog::backdrop {
@@ -32,7 +32,7 @@ img {
   margin-top: 0;
 }
 
-/* Clean styling for the image zoom button (since Tailwind preflight is off) */
+/* Styling for the image zoom button */
 .starlight-image-zoom-control {
   display: block !important;
   background: rgba(255, 255, 255, 0.9) !important;
@@ -40,10 +40,13 @@ img {
   border-radius: 4px !important;
   padding: 4px !important;
   cursor: pointer !important;
+  list-style-type: none !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  margin: 0 !important;
 }
 
 .starlight-image-zoom-control:hover {
   background: white !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
   transform: scale(1.1);
 }
