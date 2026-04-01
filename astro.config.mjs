@@ -115,7 +115,7 @@ export default defineConfig({
       },
       pagination: false,
     }),
-    tailwind(),
+    tailwind({ applyBaseStyles: false }),
     compress(),
   ],
   markdown: {
