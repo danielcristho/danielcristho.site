@@ -116,6 +116,13 @@ hero:
           color: #2e8555;
           font-size: 0.875rem;
           font-weight: 500;
+          transition: all 0.2s ease;
+        }
+        .tool-tag:hover {
+          background: rgba(46, 133, 85, 0.15);
+          border-color: rgba(46, 133, 85, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(46, 133, 85, 0.1);
         }
       </style>
     </div>
@@ -127,11 +134,10 @@ import SubscribeLinks from "../../components/SubscribeLinks.astro";
 <SubscribeLinks />
 
 <style is:global>{`
-  /* Standardize title appearance */
-  .hero h1,
-  .page-title,
-  h1,
-  [data-theme] .hero h1 {
+  /* SCOPE TO SPLASH PAGES ONLY */
+  [data-template="splash"] .hero h1,
+  [data-template="splash"] .page-title,
+  [data-template="splash"] [data-theme] .hero h1 {
     font-size: clamp(3rem, 10vw, 4.2rem) !important;
     font-weight: 700 !important;
     margin-bottom: 0.25rem !important;
@@ -142,7 +148,7 @@ import SubscribeLinks from "../../components/SubscribeLinks.astro";
     color: var(--sl-color-white) !important;
   }
   /* RESET Starlight constraints for the hero splash layout */
-  .hero {
+  [data-template="splash"] .hero {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -151,13 +157,13 @@ import SubscribeLinks from "../../components/SubscribeLinks.astro";
     padding-inline-start: 0 !important;
     margin-left: 0 !important;
   }
-  .hero > .hero-content {
+  [data-template="splash"] .hero > .hero-content {
     flex: 1;
     text-align: left !important;
     margin-left: 0 !important;
     padding-left: 0 !important;
   }
-  .tagline {
+  [data-template="splash"] .tagline {
     width: 100%;
     margin-top: 0 !important;
     margin-left: 0 !important;

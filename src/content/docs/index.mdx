@@ -121,6 +121,12 @@ hero:
           min-width: 140px;
           justify-content: center;
         }
+        .action-btn:hover {
+          background: rgba(46, 133, 85, 0.15);
+          border-color: rgba(46, 133, 85, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(46, 133, 85, 0.1);
+        }
         .social-section {
           margin-top: 3rem;
           margin-left: 0 !important;
@@ -163,11 +169,10 @@ import FloatingImages from "../../../src/components/FloatingImages.astro";
 <FloatingImages />
 
 <style is:global>{`
-  /* Standardize title appearance */
-  .hero h1,
-  .page-title,
-  h1,
-  [data-theme] .hero h1 {
+  /* SCOPE TO SPLASH PAGES ONLY to avoid breaking blog/search */
+  [data-template="splash"] .hero h1,
+  [data-template="splash"] .page-title,
+  [data-template="splash"] [data-theme] .hero h1 {
     font-size: clamp(3rem, 10vw, 4.2rem) !important;
     font-weight: 700 !important;
     margin-bottom: 0.25rem !important;
@@ -177,15 +182,15 @@ import FloatingImages from "../../../src/components/FloatingImages.astro";
     text-align: left !important;
     color: var(--sl-color-white) !important;
   }
-  /* RESET Starlight constraints */
-  .hero {
+  /* RESET Starlight constraints for Splash */
+  [data-template="splash"] .hero {
     display: flex;
     flex-direction: column;
     align-items: flex-start !important;
     text-align: left !important;
     padding-inline-start: 0 !important;
   }
-  .tagline {
+  [data-template="splash"] .tagline {
     width: 100%;
     margin-top: 0 !important;
     margin-left: 0 !important;
