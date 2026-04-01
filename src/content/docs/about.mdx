@@ -6,47 +6,41 @@ editUrl: false
 lastUpdated: false
 next: false
 prev: false
-
 hero:
   tagline: |
     <div class="about-hero">
       <div class="intro-text">
         Hello! I'm <span class="name-highlight">Daniel Pepuho</span> — you can call me <span class="name-highlight name-delay">Daniel</span>
       </div>
-
       <div class="about-content">
         <p>
           Born in 2002 in Nabire, Papua. I’ve been curious about how technology works since high school, especially when things break. That curiosity led me into infrastructure, cloud, and DevOps, and I write here when something finally clicks for me.
         </p>
-
         <p>
           Most posts are about infrastructure, cloud, and server-side topics etc, sometimes mixed with personal notes. I love contributing to open source from time to time on GitHub. 
           This blog isn't a portfolio, just a place where I write and grow. BTW, this blog runs on Astro and Starlight-Blog, if you're curious, you can see the project here: <a class="gh-badge" href="https://github.com/danielcristho/danielcristho.site"><img src="https://github.com/danielcristho.png" alt="danielcristho.site" />danielcristho.site</a>.
         </p>
-
         <p>
           Outside of tech, I enjoy reading about history and learning more about Papuan culture. I love to listen music especially hip-hop and R&B, where storytelling matters. J. Cole, Kanye West, Lauryn Hill, MURIA, Laze, and MF DOOM quietly shape how I think and write. 
           I love the vibez of island music and reggae. Black Brothers, FIJI, Onetox, Dezine, Dave B., Maoli, Common Kings, and many others. I grew up listening to their songs.
         </p>
-
         <p class="closing-note">
           This blog has my views, not anyone else’s.
         </p>
       </div>
-
       <style>
         .about-hero {
           text-align: left;
           width: 100%;
         }
-
         .intro-text {
           font-size: clamp(1.25rem, 3vw, 1.5rem);
           margin-bottom: 1.5rem;
           line-height: 1.4;
           font-weight: 500;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
         }
-
         .name-highlight {
           font-weight: bold;
           background: linear-gradient(45deg, #2e8555, #4ade80, #2e8555);
@@ -57,31 +51,27 @@ hero:
           animation: gradientShift 3s ease-in-out infinite;
           display: inline-block;
         }
-
         .name-delay { animation-delay: 1.5s; }
-
         @keyframes gradientShift {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
-
         .about-content {
           font-size: clamp(1rem, 2.5vw, 1.125rem);
           line-height: 1.6;
         }
-
         .about-content p {
           margin-bottom: 0.5rem !important;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
           text-align: left !important;
         }
-
         .closing-note {
           font-style: italic;
           opacity: 0.8;
           margin-top: 1rem !important;
           display: block;
         }
-
         .gh-badge {
           display: inline-flex;
           align-items: center;
@@ -98,31 +88,26 @@ hero:
           margin: 0 0.2em;
           transform: translateY(0.12rem);
         }
-
         .gh-badge img {
           border-radius: 9999px;
           width: 1.3em;
           height: 1.3em;
           margin-right: 0.4em;
         }
-
         .tools-section {
           margin-top: 2rem;
         }
-
         .tools-title {
           font-size: 1rem;
           margin-bottom: 1rem;
           color: var(--sl-color-gray-3);
         }
-
         .tools-grid {
           display: flex;
           gap: 0.75rem;
           flex-wrap: wrap;
           justify-content: flex-start;
         }
-
         .tool-tag {
           padding: 0.4rem 0.8rem;
           background: rgba(46, 133, 85, 0.08);
@@ -137,7 +122,6 @@ hero:
   image:
     file: ../../assets/me-homepage.jpeg
 ---
-
 import SubscribeLinks from "../../components/SubscribeLinks.astro";
 
 <SubscribeLinks />
@@ -151,12 +135,12 @@ import SubscribeLinks from "../../components/SubscribeLinks.astro";
     font-size: clamp(3rem, 10vw, 4.2rem) !important;
     font-weight: 700 !important;
     margin-bottom: 0.25rem !important;
+    margin-left: 0 !important;
     padding: 0 !important;
     line-height: 1.1 !important;
     text-align: left !important;
     color: var(--sl-color-white) !important;
   }
-
   /* RESET Starlight constraints for the hero splash layout */
   .hero {
     display: flex !important;
@@ -165,16 +149,18 @@ import SubscribeLinks from "../../components/SubscribeLinks.astro";
     justify-content: space-between !important;
     gap: 4rem !important;
     padding-inline-start: 0 !important;
+    margin-left: 0 !important;
   }
-
   .hero > .hero-content {
     flex: 1;
     text-align: left !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
-
   .tagline {
     width: 100%;
     margin-top: 0 !important;
-    padding: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
 `}</style>

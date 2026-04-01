@@ -6,19 +6,16 @@ editUrl: false
 lastUpdated: false
 next: false
 prev: false
-
 hero:
   tagline: |
     <div class="homepage-hero">
       <div class="welcome-text">
         <span class="welcome-title">Welcome</span>
       </div>
-
       <div class="hero-description">
         A space where I write what I've learned — mostly about infrastructure,
         cloud technologies, and server-side. Sometimes, I write personal notes too.
       </div>
-
       <div class="action-buttons">
         <a href="/blog" class="action-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -28,7 +25,6 @@ hero:
           </svg>
           See latest post
         </a>
-
         <a href="/about" class="action-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -37,7 +33,6 @@ hero:
           More about me
         </a>
       </div>
-
       <div class="social-section">
         <p class="social-label">Reach me on:</p>
         <div class="social-links">
@@ -68,18 +63,19 @@ hero:
           </a>
         </div>
       </div>
-
       <style>
         .homepage-hero {
           text-align: left;
           width: 100%;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
         }
-
         .welcome-text {
           margin-top: -0.5rem;
           margin-bottom: 1.5rem;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
         }
-
         .welcome-title {
           font-size: clamp(1.5rem, 4vw, 2.5rem);
           font-weight: bold;
@@ -91,12 +87,10 @@ hero:
           animation: gradientShift 3s ease-in-out infinite;
           display: inline-block;
         }
-
         @keyframes gradientShift {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
-
         .hero-description {
           font-size: clamp(1rem, 2.5vw, 1.125rem);
           line-height: 1.6;
@@ -104,7 +98,6 @@ hero:
           color: var(--sl-color-text);
           max-width: 600px;
         }
-
         .action-buttons {
           display: flex;
           gap: 0.75rem;
@@ -112,7 +105,6 @@ hero:
           justify-content: flex-start;
           margin-bottom: 2rem;
         }
-
         .action-btn {
           display: flex;
           align-items: center;
@@ -129,25 +121,27 @@ hero:
           min-width: 140px;
           justify-content: center;
         }
-
         .social-section {
           margin-top: 3rem;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
           text-align: left !important;
         }
-
         .social-label {
           font-size: 1rem;
           margin-bottom: 1rem !important;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
           color: var(--sl-color-text);
         }
-
         .social-links {
           display: flex;
           gap: 1rem;
           justify-content: flex-start !important;
+          margin-left: 0 !important;
+          padding-left: 0 !important;
           flex-wrap: wrap;
         }
-
         .social-link {
           color: #2e8555;
           display: inline-flex;
@@ -157,7 +151,6 @@ hero:
           background: rgba(46, 133, 85, 0.05);
           transition: all 0.2s ease;
         }
-
         .social-link:hover {
           background: rgba(46, 133, 85, 0.15);
           transform: translateY(-2px);
@@ -165,7 +158,6 @@ hero:
       </style>
     </div>
 ---
-
 import FloatingImages from "../../../src/components/FloatingImages.astro";
 
 <FloatingImages />
@@ -179,12 +171,12 @@ import FloatingImages from "../../../src/components/FloatingImages.astro";
     font-size: clamp(3rem, 10vw, 4.2rem) !important;
     font-weight: 700 !important;
     margin-bottom: 0.25rem !important;
+    margin-left: 0 !important;
     padding: 0 !important;
     line-height: 1.1 !important;
     text-align: left !important;
     color: var(--sl-color-white) !important;
   }
-
   /* RESET Starlight constraints */
   .hero {
     display: flex;
@@ -193,9 +185,10 @@ import FloatingImages from "../../../src/components/FloatingImages.astro";
     text-align: left !important;
     padding-inline-start: 0 !important;
   }
-
   .tagline {
     width: 100%;
     margin-top: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
 `}</style>
