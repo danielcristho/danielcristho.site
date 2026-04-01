@@ -1,5 +1,5 @@
 :root {
-  --starlight-image-zoom-backdrop-bg: none;
+  --starlight-image-zoom-backdrop-bg: rgba(0, 0, 0, 0.75) !important;
 }
 
 dialog::backdrop {
@@ -30,4 +30,20 @@ img {
 
 .code-clues-grid > * {
   margin-top: 0;
+}
+
+/* Clean styling for the image zoom button (since Tailwind preflight is off) */
+.starlight-image-zoom-control {
+  display: block !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.starlight-image-zoom-control:hover {
+  background: white !important;
+  transform: scale(1.1);
 }
