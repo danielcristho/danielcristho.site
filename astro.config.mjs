@@ -1,10 +1,21 @@
+import { rehypeHeadingIds } from "@astrojs/markdown-remark";
+import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 import starlightBlog from "starlight-blog";
-import starlight from "@astrojs/starlight";
+import starlightCoolerCredit from "starlight-cooler-credit";
+import starlightGiscus from "starlight-giscus";
+import starlightImageZoom from "starlight-image-zoom";
+import starlightLinksValidator from "starlight-links-validator";
+import starlightThemeRapide from "starlight-theme-rapide";
 import tailwind from "@astrojs/tailwind";
 import compress from "astro-compress";
 import { visit } from "unist-util-visit";
 import { BLOG_URL, X_URL, GITHUB_URL, LINKEDIN_URL } from "./src/contants";
+
+import rehypeAutolinkHeadings from "./src/plugins/rehype/autolink-headings";
+import rehypeGitHubBadgeLinks from "./src/plugins/rehype/github-badge-links";
+import remarkReplaceArrows from "./src/plugins/remark/replace-arrows";
+import expressiveCodeConfig from "./ec.config.mjs";
 
 // Auto-optimize Cloudinary images in markdown
 const rehypeCloudinaryOptimize = () => (tree) => {
@@ -20,25 +31,47 @@ const rehypeCloudinaryOptimize = () => (tree) => {
   });
 };
 
+// https://astro.build/config
 export default defineConfig({
   output: "static",
   site: BLOG_URL,
-  markdown: {
-    rehypePlugins: [rehypeCloudinaryOptimize],
+  image: {
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+    ],
   },
   integrations: [
-    compress(),
-    tailwind(),
     starlight({
+      title: "dc.",
       favicon: "/favicon.svg",
       lastUpdated: true,
-      title: "dc.",
       editLink: {
         baseUrl:
           "https://github.com/danielcristho/danielcristho.site/edit/main",
       },
-      customCss: ["./src/styles/custom.css", "./src/styles/hero-title.css"],
+      social: [
+        { icon: "linkedin", label: "LinkedIn", href: `${LINKEDIN_URL}` },
+        { icon: "github", label: "GitHub", href: `${GITHUB_URL}` },
+        { icon: "x.com", label: "X", href: `${X_URL}` },
+        { icon: "rss", label: "RSS", href: `${BLOG_URL}/rss.xml` },
+      ],
+      routeMiddleware: "./src/routeData.ts",
+      expressiveCode: expressiveCodeConfig,
       plugins: [
+        starlightLinksValidator({
+          exclude: ["/blog", "/blog/tags/*", "/blog/authors/*"],
+          errorOnRelativeLinks: false,
+          errorOnInvalidHashes: false,
+        }),
+        starlightImageZoom(),
+        starlightGiscus({
+          repo: "danielcristho/danielcristho.site",
+          repoId: "R_kgDOMo7Jhw",
+          category: "General",
+          categoryId: "DIC_kwDOMo7Jh84Cj76O",
+          lazy: true,
+        }),
         starlightBlog({
           pathname: "/blog",
           rss: true,
@@ -57,6 +90,14 @@ export default defineConfig({
           recentPostCount: 10,
           postCount: 5,
         }),
+        starlightCoolerCredit({
+          credit: {
+            title: "Credits",
+            description: "View all credits of this blog →",
+            href: `${BLOG_URL}/credits`,
+          },
+        }),
+        starlightThemeRapide(),
       ],
       components: {
         TableOfContents: "./src/components/TableOfContents.astro",
@@ -68,14 +109,24 @@ export default defineConfig({
         PageTitle: "./src/components/starlight/PageTitle.astro",
         MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
       },
-      social: [
-        { icon: "linkedin", label: "LinkedIn", href: `${LINKEDIN_URL}` },
-        { icon: "github", label: "GitHub", href: `${GITHUB_URL}` },
-        { icon: "x.com", label: "X", href: `${X_URL}` },
-        { icon: "rss", label: "RSS", href: `${BLOG_URL}/rss.xml` },
-      ],
+      customCss: ["./src/styles/index.css"],
+      markdown: {
+        headingLinks: false,
+      },
+      pagination: false,
     }),
+    tailwind(),
+    compress(),
   ],
+  markdown: {
+    remarkPlugins: [remarkReplaceArrows],
+    rehypePlugins: [
+      rehypeHeadingIds,
+      rehypeAutolinkHeadings,
+      rehypeGitHubBadgeLinks,
+      rehypeCloudinaryOptimize,
+    ],
+  },
   vite: {
     define: {
       "process.env.PUBLIC_UMAMI_URL": JSON.stringify(

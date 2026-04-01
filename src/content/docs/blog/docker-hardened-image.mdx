@@ -1,0 +1,87 @@
+---
+title: "Introduction to DHI"
+date: 2026-25-03
+description: An introduction to Docker Hardened Image (DHI)
+excerpt: xxx
+tags:
+  - Docker
+authors:
+  - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1774262831/docker-cover_xlz7ai.webp
+---
+
+Containers have become the backbone of modern application delivery. But as adoption grows, so does the attack surface. From vulnerable base images to supply chain risks, security is no longer optional—it’s foundational.
+
+This is where Docker Hardened Images (DHI) come into play.
+
+Docker Hardened Images are minimal, secure, and production-ready container images maintained directly by Docker. They are designed to reduce vulnerabilities from the start while simplifying compliance and integration into existing workflows. [Docker Hardened Images features](https://docs.docker.com/dhi/features)
+
+Instead of relying on generic base images and fixing issues later with scanners, DHI focuses on building a secure foundation from the beginning.
+
+## TL;DR
+
+- Secure, minimal, production-ready container images by Docker
+- Near-zero CVEs with continuous patching
+- Built-in SBOM, provenance (SLSA L3), and signed metadata
+- Drop-in replacement for existing Docker workflow
+- Available in Community, Select, and Enterprise tiers
+
+## What is DHI?
+
+Docker Hardened Images (DHI) are curated container images built with a strong focus on security, minimalism, and maintainability. They are designed to reduce the number of known vulnerabilities by limiting unnecessary packages and continuously applying patches.
+
+## Why does it matter?
+
+Most container vulnerabilities originate from base images. If your foundation is already risky, everything built on top inherits that risk. DHI minimizes this exposure early in the lifecycle.
+
+## When should you use it?
+
+- When building production-grade applications
+- When compliance and security are priorities
+- When you want to reduce dependency on reactive scanning
+
+## How does it work?
+
+DHI combines multiple security layers:
+
+### Security by Default
+
+- Near-zero known vulnerabilities (CVEs)
+- Non-root containers by default
+- Minimal packages → smaller attack surface
+
+### Full Transparency
+
+- Signed SBOM (Software Bill of Materials)
+- SLSA Level 3 build provenance
+- VEX (context about exploitability)
+- Cryptographic signatures for integrity
+
+### Hardened Supply Chain
+
+- Packages built from source by Docke
+- Signed and verified artifacts
+- Reduced risk from compromised public registries
+
+### Developer Friendly
+
+- Built on Alpine and Debian, requiring minimal changes to adopt. Full support `glibc` and `musl` available in both variants for broad application compatibility
+- Compatible with existing CI/CD
+- No major workflow changes required
+
+## Conclusion
+
+DHI represents a shift in how we think about container security.
+
+Instead of reacting to vulnerabilities after scanning, DHI helps prevent them from being introduced in the first place—starting from the base image.
+
+It doesn’t replace tools like Trivy or other scanners, but it significantly reduces the noise and risk those tools have to deal with.
+
+If you’re already building containers, adopting hardened images is one of the lowest-effort, highest-impact improvements you can make.
+
+Aight, thanks for taking the time read this post. Happy containerazation 🚀
+
+- [Docker Hardened Images](https://docs.docker.com/dhi)
+- [Docker Hardened Images Features](https://docs.docker.com/dhi/features)

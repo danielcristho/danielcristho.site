@@ -21,7 +21,7 @@ hero:
 
         <p>
           Most posts are about infrastructure, cloud, and server-side topics etc, sometimes mixed with personal notes. I love contributing to open source from time to time on GitHub. 
-          This blog isn't a portfolio, just a place where I write and grow. BTW, this blog runs on Astro and Starlight-Blog, if you're curious, you can see the project <a class="green-link" href="https://github.com/danielcristho/danielcristho.site"><u>here</u></a>.
+          This blog isn't a portfolio, just a place where I write and grow. BTW, this blog runs on Astro and Starlight-Blog, if you're curious, you can see the project here: <a class="gh-badge" href="https://github.com/danielcristho/danielcristho.site"><img src="https://github.com/danielcristho.png" alt="danielcristho.site" />danielcristho.site</a>.
         </p>
 
         <p>
@@ -32,20 +32,18 @@ hero:
         <p class="closing-note">
           This blog has my views, not anyone else’s.
         </p>
-      </div>
 
       <style>
         .about-hero {
-          text-align: center;
-          max-width: 100%;
-          margin: 0 auto;
-          padding: 0 1rem;
+          text-align: left;
+          width: 100%;
         }
 
         .intro-text {
-          font-size: clamp(1rem, 2.5vw, 1.15rem);
-          margin-bottom: 2rem;
-          line-height: 1.5;
+          font-size: clamp(1.25rem, 3vw, 1.5rem);
+          margin-bottom: 1.5rem;
+          line-height: 1.4;
+          font-weight: 500;
         }
 
         .name-highlight {
@@ -56,19 +54,10 @@ hero:
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           animation: gradientShift 3s ease-in-out infinite;
-          transition: all 0.3s ease;
-          cursor: default;
           display: inline-block;
         }
 
-        .name-delay {
-          animation-delay: 1.5s;
-        }
-
-        .name-highlight:hover {
-          transform: scale(1.05);
-          text-shadow: 0 0 20px rgba(46, 133, 85, 0.5);
-        }
+        .name-delay { animation-delay: 1.5s; }
 
         @keyframes gradientShift {
           0%, 100% { background-position: 0% 50%; }
@@ -76,46 +65,44 @@ hero:
         }
 
         .about-content {
-          font-size: clamp(0.875rem, 2vw, 1rem);
-          line-height: 1.65;
-          opacity: 0.9;
-          margin-bottom: 2.5rem;
-          max-width: 700px;
-          margin-left: auto;
-          margin-right: auto;
+          font-size: clamp(1rem, 2.5vw, 1.125rem);
+          line-height: 1.6;
         }
 
         .about-content p {
-          margin-bottom: 1.5rem;
+          margin-bottom: 0.5rem !important;
+          text-align: left !important;
         }
 
         .closing-note {
           font-style: italic;
           opacity: 0.8;
-          margin-top: 2rem !important;
+          margin-top: 1rem !important;
+          display: block;
         }
 
-        .green-link {
-          color: #2e8555;
+        .gh-badge {
+          display: inline-flex;
+          align-items: center;
+          background-color: var(--sl-color-accent-low);
+          border-radius: 9999px;
+          padding: 0em 0.5em 0 0.3em;
+          font-size: 0.9em;
+          text-decoration: none;
+          color: inherit;
           font-weight: 500;
-          text-decoration: underline;
-          text-decoration-thickness: 2px;
-          text-underline-offset: 3px;
-          text-decoration-color: #2e8555;
-          transition: all 0.2s ease;
+          transition: background-color 0.2s ease;
+          border: 1px solid var(--sl-color-accent-high);
+          vertical-align: baseline;
+          margin: 0 0.2em;
+          transform: translateY(0.12rem);
         }
 
-        .green-link:hover {
-          opacity: 0.8;
-          text-decoration-thickness: 2.5px;
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-          .green-link {
-            color: #4ade80;
-            text-decoration-color: #4ade80;
-          }
+        .gh-badge img {
+          border-radius: 9999px;
+          width: 1.3em;
+          height: 1.3em;
+          margin-right: 0.4em;
         }
 
         .tools-section {
@@ -123,91 +110,26 @@ hero:
         }
 
         .tools-title {
-          font-size: clamp(0.875rem, 2vw, 0.9rem);
-          line-height: 1.65;
-          opacity: 0.9;
-          margin-bottom: 1.5rem;
-          font-weight: normal;
+          font-size: 1rem;
+          margin-bottom: 1rem;
+          color: var(--sl-color-gray-3);
         }
 
         .tools-grid {
           display: flex;
-          gap: 0.6rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
-          justify-content: center;
-          max-width: 600px;
-          margin: 0 auto;
+          justify-content: flex-start;
         }
 
         .tool-tag {
-          padding: 0.5rem 1rem;
+          padding: 0.4rem 0.8rem;
           background: rgba(46, 133, 85, 0.08);
           border: 1px solid rgba(46, 133, 85, 0.25);
           border-radius: 0.4rem;
           color: #2e8555;
-          font-size: clamp(0.7rem, 1.5vw, 0.75rem);
+          font-size: 0.875rem;
           font-weight: 500;
-          transition: all 0.2s ease;
-          cursor: default;
-          display: inline-block;
-        }
-
-        .tool-tag:hover {
-          background: rgba(46, 133, 85, 0.15);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(46, 133, 85, 0.2);
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 640px) {
-          .about-hero {
-            padding: 0 0.5rem;
-          }
-
-          .about-content {
-            text-align: left;
-          }
-
-          .tools-grid {
-            justify-content: center;
-            gap: 0.5rem;
-          }
-
-          .tool-tag {
-            padding: 0.4rem 0.8rem;
-          }
-        }
-
-        /* Tablet optimizations */
-        @media (min-width: 641px) and (max-width: 1024px) {
-          .about-hero {
-            padding: 0 1.5rem;
-          }
-
-          .about-content {
-            max-width: 600px;
-          }
-        }
-
-        /* Desktop left alignment */
-        @media (min-width: 1025px) {
-          .about-hero {
-            text-align: left;
-            max-width: 1200px;
-            margin: 0;
-            padding: 0;
-          }
-
-          .about-content {
-            margin-left: 0;
-            margin-right: 0;
-            text-align: left;
-          }
-
-          .tools-grid {
-            justify-content: flex-start;
-            margin: 0;
-          }
         }
       </style>
     </div>
@@ -218,3 +140,40 @@ hero:
 import SubscribeLinks from "../../components/SubscribeLinks.astro";
 
 <SubscribeLinks />
+
+<style is:global>{`
+  /* Standardize title appearance */
+  .hero h1,
+  .page-title,
+  h1,
+  [data-theme] .hero h1 {
+    font-size: clamp(3rem, 10vw, 4.2rem) !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.25rem !important;
+    padding: 0 !important;
+    line-height: 1.1 !important;
+    text-align: left !important;
+    color: var(--sl-color-white) !important;
+  }
+
+  /* RESET Starlight constraints for the hero splash layout */
+  .hero {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4rem !important;
+    padding-inline-start: 0 !important;
+  }
+
+  .hero > .hero-content {
+    flex: 1;
+    text-align: left !important;
+  }
+
+  .tagline {
+    width: 100%;
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+`}</style>

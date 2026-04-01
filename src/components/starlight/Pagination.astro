@@ -1,0 +1,12 @@
+---
+import StarlightThemeRapidePagination from "starlight-theme-rapide/overrides/Pagination.astro";
+import StarlightCoolerCreditPagination from "starlight-cooler-credit/components/Pagination.astro";
+---
+
+<StarlightThemeRapidePagination {...Astro.props}>
+  <slot />
+</StarlightThemeRapidePagination>
+
+<StarlightCoolerCreditPagination {...Astro.props}>
+  <slot />
+</StarlightCoolerCreditPagination>
