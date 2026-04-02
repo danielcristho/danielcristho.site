@@ -3,13 +3,15 @@ import type { Props } from "@astrojs/starlight/props";
 import DefaultHead from "@astrojs/starlight/components/Head.astro";
 import { ANALYTICS } from "../contants";
 
-const defaultOgImage = "/og/default.png?v=2";
+const defaultOgImage = new URL("/og/default.png?v=2", Astro.site);
 
-// OG image URL
-const isBlogPost = Astro.props.slug?.startsWith("blog/");
-const ogImageUrl = isBlogPost
-  ? new URL(`/og/${Astro.props.slug}.png?v=2`, Astro.site)
-  : new URL(defaultOgImage, Astro.site);
+// OG image URL, get cover from Cloudinary
+const { entry } = Astro.props;
+const coverImage = entry?.data?.cover?.image;
+
+const ogImageUrl = coverImage
+  ? new URL(coverImage, Astro.site)
+  : defaultOgImage;
 ---
 
 <script is:inline>
