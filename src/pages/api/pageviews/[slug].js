@@ -8,9 +8,10 @@ async function getUmamiAuthToken() {
     return authToken;
   }
 
-  const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
-  const username = import.meta.env.UMAMI_USERNAME;
-  const password = import.meta.env.UMAMI_PASSWORD;
+  const umamiApiUrl =
+    process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
+  const username = process.env.UMAMI_USERNAME || import.meta.env.UMAMI_USERNAME;
+  const password = process.env.UMAMI_PASSWORD || import.meta.env.UMAMI_PASSWORD;
 
   if (!umamiApiUrl || !username || !password) return null;
 
@@ -50,11 +51,14 @@ export async function GET({ params, request }) {
     );
   }
 
-  const websiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
-  const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
+  const websiteId =
+    process.env.PUBLIC_UMAMI_WEBSITE_ID ||
+    import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+  const umamiApiUrl =
+    process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
 
   if (!websiteId || !umamiApiUrl) {
-    console.error("Umami config missing in .env");
+    console.error("Umami config missing in env");
     return new Response(
       JSON.stringify({ pageviews: 0, error: "Missing config" }),
       {

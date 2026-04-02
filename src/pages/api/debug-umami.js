@@ -12,9 +12,12 @@ async function getUmamiAuthToken() {
   }
 
   try {
-    const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
-    const username = import.meta.env.UMAMI_USERNAME;
-    const password = import.meta.env.UMAMI_PASSWORD;
+    const umamiApiUrl =
+      process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
+    const username =
+      process.env.UMAMI_USERNAME || import.meta.env.UMAMI_USERNAME;
+    const password =
+      process.env.UMAMI_PASSWORD || import.meta.env.UMAMI_PASSWORD;
 
     console.log("Umami Config Check:", {
       url: umamiApiUrl,
@@ -106,7 +109,9 @@ export async function GET({ request }) {
   }
 
   try {
-    const websiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+    const websiteId =
+      process.env.PUBLIC_UMAMI_WEBSITE_ID ||
+      import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
     console.log("Target Website ID:", websiteId);
 
     const endDate = new Date();
