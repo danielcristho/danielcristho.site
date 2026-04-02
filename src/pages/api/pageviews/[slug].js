@@ -8,9 +8,10 @@ async function getUmamiAuthToken() {
     return authToken;
   }
 
-  const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
-  const username = import.meta.env.UMAMI_USERNAME;
-  const password = import.meta.env.UMAMI_PASSWORD;
+  const umamiApiUrl =
+    process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
+  const username = process.env.UMAMI_USERNAME || import.meta.env.UMAMI_USERNAME;
+  const password = process.env.UMAMI_PASSWORD || import.meta.env.UMAMI_PASSWORD;
 
   if (!umamiApiUrl || !username || !password) return null;
 
@@ -50,11 +51,14 @@ export async function GET({ params, request }) {
     );
   }
 
-  const websiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
-  const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
+  const websiteId =
+    process.env.PUBLIC_UMAMI_WEBSITE_ID ||
+    import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+  const umamiApiUrl =
+    process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
 
   if (!websiteId || !umamiApiUrl) {
-    console.error("Umami config missing in .env");
+    console.error("Umami config missing in env");
     return new Response(
       JSON.stringify({ pageviews: 0, error: "Missing config" }),
       {
@@ -78,12 +82,13 @@ export async function GET({ params, request }) {
 
   // Normalize baseUrl: remove any /api/login or /api/ if present at the end
   const baseUrl = umamiApiUrl.replace(/\/(api\/)?(login)?\/?$/, "");
-  // Use All Time (0) to match dashboard totals precisely
-  const startAt = 0;
+  // Use a very old timestamp instead of 0 for better compatibility
+  const startAt = 1000;
   const endAt = Date.now();
+  let debugInfo = {};
 
   try {
-    // 1. Fetch site baseline
+    // Fetch site baseline
     const siteTotalUrl = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`;
     const siteResponse = await fetch(`${baseUrl}${siteTotalUrl}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -95,14 +100,13 @@ export async function GET({ params, request }) {
         typeof siteData.pageviews === "number"
           ? siteData.pageviews
           : siteData.pageviews?.value || 0;
-      console.log(`SITE TOTAL (All Time): ${siteTotal}`);
+      debugInfo.siteTotal = siteTotal;
     }
 
-    // 2. PARAMETER DISCOVERY: Find which parameter actually filters the site total
+    // PARAMETER DISCOVERY
     const testUrl = "/non-existent-canary-" + Date.now();
     const paramNames = ["url", "path", "pathname", "url=eq.", "path=eq."];
     let candidateParams = [];
-
     for (const p of paramNames) {
       try {
         let endpoint;
@@ -112,7 +116,6 @@ export async function GET({ params, request }) {
         } else {
           endpoint = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${p}=${encodeURIComponent(testUrl)}`;
         }
-
         const res = await fetch(`${baseUrl}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -122,24 +125,20 @@ export async function GET({ params, request }) {
             typeof data.pageviews === "number"
               ? data.pageviews
               : data.pageviews?.value || 0;
-          if (val < siteTotal || (siteTotal === 0 && val === 0)) {
+          if (val < siteTotal || (siteTotal === 0 && val === 0))
             candidateParams.push(p);
-          }
         }
       } catch (e) {}
     }
-
-    // Prefer eq. variants if they work, as they are more specific (especially for Supabase-based Umami)
     let workingParam =
       candidateParams.find((p) => p.includes("=")) || candidateParams[0];
-    console.log(`Working parameter for stats: ${workingParam || "NONE"}`);
+    debugInfo.workingParam = workingParam;
 
-    // 3. METRICS DISCOVERY: Try to get the list of unique visitors (most accurate for aggregate variants)
+    // METRICS DISCOVERY
     let metricsData = null;
     const metricEndpoints = [
       `/api/websites/${websiteId}/metrics?type=url&startAt=${startAt}&endAt=${endAt}&limit=5000`,
       `/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-      `/api/websites/${websiteId}/metrics/url?startAt=${startAt}&endAt=${endAt}&limit=5000`,
     ];
 
     for (const me of metricEndpoints) {
@@ -150,8 +149,8 @@ export async function GET({ params, request }) {
         if (mRes.ok) {
           const data = await mRes.json();
           if (Array.isArray(data) && data.length > 0) {
-            console.log(`Metrics Discovery Success: ${me}`);
             metricsData = data;
+            debugInfo.metricsFound = data.length;
             break;
           }
         }
@@ -159,52 +158,38 @@ export async function GET({ params, request }) {
     }
 
     const normalizedSlug = (slug || "").replace(/^\/|\/$/g, "").toLowerCase();
-    // 3. METRICS-BASED VISITOR SUMMATION (Targeting the stable 99 total)
     let finalPageviews = 0;
+
     if (metricsData) {
       metricsData.forEach((item) => {
-        // Split by ? and # to get the clean pathname
-        let itemUrl = (item.x || "")
-          .split(/[?#]/)[0]
-          .toLowerCase()
-          .trim()
-          .replace(/^https?:\/\/[^\/]+/, "");
-        if (!itemUrl.startsWith("/")) itemUrl = "/" + itemUrl;
-        if (itemUrl.length > 1) itemUrl = itemUrl.replace(/\/$/, "");
+        let path = (item.x || "").toLowerCase().trim();
+        path = path.split(/[?#]/)[0];
+        path = path.replace(/^https?:\/\/[^\/]+/, "");
+        if (!path.startsWith("/")) path = "/" + path;
+        path = path.replace(/\/$/, "");
+        if (path === "") path = "/";
 
         if (
-          itemUrl === `/blog/${normalizedSlug}` ||
-          itemUrl === `/${normalizedSlug}`
+          path === `/blog/${normalizedSlug}` ||
+          path === `/${normalizedSlug}`
         ) {
           finalPageviews += item.y || 0;
         }
       });
     }
 
-    // fallback: if metrics failed but we have a workingParam, use stats (Visitors column)
     if (finalPageviews === 0 && workingParam) {
-      const variants = [
-        `/blog/${normalizedSlug}`,
-        `/blog/${normalizedSlug}/`,
-        `/${normalizedSlug}`,
-        `/${normalizedSlug}/`,
-      ];
+      const variants = [`/blog/${normalizedSlug}`, `/${normalizedSlug}`];
       const results = await Promise.all(
         variants.map(async (u) => {
-          let p = workingParam;
-          let ep;
-          if (p.includes("=")) {
-            const parts = p.split("=");
-            ep = `/api/websites/${websiteId}/stats?startAt=0&endAt=${endAt}&${parts[0]}=${parts[1]}${encodeURIComponent(u)}`;
-          } else {
-            ep = `/api/websites/${websiteId}/stats?startAt=0&endAt=${endAt}&${p}=${encodeURIComponent(u)}`;
-          }
+          let ep = workingParam.includes("=")
+            ? `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam.split("=")[0]}=${workingParam.split("=")[1]}${encodeURIComponent(u)}`
+            : `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam}=${encodeURIComponent(u)}`;
           const res = await fetch(`${baseUrl}${ep}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (!res.ok) return 0;
           const d = await res.json();
-          // Use VISITORS for the 99 target
           return typeof d.visitors === "number"
             ? d.visitors
             : d.visitors?.value || 0;
@@ -215,23 +200,23 @@ export async function GET({ params, request }) {
       });
     }
 
-    console.log(`FINAL Pageviews (Visitors) for ${slug}: ${finalPageviews}`);
-
     return new Response(
       JSON.stringify({
         pageviews: finalPageviews,
         slug,
         success: true,
+        meta: debugInfo,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error(`Error fetching views for ${slug}:`, error);
     return new Response(
-      JSON.stringify({ pageviews: 0, error: "Internal error" }),
+      JSON.stringify({
+        pageviews: 0,
+        error: error.message,
+        hint: "Check Vercel logs and Umami credentials",
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },

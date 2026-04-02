@@ -12,25 +12,20 @@ async function getUmamiAuthToken() {
   }
 
   try {
-    const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
-    const username = import.meta.env.UMAMI_USERNAME;
-    const password = import.meta.env.UMAMI_PASSWORD;
-
-    console.log("Umami Config Check:", {
-      url: umamiApiUrl,
-      hasUser: !!username,
-      hasPass: !!password,
-    });
+    const umamiApiUrl =
+      process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
+    const username =
+      process.env.UMAMI_USERNAME || import.meta.env.UMAMI_USERNAME;
+    const password =
+      process.env.UMAMI_PASSWORD || import.meta.env.UMAMI_PASSWORD;
 
     if (!umamiApiUrl || !username || !password) {
-      console.error("Missing Umami configuration in .env");
+      console.error("Missing Umami configuration in env");
       return null;
     }
 
-    const baseUrl = umamiApiUrl.replace(/\/(login)?$/, "");
+    const baseUrl = umamiApiUrl.replace(/\/(api\/)?(login)?\/?$/, "");
     const loginUrl = `${baseUrl}/api/auth/login`;
-
-    console.log(`Authenticating at: ${loginUrl}`);
 
     const response = await fetch(loginUrl, {
       method: "POST",
@@ -38,24 +33,13 @@ async function getUmamiAuthToken() {
       body: JSON.stringify({ username, password }),
     });
 
-    console.log(`Login response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Login failed:", errorText);
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
-    if (!data.token) {
-      console.error("No token in login response");
-      return null;
-    }
+    if (!data.token) return null;
 
     authToken = data.token;
     tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
-
-    console.log("Umami authentication successful!");
     return authToken;
   } catch (error) {
     console.error("Umami authentication error:", error);
@@ -65,17 +49,12 @@ async function getUmamiAuthToken() {
 
 async function makeUmamiRequest(endpoint, options = {}) {
   const token = await getUmamiAuthToken();
-  if (!token) {
-    console.error("Request failed: No auth token");
-    return null;
-  }
+  if (!token) return null;
 
-  const umamiApiUrl = import.meta.env.PUBLIC_UMAMI_URL;
-  // Normalize baseUrl: remove any /api/login or /api/ if present at the end
+  const umamiApiUrl =
+    process.env.PUBLIC_UMAMI_URL || import.meta.env.PUBLIC_UMAMI_URL;
   const baseUrl = umamiApiUrl.replace(/\/(api\/)?(login)?\/?$/, "");
   const fullUrl = `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
-
-  console.log(`FETCHING: ${fullUrl}`);
 
   try {
     const response = await fetch(fullUrl, {
@@ -86,10 +65,8 @@ async function makeUmamiRequest(endpoint, options = {}) {
         ...options.headers,
       },
     });
-    console.log(`STATUS [${response.status}] for ${endpoint}`);
     return response;
   } catch (error) {
-    console.error(`FETCH ERROR for ${fullUrl}:`, error);
     return null;
   }
 }
@@ -106,12 +83,14 @@ export async function GET({ request }) {
   }
 
   try {
-    const websiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+    const websiteId =
+      process.env.PUBLIC_UMAMI_WEBSITE_ID ||
+      import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
     console.log("Target Website ID:", websiteId);
 
     const endDate = new Date();
-    // Use All Time (0) to match dashboard totals precisely
-    const startAtTs = 0;
+    // Use a compatible old timestamp instead of 0 to ensure All Time data
+    const startAtTs = 1000;
     const endAtTs = endDate.getTime();
 
     const results = {};

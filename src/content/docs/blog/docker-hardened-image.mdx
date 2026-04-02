@@ -90,12 +90,14 @@ You will be prompted for your **Docker ID** and **Personal Access Token (PAT)**.
 Implementation is as simple as updating a single line in your `Dockerfile`. Just replace your standard image prefix with `dhi.io/`.
 
 **Example: Standard Node.js Image**
+
 ```dockerfile
 FROM node:22-alpine
 # ... rest of your build
 ```
 
 **Example: Hardened Node.js Image**
+
 ```dockerfile
 FROM dhi.io/node:22
 # ... rest of your build
@@ -106,6 +108,7 @@ FROM dhi.io/node:22
 Since DHI images are designed to be extremely minimal—often lacking a shell (like `/bin/sh`) or a package manager (like `apt/apk`)—you should adopt the following strategies:
 
 ### Adopt Multi-Stage Builds
+
 DHI is a **runtime-optimized** image, not a build-time environment. Perform your compilation and dependency installation in a standard "builder" image, then copy only the necessary artifacts into the final DHI layer.
 
 ```dockerfile
@@ -124,7 +127,9 @@ CMD ["node", "dist/index.js"]
 ```
 
 ### Deep Debugging with "docker debug"
+
 Because DHI images lack an interactive shell, `docker exec -it` will not work by default. Instead, use the new [Docker Debug](https://docs.docker.com/reference/cli/docker/debug/) capability to inspect your running containers:
+
 ```bash
 docker debug <container_id>
 ```

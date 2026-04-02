@@ -20,17 +20,20 @@ const { slug, showIcon = true } = Astro.props;
 </div>
 
 <script>
-  // Fetch page views for specific post
   async function updatePageViews() {
     const viewElements = document.querySelectorAll(".view-count[data-slug]");
 
-    viewElements.forEach(async (element) => {
+    for (const element of viewElements) {
       const slug = element.getAttribute("data-slug");
-      if (!slug) return;
+      if (!slug) continue;
 
       try {
         const response = await fetch(`/api/pageviews/${slug}`);
         const data = await response.json();
+
+        if (data.error) {
+          console.warn(`[Umami] ${slug}: ${data.error}`);
+        }
 
         if (data.pageviews !== undefined) {
           element.textContent = data.pageviews.toLocaleString();
@@ -38,14 +41,20 @@ const { slug, showIcon = true } = Astro.props;
           element.textContent = "0";
         }
       } catch (error) {
+        console.error(`[Umami] Fetch error for ${slug}:`, error);
         element.textContent = "0";
       }
-    });
+    }
   }
 
-  // Update on page load
-  if (document.querySelector(".view-count")) {
+  // Update on initial load and every navigation (View Transitions)
+  document.addEventListener("astro:page-load", updatePageViews);
+
+  // Initial check (non-transition load)
+  if (document.readyState === "complete") {
     updatePageViews();
+  } else {
+    window.addEventListener("load", updatePageViews);
   }
 </script>
 
