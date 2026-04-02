@@ -82,9 +82,10 @@ export async function GET({ params, request }) {
 
   // Normalize baseUrl: remove any /api/login or /api/ if present at the end
   const baseUrl = umamiApiUrl.replace(/\/(api\/)?(login)?\/?$/, "");
-  // Use All Time (0) to match dashboard totals precisely
-  const startAt = 0;
+  // Use a very old timestamp instead of 0 for better compatibility
+  const startAt = 1000;
   const endAt = Date.now();
+  let debugInfo = {};
 
   try {
     // Fetch site baseline
@@ -99,13 +100,13 @@ export async function GET({ params, request }) {
         typeof siteData.pageviews === "number"
           ? siteData.pageviews
           : siteData.pageviews?.value || 0;
-      console.log(`SITE TOTAL (All Time): ${siteTotal}`);
+      debugInfo.siteTotal = siteTotal;
     }
 
+    // PARAMETER DISCOVERY
     const testUrl = "/non-existent-canary-" + Date.now();
     const paramNames = ["url", "path", "pathname", "url=eq.", "path=eq."];
     let candidateParams = [];
-
     for (const p of paramNames) {
       try {
         let endpoint;
@@ -115,7 +116,6 @@ export async function GET({ params, request }) {
         } else {
           endpoint = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${p}=${encodeURIComponent(testUrl)}`;
         }
-
         const res = await fetch(`${baseUrl}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -125,22 +125,20 @@ export async function GET({ params, request }) {
             typeof data.pageviews === "number"
               ? data.pageviews
               : data.pageviews?.value || 0;
-          if (val < siteTotal || (siteTotal === 0 && val === 0)) {
+          if (val < siteTotal || (siteTotal === 0 && val === 0))
             candidateParams.push(p);
-          }
         }
       } catch (e) {}
     }
-
     let workingParam =
       candidateParams.find((p) => p.includes("=")) || candidateParams[0];
-    console.log(`Working parameter for stats: ${workingParam || "NONE"}`);
+    debugInfo.workingParam = workingParam;
 
+    // METRICS DISCOVERY
     let metricsData = null;
     const metricEndpoints = [
       `/api/websites/${websiteId}/metrics?type=url&startAt=${startAt}&endAt=${endAt}&limit=5000`,
       `/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-      `/api/websites/${websiteId}/metrics/url?startAt=${startAt}&endAt=${endAt}&limit=5000`,
     ];
 
     for (const me of metricEndpoints) {
@@ -151,8 +149,8 @@ export async function GET({ params, request }) {
         if (mRes.ok) {
           const data = await mRes.json();
           if (Array.isArray(data) && data.length > 0) {
-            console.log(`Metrics Discovery Success: ${me}`);
             metricsData = data;
+            debugInfo.metricsFound = data.length;
             break;
           }
         }
@@ -164,41 +162,29 @@ export async function GET({ params, request }) {
 
     if (metricsData) {
       metricsData.forEach((item) => {
-        // Robust Path Extraction: Remove domain, protocol, query, and hash
         let path = (item.x || "").toLowerCase().trim();
-        path = path.split(/[?#]/)[0]; // Remove query/hash
-        path = path.replace(/^https?:\/\/[^\/]+/, ""); // Remove protocol + domain
+        path = path.split(/[?#]/)[0];
+        path = path.replace(/^https?:\/\/[^\/]+/, "");
         if (!path.startsWith("/")) path = "/" + path;
-        path = path.replace(/\/$/, ""); // Remove trailing slash
+        path = path.replace(/\/$/, "");
         if (path === "") path = "/";
 
-        const target1 = `/blog/${normalizedSlug}`;
-        const target2 = `/${normalizedSlug}`;
-
-        if (path === target1 || path === target2) {
+        if (
+          path === `/blog/${normalizedSlug}` ||
+          path === `/${normalizedSlug}`
+        ) {
           finalPageviews += item.y || 0;
         }
       });
     }
 
-    // fallback: if metrics failed but we have a workingParam, use stats (Visitors column)
     if (finalPageviews === 0 && workingParam) {
-      const variants = [
-        `/blog/${normalizedSlug}`,
-        `/blog/${normalizedSlug}/`,
-        `/${normalizedSlug}`,
-        `/${normalizedSlug}/`,
-      ];
+      const variants = [`/blog/${normalizedSlug}`, `/${normalizedSlug}`];
       const results = await Promise.all(
         variants.map(async (u) => {
-          let p = workingParam;
-          let ep;
-          if (p.includes("=")) {
-            const parts = p.split("=");
-            ep = `/api/websites/${websiteId}/stats?startAt=0&endAt=${endAt}&${parts[0]}=${parts[1]}${encodeURIComponent(u)}`;
-          } else {
-            ep = `/api/websites/${websiteId}/stats?startAt=0&endAt=${endAt}&${p}=${encodeURIComponent(u)}`;
-          }
+          let ep = workingParam.includes("=")
+            ? `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam.split("=")[0]}=${workingParam.split("=")[1]}${encodeURIComponent(u)}`
+            : `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam}=${encodeURIComponent(u)}`;
           const res = await fetch(`${baseUrl}${ep}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -214,18 +200,14 @@ export async function GET({ params, request }) {
       });
     }
 
-    console.log(`FINAL Pageviews (Visitors) for ${slug}: ${finalPageviews}`);
-
     return new Response(
       JSON.stringify({
         pageviews: finalPageviews,
         slug,
         success: true,
+        meta: debugInfo,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error(`Error fetching views for ${slug}:`, error);

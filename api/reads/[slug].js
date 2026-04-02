@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         /\/(api\/)?(login)?\/?$/,
         ""
       );
-      const startAt = 0;
+      const startAt = 1000;
       const endAt = Date.now();
 
       if (!websiteId || !slug) {
@@ -86,14 +86,13 @@ export default async function handler(req, res) {
       const metricFormats = [
         `/api/websites/${websiteId}/metrics?type=url&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
         `/api/websites/${websiteId}/metrics?type=path&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-        `/api/websites/${websiteId}/metrics/url?event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
       ];
 
       for (const endpoint of metricFormats) {
         const mResp = await makeUmamiRequest(endpoint);
         if (mResp && mResp.ok) {
           const d = await mResp.json();
-          if (Array.isArray(d)) {
+          if (Array.isArray(d) && d.length > 0) {
             metrics = d;
             break;
           }
@@ -105,15 +104,17 @@ export default async function handler(req, res) {
 
       if (Array.isArray(metrics)) {
         metrics.forEach((item) => {
-          // Split by ? and # to get the clean pathname
-          let itemUrl = (item.x || "").split(/[?#]/)[0].toLowerCase().trim();
-          itemUrl = itemUrl.replace(/^https?:\/\/[^\/]+/, "");
-          if (!itemUrl.startsWith("/")) itemUrl = "/" + itemUrl;
-          if (itemUrl.length > 1) itemUrl = itemUrl.replace(/\/$/, "");
+          // Robust Path Extraction
+          let path = (item.x || "").toLowerCase().trim();
+          path = path.split(/[?#]/)[0];
+          path = path.replace(/^https?:\/\/[^\/]+/, "");
+          if (!path.startsWith("/")) path = "/" + path;
+          path = path.replace(/\/$/, "");
+          if (path === "") path = "/";
 
           if (
-            itemUrl === `/blog/${normalizedSlug}` ||
-            itemUrl === `/${normalizedSlug}`
+            path === `/blog/${normalizedSlug}` ||
+            path === `/${normalizedSlug}`
           ) {
             totalReads += item.y || 0;
           }
