@@ -1,8 +1,8 @@
 ---
 title: "Introduction to DHI"
-date: 2026-25-03
+date: 2026-03-04
 description: An introduction to Docker Hardened Image (DHI)
-excerpt: xxx
+excerpt: Docker Hardened Images are minimal, secure, and production-ready container images maintained directly by Docker. They are designed to reduce vulnerabilities from the start while simplifying compliance and integration into existing workflows.
 tags:
   - Docker
 authors:
@@ -14,7 +14,7 @@ cover:
 
 Containers have become the backbone of modern application delivery. But as adoption grows, so does the attack surface. From vulnerable base images to supply chain risks, security is no longer optional—it’s foundational.
 
-This is where Docker Hardened Images (DHI) come into play.
+This is where [Docker Hardened Images (DHI)](https://github.com/docker-hardened-images) come into play.
 
 Docker Hardened Images are minimal, secure, and production-ready container images maintained directly by Docker. They are designed to reduce vulnerabilities from the start while simplifying compliance and integration into existing workflows. [Docker Hardened Images features](https://docs.docker.com/dhi/features)
 
@@ -61,7 +61,7 @@ DHI combines multiple security layers:
 
 ### Hardened Supply Chain
 
-- Packages built from source by Docke
+- Packages built from source by Docker
 - Signed and verified artifacts
 - Reduced risk from compromised public registries
 
@@ -71,9 +71,67 @@ DHI combines multiple security layers:
 - Compatible with existing CI/CD
 - No major workflow changes required
 
+## How to Get Started?
+
+Using DHI doesn’t require additional software installation because it’s integrated directly into the Docker Engine. However, since it uses a specialized registry, you must first authenticate.
+
+### 1. Authenticate to the DHI Registry
+
+Open your terminal and run the login command for the official `dhi.io` registry:
+
+```bash
+docker login dhi.io
+```
+
+You will be prompted for your **Docker ID** and **Personal Access Token (PAT)**. Ensure your account has access to a Docker tier that supports DHI (Select or Enterprise tiers).
+
+### 2. Update your Dockerfile
+
+Implementation is as simple as updating a single line in your `Dockerfile`. Just replace your standard image prefix with `dhi.io/`.
+
+**Example: Standard Node.js Image**
+```dockerfile
+FROM node:22-alpine
+# ... rest of your build
+```
+
+**Example: Hardened Node.js Image**
+```dockerfile
+FROM dhi.io/node:22
+# ... rest of your build
+```
+
+## Best Practices: Implementation Strategies
+
+Since DHI images are designed to be extremely minimal—often lacking a shell (like `/bin/sh`) or a package manager (like `apt/apk`)—you should adopt the following strategies:
+
+### Adopt Multi-Stage Builds
+DHI is a **runtime-optimized** image, not a build-time environment. Perform your compilation and dependency installation in a standard "builder" image, then copy only the necessary artifacts into the final DHI layer.
+
+```dockerfile
+# Stage 1: Build (Standard Image)
+FROM node:22 AS builder
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
+
+# Stage 2: Runtime (Hardened Image)
+FROM dhi.io/node:22
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+# DHI runs as a non-root user by default
+CMD ["node", "dist/index.js"]
+```
+
+### Deep Debugging with "docker debug"
+Because DHI images lack an interactive shell, `docker exec -it` will not work by default. Instead, use the new [Docker Debug](https://docs.docker.com/reference/cli/docker/debug/) capability to inspect your running containers:
+```bash
+docker debug <container_id>
+```
+
 ## Conclusion
 
-DHI represents a shift in how we think about container security.
+[DHI](https://github.com/docker-hardened-images) represents a shift in how we think about container security.
 
 Instead of reacting to vulnerabilities after scanning, DHI helps prevent them from being introduced in the first place—starting from the base image.
 
