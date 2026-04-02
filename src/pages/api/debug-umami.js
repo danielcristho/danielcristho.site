@@ -89,8 +89,8 @@ export async function GET({ request }) {
     console.log("Target Website ID:", websiteId);
 
     const endDate = new Date();
-    // Use All Time (0) to match dashboard totals precisely
-    const startAtTs = 0;
+    // Use a compatible old timestamp instead of 0 to ensure All Time data
+    const startAtTs = 1000;
     const endAtTs = endDate.getTime();
 
     const results = {};
