@@ -3,20 +3,13 @@ import type { Props } from "@astrojs/starlight/props";
 import DefaultHead from "@astrojs/starlight/components/Head.astro";
 import { ANALYTICS } from "../contants";
 
-const getBlogPostSlug = (
-  articleSlug: string,
-  customImageFileNameWithExt = ""
-) => ({
-  [`blog/${articleSlug}`]: `/og/blog/${customImageFileNameWithExt ? customImageFileNameWithExt : articleSlug + ".png"}?v=1`,
-});
-const defaultOgImage = "/og/default.png?v=1";
+const defaultOgImage = "/og/default.png?v=2";
 
-const ogImages: Record<string, string> = {
-  ...getBlogPostSlug("exploring-k3s-on-docker-using-k3d"),
-  ...getBlogPostSlug("automating-flask-and-postgres-using-terraform-ansible"),
-};
-
-const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
+// OG image URL
+const isBlogPost = Astro.props.slug?.startsWith("blog/");
+const ogImageUrl = isBlogPost
+  ? new URL(`/og/${Astro.props.slug}.png?v=2`, Astro.site)
+  : new URL(defaultOgImage, Astro.site);
 ---
 
 <script is:inline>
@@ -24,8 +17,8 @@ const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
   document.documentElement.setAttribute("data-theme", "light");
 </script>
 
-<meta property="og:image" content={ogImage} />
-<meta property="twitter:image" content={ogImage} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="twitter:image" content={ogImageUrl} />
 <meta name="author" content="Daniel Pepuho" />
 <link
   rel="alternate"
