@@ -82,92 +82,46 @@ export async function GET({ params, request }) {
 
   // Normalize baseUrl: remove any /api/login or /api/ if present at the end
   const baseUrl = umamiApiUrl.replace(/\/(api\/)?(login)?\/?$/, "");
-  // Use a very old timestamp instead of 0 for better compatibility
   const startAt = 1000;
   const endAt = Date.now();
   let debugInfo = {};
 
   try {
-    // Fetch site baseline
-    const siteTotalUrl = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`;
-    const siteResponse = await fetch(`${baseUrl}${siteTotalUrl}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    let siteTotal = 0;
-    if (siteResponse.ok) {
-      const siteData = await siteResponse.json();
-      siteTotal =
-        typeof siteData.pageviews === "number"
-          ? siteData.pageviews
-          : siteData.pageviews?.value || 0;
-      debugInfo.siteTotal = siteTotal;
-    }
-
-    // PARAMETER DISCOVERY
-    const testUrl = "/non-existent-canary-" + Date.now();
-    const paramNames = ["url", "path", "pathname", "url=eq.", "path=eq."];
-    let candidateParams = [];
-    for (const p of paramNames) {
-      try {
-        let endpoint;
-        if (p.includes("=")) {
-          const parts = p.split("=");
-          endpoint = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${parts[0]}=${parts[1]}${encodeURIComponent(testUrl)}`;
-        } else {
-          endpoint = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${p}=${encodeURIComponent(testUrl)}`;
-        }
-        const res = await fetch(`${baseUrl}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const val =
-            typeof data.pageviews === "number"
-              ? data.pageviews
-              : data.pageviews?.value || 0;
-          if (val < siteTotal || (siteTotal === 0 && val === 0))
-            candidateParams.push(p);
-        }
-      } catch (e) {}
-    }
-    let workingParam =
-      candidateParams.find((p) => p.includes("=")) || candidateParams[0];
-    debugInfo.workingParam = workingParam;
-
-    // METRICS DISCOVERY
-    let metricsData = null;
-    const metricEndpoints = [
-      `/api/websites/${websiteId}/metrics?type=url&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-      `/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-    ];
-
-    for (const me of metricEndpoints) {
-      try {
-        const mRes = await fetch(`${baseUrl}${me}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (mRes.ok) {
-          const data = await mRes.json();
-          if (Array.isArray(data) && data.length > 0) {
-            metricsData = data;
-            debugInfo.metricsFound = data.length;
-            break;
-          }
-        }
-      } catch (e) {}
-    }
-
     const normalizedSlug = (slug || "").replace(/^\/|\/$/g, "").toLowerCase();
+    const targets = [`/blog/${normalizedSlug}`, `/${normalizedSlug}`];
+
+    // Do parallel Fetch
+    const [metricsRes, statsResults] = await Promise.all([
+      fetch(
+        `${baseUrl}/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}&limit=5000`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      ).then((r) => (r.ok ? r.json() : [])),
+
+      Promise.all(
+        targets.map(async (u) => {
+          const url = `${baseUrl}/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&path=eq.${encodeURIComponent(u)}`;
+          const r = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!r.ok) return 0;
+          const d = await r.json();
+          return typeof d.visitors === "number"
+            ? d.visitors
+            : d.visitors?.value || 0;
+        })
+      ),
+    ]);
+
     let finalPageviews = 0;
 
-    if (metricsData) {
-      metricsData.forEach((item) => {
-        let path = (item.x || "").toLowerCase().trim();
-        path = path.split(/[?#]/)[0];
+    if (Array.isArray(metricsRes) && metricsRes.length > 0) {
+      metricsRes.forEach((item) => {
+        let path = (item.x || "").toLowerCase().trim().split(/[?#]/)[0];
         path = path.replace(/^https?:\/\/[^\/]+/, "");
         if (!path.startsWith("/")) path = "/" + path;
-        path = path.replace(/\/$/, "");
-        if (path === "") path = "/";
+        path = path.replace(/\/$/, "") || "/";
 
         if (
           path === `/blog/${normalizedSlug}` ||
@@ -178,25 +132,9 @@ export async function GET({ params, request }) {
       });
     }
 
-    if (finalPageviews === 0 && workingParam) {
-      const variants = [`/blog/${normalizedSlug}`, `/${normalizedSlug}`];
-      const results = await Promise.all(
-        variants.map(async (u) => {
-          let ep = workingParam.includes("=")
-            ? `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam.split("=")[0]}=${workingParam.split("=")[1]}${encodeURIComponent(u)}`
-            : `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}&${workingParam}=${encodeURIComponent(u)}`;
-          const res = await fetch(`${baseUrl}${ep}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!res.ok) return 0;
-          const d = await res.json();
-          return typeof d.visitors === "number"
-            ? d.visitors
-            : d.visitors?.value || 0;
-        })
-      );
-      results.forEach((v) => {
-        if (v !== siteTotal) finalPageviews += v;
+    if (finalPageviews === 0) {
+      statsResults.forEach((v) => {
+        finalPageviews += v;
       });
     }
 
@@ -205,7 +143,6 @@ export async function GET({ params, request }) {
         pageviews: finalPageviews,
         slug,
         success: true,
-        meta: debugInfo,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );

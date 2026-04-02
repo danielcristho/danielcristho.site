@@ -74,43 +74,33 @@ export async function GET({ params }) {
   }
 
   try {
-    // Attempt to fetch metrics for events
-    const metricEndpoints = [
-      `/api/websites/${websiteId}/metrics?type=url&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-      `/api/websites/${websiteId}/metrics?type=path&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
-    ];
+    const normalizedSlug = (slug || "").replace(/^\/|\/$/g, "").toLowerCase();
 
-    let metrics = null;
-    for (const ep of metricEndpoints) {
-      const res = await makeUmamiRequest(ep);
-      if (res && res.ok) {
-        const d = await res.json();
-        if (Array.isArray(d) && d.length > 0) {
-          metrics = d;
-          break;
-        }
-      }
-    }
+    // Optimized Turbo Strategy: Parallel Fetch
+    const metricsDataList = await Promise.all([
+      makeUmamiRequest(
+        `/api/websites/${websiteId}/metrics?type=url&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`
+      ),
+      makeUmamiRequest(
+        `/api/websites/${websiteId}/metrics?type=path&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`
+      ),
+    ]).then((responses) =>
+      Promise.all(responses.map((res) => (res && res.ok ? res.json() : [])))
+    );
 
+    // Flatten and sum results
     let totalReads = 0;
-    const normalizedSlug = slug.replace(/^\/|\/$/g, "").toLowerCase();
+    metricsDataList.flat().forEach((item) => {
+      if (!item) return;
+      let path = (item.x || "").toLowerCase().trim().split(/[?#]/)[0];
+      path = path.replace(/^https?:\/\/[^\/]+/, "");
+      if (!path.startsWith("/")) path = "/" + path;
+      path = path.replace(/\/$/, "") || "/";
 
-    if (metrics) {
-      metrics.forEach((item) => {
-        let path = (item.x || "").toLowerCase().trim();
-        path = path.split(/[?#]/)[0];
-        path = path.replace(/^https?:\/\/[^\/]+/, "");
-        if (!path.startsWith("/")) path = "/" + path;
-        path = path.replace(/\/$/, "");
-
-        if (
-          path === `/blog/${normalizedSlug}` ||
-          path === `/${normalizedSlug}`
-        ) {
-          totalReads += item.y || 0;
-        }
-      });
-    }
+      if (path === `/blog/${normalizedSlug}` || path === `/${normalizedSlug}`) {
+        totalReads += item.y || 0;
+      }
+    });
 
     return new Response(JSON.stringify({ reads: totalReads, slug }), {
       status: 200,
