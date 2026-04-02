@@ -1,0 +1,64 @@
+/* Navigation - TOC and Pagination */
+
+/* Table of Contents */
+.right-sidebar nav a {
+  color: var(--sl-color-gray-4);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+}
+
+.right-sidebar nav a:hover {
+  color: #2e8555;
+  border-left-color: rgba(46, 133, 85, 0.3);
+}
+
+.right-sidebar nav a[aria-current="true"],
+.right-sidebar nav a.active {
+  color: #2e8555;
+  font-weight: 600;
+  border-left-color: #2e8555;
+  background: rgba(46, 133, 85, 0.05);
+}
+
+/* Pagination Links */
+@layer overrides {
+  .pagination-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-top: 2rem;
+  }
+
+  .pagination-links a {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem !important;
+    border: 2px solid #2e8555 !important;
+    border-radius: 0.5rem !important;
+    background: transparent !important;
+    color: #2e8555 !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .pagination-links a:hover {
+    background: rgba(46, 133, 85, 0.05) !important;
+    border-color: #246b43 !important;
+    transform: translateY(-2px);
+  }
+
+  .pagination-links a::after {
+    display: none !important;
+  }
+
+  .pagination-links a svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}

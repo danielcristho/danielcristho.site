@@ -1,0 +1,52 @@
+:root {
+  --starlight-image-zoom-backdrop-bg: none;
+}
+
+dialog::backdrop {
+  backdrop-filter: blur(10px) brightness(0.8);
+}
+
+img {
+  border-radius: 0.5rem;
+}
+
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-block: 3rem;
+}
+
+.album-grid > * {
+  margin-top: 0;
+}
+
+.code-clues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  margin-block: 3rem;
+}
+
+.code-clues-grid > * {
+  margin-top: 0;
+}
+
+/* Styling for the image zoom button */
+.starlight-image-zoom-control {
+  display: block !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  list-style-type: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  margin: 0 !important;
+}
+
+.starlight-image-zoom-control:hover {
+  background: white !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+  transform: scale(1.1);
+}

@@ -7,9 +7,14 @@ import ShareButtons from "../ShareButtons.astro";
 const { entry } = Astro.props;
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 
-// Extract blog slug for analytics
-const slug = entry?.slug || "";
-const blogSlug = slug.replace("blog/", "");
+// Extract blog slug reliably from the URL path for Astro v6
+// Example: /blog/my-post/ -> ["blog", "my-post"] -> "my-post"
+const pathParts = Astro.url.pathname.split("/").filter(Boolean);
+const blogSlug = pathParts.length > 0 ? pathParts[pathParts.length - 1] : "";
+
+console.log(
+  `[PageTitle] Rendering for pathname: ${Astro.url.pathname}, slug: ${blogSlug}`
+);
 
 // Get title and full URL for share buttons
 const title = entry?.data?.title || "";
@@ -19,7 +24,7 @@ const fullUrl = Astro.url.href;
 <Default {...Astro.props} />
 
 {
-  isBlogPost && (
+  isBlogPost && blogSlug && (
     <>
       <div class="analytics-section">
         <PageViews slug={blogSlug} />

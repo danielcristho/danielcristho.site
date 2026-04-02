@@ -2,12 +2,15 @@
 import Default from "starlight-blog/overrides/MarkdownContent.astro";
 const { content } = Astro.props;
 import Giscus from "../Giscus.astro";
+import ImageZoom from "starlight-image-zoom/components/ImageZoom.astro";
 
 const data = Astro.props?.data || {};
 const cover = data.cover;
 
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 ---
+
+<ImageZoom />
 
 {
   cover && (
