@@ -17,3 +17,14 @@
 starlight-theme-select {
   display: none !important;
 }
+
+/* Firefox-based Browser List Fix */
+@-moz-document url-prefix() {
+  .sl-markdown-content :is(ul, ol) li p {
+    display: inline !important;
+    margin: 0 !important;
+  }
+  .sl-markdown-content :is(ul, ol) li {
+    margin-bottom: 0.5rem !important;
+  }
+}
