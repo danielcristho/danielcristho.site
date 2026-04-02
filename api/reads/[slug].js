@@ -1,4 +1,3 @@
-// Shared authentication utility
 let authToken = null;
 let tokenExpiry = 0;
 
@@ -65,33 +64,60 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const websiteId = process.env.PUBLIC_UMAMI_WEBSITE_ID;
+      // Normalize baseUrl: remove any /api/login or /api/ if present at the end
+      const baseUrl = (process.env.PUBLIC_UMAMI_URL || "").replace(
+        /\/(api\/)?(login)?\/?$/,
+        ""
+      );
+      const startAt = 0;
+      const endAt = Date.now();
 
       if (!websiteId || !slug) {
         return res.status(500).json({ error: "Missing configuration" });
       }
 
-      // Calculate date range for last 30 days
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
+      const token = await getUmamiAuthToken();
+      if (!token) {
+        return res.status(500).json({ error: "Auth failed" });
+      }
 
-      const startAt = startDate.getTime();
-      const endAt = endDate.getTime();
+      // Try various metrics formats for events until one works
+      let metrics = null;
+      const metricFormats = [
+        `/api/websites/${websiteId}/metrics?type=url&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
+        `/api/websites/${websiteId}/metrics?type=path&event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
+        `/api/websites/${websiteId}/metrics/url?event=read_completed&startAt=${startAt}&endAt=${endAt}&limit=5000`,
+      ];
 
-      // Fetch read completion events from Umami API
-      // Try both with and without trailing slash
-      const urls = [`/blog/${slug}`, `/blog/${slug}/`];
-      let totalReads = 0;
-
-      for (const url of urls) {
-        const response = await makeUmamiRequest(
-          `/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&url=${url}&event=read_completed`
-        );
-
-        if (response && response.ok) {
-          const data = await response.json();
-          totalReads += data.events?.length || 0;
+      for (const endpoint of metricFormats) {
+        const mResp = await makeUmamiRequest(endpoint);
+        if (mResp && mResp.ok) {
+          const d = await mResp.json();
+          if (Array.isArray(d)) {
+            metrics = d;
+            break;
+          }
         }
+      }
+
+      let totalReads = 0;
+      const normalizedSlug = slug.replace(/^\/|\/$/g, "").toLowerCase();
+
+      if (Array.isArray(metrics)) {
+        metrics.forEach((item) => {
+          // Split by ? and # to get the clean pathname
+          let itemUrl = (item.x || "").split(/[?#]/)[0].toLowerCase().trim();
+          itemUrl = itemUrl.replace(/^https?:\/\/[^\/]+/, "");
+          if (!itemUrl.startsWith("/")) itemUrl = "/" + itemUrl;
+          if (itemUrl.length > 1) itemUrl = itemUrl.replace(/\/$/, "");
+
+          if (
+            itemUrl === `/blog/${normalizedSlug}` ||
+            itemUrl === `/${normalizedSlug}`
+          ) {
+            totalReads += item.y || 0;
+          }
+        });
       }
 
       return res.status(200).json({
