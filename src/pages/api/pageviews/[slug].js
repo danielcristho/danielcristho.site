@@ -87,7 +87,7 @@ export async function GET({ params, request }) {
   const endAt = Date.now();
 
   try {
-    // 1. Fetch site baseline
+    // Fetch site baseline
     const siteTotalUrl = `/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`;
     const siteResponse = await fetch(`${baseUrl}${siteTotalUrl}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -102,7 +102,6 @@ export async function GET({ params, request }) {
       console.log(`SITE TOTAL (All Time): ${siteTotal}`);
     }
 
-    // 2. PARAMETER DISCOVERY: Find which parameter actually filters the site total
     const testUrl = "/non-existent-canary-" + Date.now();
     const paramNames = ["url", "path", "pathname", "url=eq.", "path=eq."];
     let candidateParams = [];
@@ -133,12 +132,10 @@ export async function GET({ params, request }) {
       } catch (e) {}
     }
 
-    // Prefer eq. variants if they work, as they are more specific (especially for Supabase-based Umami)
     let workingParam =
       candidateParams.find((p) => p.includes("=")) || candidateParams[0];
     console.log(`Working parameter for stats: ${workingParam || "NONE"}`);
 
-    // 3. METRICS DISCOVERY: Try to get the list of unique visitors (most accurate for aggregate variants)
     let metricsData = null;
     const metricEndpoints = [
       `/api/websites/${websiteId}/metrics?type=url&startAt=${startAt}&endAt=${endAt}&limit=5000`,
@@ -163,7 +160,6 @@ export async function GET({ params, request }) {
     }
 
     const normalizedSlug = (slug || "").replace(/^\/|\/$/g, "").toLowerCase();
-    // 3. METRICS-BASED VISITOR SUMMATION (Targeting the stable 99 total)
     let finalPageviews = 0;
     if (metricsData) {
       metricsData.forEach((item) => {
@@ -185,7 +181,6 @@ export async function GET({ params, request }) {
       });
     }
 
-    // fallback: if metrics failed but we have a workingParam, use stats (Visitors column)
     if (finalPageviews === 0 && workingParam) {
       const variants = [
         `/blog/${normalizedSlug}`,
@@ -208,7 +203,6 @@ export async function GET({ params, request }) {
           });
           if (!res.ok) return 0;
           const d = await res.json();
-          // Use VISITORS for the 99 target
           return typeof d.visitors === "number"
             ? d.visitors
             : d.visitors?.value || 0;
