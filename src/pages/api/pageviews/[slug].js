@@ -161,26 +161,27 @@ export async function GET({ params, request }) {
 
     const normalizedSlug = (slug || "").replace(/^\/|\/$/g, "").toLowerCase();
     let finalPageviews = 0;
+
     if (metricsData) {
       metricsData.forEach((item) => {
-        // Split by ? and # to get the clean pathname
-        let itemUrl = (item.x || "")
-          .split(/[?#]/)[0]
-          .toLowerCase()
-          .trim()
-          .replace(/^https?:\/\/[^\/]+/, "");
-        if (!itemUrl.startsWith("/")) itemUrl = "/" + itemUrl;
-        if (itemUrl.length > 1) itemUrl = itemUrl.replace(/\/$/, "");
+        // Robust Path Extraction: Remove domain, protocol, query, and hash
+        let path = (item.x || "").toLowerCase().trim();
+        path = path.split(/[?#]/)[0]; // Remove query/hash
+        path = path.replace(/^https?:\/\/[^\/]+/, ""); // Remove protocol + domain
+        if (!path.startsWith("/")) path = "/" + path;
+        path = path.replace(/\/$/, ""); // Remove trailing slash
+        if (path === "") path = "/";
 
-        if (
-          itemUrl === `/blog/${normalizedSlug}` ||
-          itemUrl === `/${normalizedSlug}`
-        ) {
+        const target1 = `/blog/${normalizedSlug}`;
+        const target2 = `/${normalizedSlug}`;
+
+        if (path === target1 || path === target2) {
           finalPageviews += item.y || 0;
         }
       });
     }
 
+    // fallback: if metrics failed but we have a workingParam, use stats (Visitors column)
     if (finalPageviews === 0 && workingParam) {
       const variants = [
         `/blog/${normalizedSlug}`,
@@ -229,7 +230,11 @@ export async function GET({ params, request }) {
   } catch (error) {
     console.error(`Error fetching views for ${slug}:`, error);
     return new Response(
-      JSON.stringify({ pageviews: 0, error: "Internal error" }),
+      JSON.stringify({
+        pageviews: 0,
+        error: error.message,
+        hint: "Check Vercel logs and Umami credentials",
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
