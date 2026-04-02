@@ -19,8 +19,9 @@ const ogImageUrl = coverImage
   document.documentElement.setAttribute("data-theme", "light");
 </script>
 
-<meta property="og:image" content={ogImageUrl} />
-<meta property="twitter:image" content={ogImageUrl} />
+<meta property="og:image" content={ogImageUrl.href} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content={ogImageUrl.href} />
 <meta name="author" content="Daniel Pepuho" />
 <link
   rel="alternate"
