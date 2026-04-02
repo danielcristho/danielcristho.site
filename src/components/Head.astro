@@ -19,6 +19,11 @@ const ogImages: Record<string, string> = {
 const ogImage = ogImages[Astro.props.slug] ?? defaultOgImage;
 ---
 
+<script is:inline>
+  localStorage.setItem("starlight-theme", "light");
+  document.documentElement.setAttribute("data-theme", "light");
+</script>
+
 <meta property="og:image" content={ogImage} />
 <meta property="twitter:image" content={ogImage} />
 <meta name="author" content="Daniel Pepuho" />

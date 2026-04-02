@@ -8,3 +8,12 @@
 @import "./images.css" layer(blog);
 @import "./links.css" layer(blog);
 @import "./separators.css" layer(blog);
+
+:root,
+[data-theme="dark"] {
+  color-scheme: light !important;
+}
+
+starlight-theme-select {
+  display: none !important;
+}
