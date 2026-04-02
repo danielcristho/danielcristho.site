@@ -95,7 +95,7 @@ we will use the [libvirt provider](https://github.com/dmacvicar/terraform-provid
 
 Create `main.tf`, just specify the provider and version you want to use:
 
-```tf
+```tf title="main.tf"
 terraform {
   required_providers {
     libvirt = {
@@ -138,7 +138,7 @@ commands will detect it and remind you to do so if necessary.
 
 Now create our `variables.tf`. This `variables.tf` file defines inputs for the libvirt disk pool path, the Ubuntu 20.04 image URL as OS for the VMs , and a list of VM hostnames.
 
-```tf
+```tf title="variables.tf"
 variable "libvirt_disk_path" {
   description = "path for libvirt pool"
   default     = "default"
@@ -157,7 +157,7 @@ variable "vm_hostnames" {
 
 Let's update our `main.tf`:
 
-```tf
+```tf title="main.tf"
 resource "null_resource" "cache_image" {
   provisioner "local-exec" {
     command = "wget -O /tmp/ubuntu-20.04.qcow2 ${var.ubuntu_20_img_url}"
@@ -246,7 +246,7 @@ $ mkdir config/
 
 Then create our `config/cloud_init.yml`, just make sure that you configure your public ssh key for ssh access in the config:
 
-```yml
+```yml title="config/cloud_init.yml"
 #cloud-config
 runcmd:
   - sed -i '/PermitRootLogin/d' /etc/ssh/sshd_config
@@ -274,7 +274,7 @@ users:
 
 And then network config, in `config/network_config.yml`:
 
-```yml
+```yml title="config/network_config.yml"
 version: 2
 ethernets:
   ens3:
@@ -374,7 +374,7 @@ Now let's create the Ansible Playbook to deploy Flask & Postgresql on Docker. Fi
 $ mkdir ansible && cd ansible
 ```
 
-```bash
+```bash title="ansible.cfg"
 [defaults]
 inventory = hosts
 host_key_checking = True
@@ -384,7 +384,7 @@ collections = ansible.posix, community.general, community.postgresql
 
 Then create inventory file called `hosts`:
 
-```bash
+```bash title="hosts"
 [vm1]
 192.168.122.19 ansible_user=ubuntu
 
@@ -415,7 +415,7 @@ $ ansible -m ping all
 
 Now create `playbook.yml` and `roles`, this playbook will install and configure Docker, Flask and PostgreSQL:
 
-```bash
+```bash title="playbook.yml"
 ---
 - name: Deploy Flask
   hosts: vm1
@@ -450,7 +450,7 @@ $ mkdir docker/tasks
 $ vim main.yml
 ```
 
-```yml
+```yml title="main.yml"
 ---
 - name: Run update
   ansible.builtin.apt:
@@ -543,7 +543,7 @@ $ mkdir psql/tasks
 
 After that, in `vars`, create `main.yml`. These are variables used to set username, passwords, etc:
 
-```yml
+```yml title="main.yml"
 ---
 db_port: 5433
 db_user: admin
@@ -553,7 +553,7 @@ db_name: todo
 
 Next, we will create jinja file called `docker-compose.yml.j2`. With this file we will create postgresql container:
 
-```yml
+```yml title="docker-compose.yml.j2"
 version: '3.7'
 services:
   postgres:
@@ -579,7 +579,7 @@ volumes:
 
 Next, create `main.yml` to `tasks`. So we will copy `docker-compose.yml.j2` and run using `docker compose`:
 
-```yml
+```yml title="tasks/main.yml"
 ---
 - name: Add Postgresql Compose
   ansible.builtin.template:
@@ -606,7 +606,7 @@ $ mkdir flask/tasks
 
 Next, add `main.yml` to `vars`. This file refer to posgtresql variable before, with addition IP address of VM2(database VM):
 
-```yml
+```yml title="vars/main.yml"
 ---
 db_port: 5433
 db_user: admin
@@ -617,7 +617,7 @@ db_host: 192.168.122.15
 
 Next, create `config.py.j2` to `templates`. This file will replace the old config file from Flask project:
 
-```jinja
+```jinja title="templates/config.py.j2"
 DEV_DB = 'sqlite:///task.db'
 
 pg_user = "{{ db_user }}"
@@ -631,7 +631,7 @@ PROD_DB = f'postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}'
 
 Next, create `docker-compose.yml.j2` to templates. With this file we will create a container using `docker compose`:
 
-```yml
+```yml title="templates/docker-compose.yml.j2"
 version: "3.7"
 services:
   flask:
@@ -651,7 +651,7 @@ networks:
 
 Next, create `main.yml` in `tasks`. With this file we will clone [flask project](https://github.com/danielcristho/Flask_TODO/tree/master), add compose file, replace config.py and create new container using `docker compose`:
 
-```yml
+```yml title="tasks/main.yml"
 ---
 - name: Clone Flask project
   changed_when: false

@@ -69,7 +69,7 @@ Now let’s do some work and start defining our first Kubernetes workload using 
 
 We start by defining a new CDK stack class that accepts an existing EKS cluster as a parameter.
 
-```py
+```py title="running_first_workloads_stack.py"
 class RunningFirstWorkloadsStack(Stack):
 
     def __init__(
@@ -139,7 +139,7 @@ In this example, the Deployment is responsible for:
 
 - Managing multiple replicas for availability
 
-```py
+```py title="running_first_workloads_stack.py"
         # Caddy Deployment
         cluster.add_manifest(
             "CaddyDeployment",
@@ -212,7 +212,7 @@ To make the application actually usable, we define a **Service**, which gives ou
 
 In this example, we use a Service of type **LoadBalancer**, which is the simplest way to expose an application externally on AWS.
 
-```py
+```py title="running_first_workloads_stack.py"
         # Service to expose Caddy
         cluster.add_manifest(
             "CaddyService",
@@ -244,7 +244,7 @@ Once the Service is created, Kubernetes and AWS work together to expose the appl
 
 Before we dive deeper, here is the full code for `eks_stack.py`
 
-```py
+```py title="eks_stack.py"
 from aws_cdk import (
 Stack,
 aws_eks as eks,
@@ -299,7 +299,7 @@ class CdkEksStack(Stack):
 
 Also, the `running_first_workloads_stack.py`
 
-```py
+```py title="running_first_workloads_stack.py"
 from aws_cdk import (
 Stack,
 aws_eks as eks,
@@ -432,7 +432,7 @@ class RunningFirstWorkloadsStack(Stack):
 
 And the last one, `app.py`:
 
-```py
+```py title="app.py"
 #!/usr/bin/env python3
 import aws_cdk as cdk
 

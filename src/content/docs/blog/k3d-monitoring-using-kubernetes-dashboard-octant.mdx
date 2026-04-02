@@ -67,7 +67,7 @@ kubernetes-dashboard-56cf4b97c5-fg92n        1/1     Running   0          10m
 
 Then, create a service account and bind role, to access the dashboard, you need a service account with the proper permissions. Create a service account and cluster role binding using the following YAML:
 
-```yml
+```yml title="admin-user.yaml"
 apiVersion: v1
 kind: ServiceAccount
 metadata:

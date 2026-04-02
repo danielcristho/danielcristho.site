@@ -144,7 +144,7 @@ Now, create a new file `main.go` and add the following code:
 $ vim main.go
 ```
 
-```go
+```go title="main.go"
 package main
 
 import (
@@ -195,7 +195,7 @@ $ go get github.com/common-nighthawk/go-figure
 
 Now, modify `main.go` to generate an ASCII text response dynamically:
 
-```go
+```go title="main.go"
 package main
 
 import (
@@ -241,7 +241,7 @@ $ sudo vim /etc/supervisor/conf.d/go-api.conf
 
 Add the following configuration:
 
-```bash
+```bash title="go-api.conf"
 [program:go-api]
 process_name=%(program_name)s_%(process_num)02d
 directory=/var/www/go-api
@@ -334,7 +334,7 @@ Server started at :8080
 $ sudo vim /etc/nginx/sites-available/go-api
 ```
 
-```sh
+```sh title="go-api"
 server {
     server_name _;
 

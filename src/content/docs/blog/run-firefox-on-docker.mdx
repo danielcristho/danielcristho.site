@@ -42,7 +42,7 @@ Everything runs headlessly, there’s no physical display, but the combo of `Xvf
 
 ## 🐋 Dockerfile Overview
 
-```dockerfile
+```dockerfile title="Dockerfile"
 FROM alpine:edge
 
 RUN apk add --no-cache \
@@ -83,7 +83,7 @@ CMD ["supervisord", "-c", "/etc/supervisord.conf", "-n"]
 
 ## 📦 Docker Compose Setup
 
-```yml
+```yml title="docker-compose.yml"
 version: '3.8'
 services:
   vnc_firefox:
@@ -118,7 +118,7 @@ Everything is managed by `supervisord`, which runs:
 
 Example `supervisord.conf`:
 
-```sh
+```sh title="supervisord.conf"
 # Supervisor main config
 [supervisord]
 nodaemon=true

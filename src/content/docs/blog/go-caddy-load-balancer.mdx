@@ -77,7 +77,7 @@ Let's break down the files in our project.
 
 This is a simple Go HTTP server. It listens on port `8081` and responds to any request by printing its `hostname`. This is our primary tool for observing the load balancing behavior.
 
-```go
+```go title="main.go"
 package main
 
 import (
@@ -101,7 +101,7 @@ func main() {
 
 This `Dockerfile` builds our Go application into a lightweight, self-contained Docker image.
 
-```docker
+```docker title="Dockerfile"
 FROM golang:1.24 AS builder
 
 WORKDIR /go/src/app
@@ -126,7 +126,7 @@ CMD ["/app"]
 
 This file ties everything together. We define a service for our Caddy load balancer and three worker services.
 
-```yml
+```yml title="docker-compose.yml"
 version: "3.8"
 
 services:
@@ -164,7 +164,7 @@ services:
 
 This is where the magic happens! The `Caddyfile` is Caddy's configuration file. We'll define a **reverse proxy** that routes to our workers. The `lb_policy` directive is where we'll specify our load balancing algorithms.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy round_robin
@@ -186,7 +186,7 @@ This is the most common and simplest load balancing algorithm. Caddy distributes
 
 Modify your `caddy/Caddyfile` to use the `round_robin` policy.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy round_robin
@@ -238,7 +238,7 @@ You can also use this policy to gradually drain traffic from an old server or ra
 
 To use this policy, you need to add the weight to each server's address in the `Caddyfile`. For our example, let's give `worker_1` a higher weight of 3, while `worker_2` and `worker_3` each have a weight of 1. This means `worker_1` should handle three out of every five requests.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy weighted_round_robin 3 1 1
@@ -283,7 +283,7 @@ For example, if one of your servers gets a handful of complex, long-running requ
 
 Configuring this policy is simple. You just need to change the `lb_policy` directive in your Caddyfile.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy least_conn
@@ -303,7 +303,7 @@ To demonstrate the Least Connection algorithm, you'll need to modify your Go cod
 
 Open your `src/main.go` file and add a new handler that will simulate a task with a significant delay. This will act as our "long-running request."
 
-```go
+```go title="main.go"
 package main
 
 import (
@@ -379,7 +379,7 @@ The IP Hash load balancing algorithm is different from the previous ones because
 
 Configuring the IP Hash policy is straightforward. You simply need to replace the lb_policy directive in your Caddyfile with `ip_hash`.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy ip_hash
@@ -411,7 +411,7 @@ While it may seem less sophisticated than other algorithms, the Random policy is
 
 Configuring this policy is the easiest. Simply replace the `lb_policy` directive in your Caddyfile with `random`.
 
-```go
+```go title="Caddyfile"
 :80 {
     reverse_proxy  worker_1:8081 worker_2:8081 worker_3:8081 {
         lb_policy random

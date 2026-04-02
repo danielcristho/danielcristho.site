@@ -158,7 +158,7 @@ You’ll mostly see logs like:
 
 To make access logs enable JSON logging globally in the Caddyfile you can put `output stdout` like this.
 
-```json
+```json title="Caddyfile"
 {
     log {
         level INFO
@@ -260,7 +260,7 @@ Earlier, we saw that standard access logs don’t explicitly show which backend 
 
 By enabling debug mode, Caddy reveals how routing decisions are made internally.
 
-```json
+```json title="Caddyfile"
 {
     log {
         level DEBUG
@@ -330,7 +330,7 @@ Caddy allows you to control how logs are encoded, not just what gets logged. Thi
 
 Besides json, Caddy also provides a console encoder. It formats logs in a more friendly way while still preserving structure.
 
-```json
+```json title="Caddyfile"
 {
     log {
         level INFO
@@ -388,7 +388,7 @@ For example, you can:
 
 - normalize log levels
 
-```json
+```json title="Caddyfile"
 ...
 {
     log {
@@ -436,7 +436,7 @@ Access logs often include fields that are technically correct but not relevant, 
 
 If headers are not part of your debugging workflow, you can remove them:
 
-```json
+```json title="Caddyfile"
 ...
 log {
     format filter {
@@ -454,7 +454,7 @@ With the request field removed entirely, access logs become significantly smalle
 
 In other cases, it’s enough to remove only specific nested fields:
 
-```json
+```json title="Caddyfile"
 ...
 log {
     format filter {
@@ -475,7 +475,7 @@ Instead of deleting the entire request, selectively removing fields gives a bett
 
 Some fields should not be stored in plain text at all. Rather than relying on downstream redaction, Caddy can obscure sensitive data at the source:
 
-```json
+```json title="Caddyfile"
 log {
     format filter {
         request>client_ip ip_mask {

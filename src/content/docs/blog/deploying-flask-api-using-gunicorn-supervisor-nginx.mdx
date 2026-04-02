@@ -255,7 +255,7 @@ $ sudo vim /etc/supervisor/conf.d/flask-api.conf
 
 Insert this configuration (adjust paths as needed):
 
-```bash
+```bash title="flask-api.conf"
 [program:flask-api]
 directory=/home/youruser/flask-api
 command=/home/youruser/flask-api/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
@@ -316,7 +316,7 @@ Create a new Nginx config file:
 $ sudo vim /etc/nginx/sites-available/flask-api
 ```
 
-```bash
+```bash title="flask-api"
 server {
     listen 80;
     server_name _;

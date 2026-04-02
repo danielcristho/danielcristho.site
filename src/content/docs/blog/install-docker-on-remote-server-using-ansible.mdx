@@ -22,8 +22,7 @@ $ mkdir ansible-docker && cd ansible-docker
 
 Create a new file called `ansible.cfg` as the Ansible configuration setting and then define the inventory file.
 
-```
-
+```sh title="ansible.cfg"
 [defaults]
 inventory = hosts
 host_key_checking = True
@@ -33,7 +32,7 @@ collections = ansible.posix, community.general
 
 Then create a new file called `hosts`, where the name is defined on `ansible.cfg`.
 
-```bash
+```sh title="hosts"
 [example-server]
 0.0.0.0 ansible_user=root
 ```
@@ -42,7 +41,7 @@ NB: Don't forget to change the IP Address and host name.
 
 After setup the Ansible configuration setting & inventory file, let's create a **YAML** file called `playbook.yml`
 
-```yaml
+```yaml title="playbook.yml"
 ---
 - name: Setup Docker on Ubuntu Server 22.04
   hosts: all
@@ -57,7 +56,7 @@ Then create roles directory:
 
 - Config, On this directory I will create a directory called tasks. After that, I should create yaml file called `main.yml` to run update, upgrade & install many dependencies.
 
-```yml
+```yml title="config/main.yml"
 ---
 - name: Update&Upgrade
   ansible.builtin.apt:
@@ -95,7 +94,7 @@ Then create roles directory:
 
 On tasks directory create new file called `main.yml`. This file contains _Docker installation, Docker Compose installation & private registry setup_.
 
-```yml
+```yml title="tasks/main.yml"
 ---
 - name: Add Docker GPG apt Key
   ansible.builtin.apt_key:
@@ -154,7 +153,7 @@ On tasks directory create new file called `main.yml`. This file contains _Docker
 
 In the template, create a template file using a jinja file named `daemon.j2`. This file contains configuration for private registry settings (optional).
 
-```json
+```json title="daemon.j2"
 {
   "insecure-registries": ["http://0.0.0.0:5000"]
 }

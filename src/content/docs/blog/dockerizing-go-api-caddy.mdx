@@ -112,7 +112,7 @@ The server exposes two routes:
 
 **1.** Root path `/` -> return an ASCII banner generated with the `go-figure` package.
 
-```go
+```go title="main.go"
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	asciiArt := figure.NewFigure("Go API - Caddy", "", true).String()
@@ -122,7 +122,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 **2.** `/api/hello` -> returns a simple JSON response.
 
-```go
+```go title="main.go"
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `{"message":"Hello, World!"}`)
@@ -139,7 +139,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 > - Gracefully shut down the server with a 5-second timeout when a termination signal is received.
 
-```go
+```go title="main.go"
 func main() {
 
 	r := chi.NewRouter()
@@ -178,7 +178,7 @@ func main() {
 
 Here is the full code:
 
-```go
+```go title="main.go"
 package main
 
 import (
@@ -278,7 +278,7 @@ We'll use a multi-stage build to create a minimal and secure Docker image. This 
 
 Create a `Dockerfile` in your project directory and add the following code:
 
-```dockerfile
+```dockerfile title="Dockerfile"
 # First stage: builder
 FROM golang:1.24 AS builder
 
@@ -297,7 +297,7 @@ RUN CGO_ENABLED=0 go build -o /go/bin/app
 
 - Then we build the binary with `CGO_ENABLED=0` to ensure it’s statically compiled and portable. The binary is placed in `/go/bin/app`.
 
-```dockerfile
+```dockerfile title="Dockerfile"
 # Second stage: final image
 FROM golang:1.24-alpine
 
@@ -319,7 +319,7 @@ CMD ["/app"]
 
 Here the full code:
 
-```dockerfile
+```dockerfile title="Dockerfile"
 FROM golang:1.24 AS builder
 
 WORKDIR /go/src/app
@@ -350,7 +350,7 @@ Caddy will act as a reverse proxy that forwards incoming requests to the Go API 
 
 Create a file named `Caddyfile` in your project directory:
 
-```sh
+```sh title="Caddyfile"
 :80 {
     reverse_proxy go-api:8081
 }
@@ -358,7 +358,7 @@ Create a file named `Caddyfile` in your project directory:
 
 > 💡 If you later have a domain (e.g. api.example.com), you can replace :80 with your domain
 
-```sh
+```sh title="Caddyfile"
 api.example.com {
     reverse_proxy go-api:8081
 }
@@ -368,7 +368,7 @@ api.example.com {
 
 Create a file named docker-compose.yml in your project directory:
 
-```yml
+```yml title="docker-compose.yml"
 version: "3.8"
 
 services:
