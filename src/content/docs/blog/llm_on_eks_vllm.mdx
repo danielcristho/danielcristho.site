@@ -45,6 +45,7 @@ The flow looks like this:
 ## Prerequisites
 
 Before we start, you'll need:
+
 - **AWS CLI** installed and configured (`aws configure`).
 - **AWS CDK** installed (`npm install -g aws-cdk`).
 
@@ -168,9 +169,10 @@ self.model_bucket.grant_read(gpu_node_role)
 ```
 
 :::note
+
 - The `disk_size=100` ensures we don't get pod eviction issues, as the default 20GB is too small for the vLLM container image and the model cache.
 - The taint `nvidia.com/gpu=true:NoSchedule` on the GPU node group means no pod will be scheduled there unless it explicitly tolerates it. This keeps system pods off the GPU node.
-:::
+  :::
 
 The S3 bucket is for model weights, and the GPU node role gets read access to it:
 
@@ -188,10 +190,11 @@ self.model_bucket = s3.Bucket(
 :::note
 We will create those instances:
 
-| Node      | vCPU| Memory  |
-|-----------|-----|---------|
-| t3.medium | 2   | 4Gi     |
-| g4dn.xlarge | 4 | 16Gi    |
+| Node        | vCPU | Memory |
+| ----------- | ---- | ------ |
+| t3.medium   | 2    | 4Gi    |
+| g4dn.xlarge | 4    | 16Gi   |
+
 :::
 
 ### vLLM Stack
@@ -359,11 +362,13 @@ You should see something like:
 ```json
 {
   "object": "list",
-  "data": [{
-    "id": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
-    "object": "model",
-    "owned_by": "vllm"
-  }]
+  "data": [
+    {
+      "id": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+      "object": "model",
+      "owned_by": "vllm"
+    }
+  ]
 }
 ```
 
