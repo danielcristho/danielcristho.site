@@ -391,17 +391,25 @@ Response:
 
 ```json
 {
-  "id": "chatcmpl-8609921b347e2718",
+  "id": "chatcmpl-9444cb8cc9c352a1",
   "object": "chat.completion",
-  "created": 1777640350,
+  "created": 1777649378,
   "model": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "The CAP theorem, also known as the Brewer's CAP theorem, is a fundamental concept in distributed systems. It was first proposed by Eric Brewer in 2000.\n\n**CAP stands for:**\n\n1. **Consistency**: This refers to the ability of a system to ensure that all nodes in the system have the same view of the data. In other words, all nodes see the same data, and any updates are reflected uniformly across the system.\n2. **Availability**: This refers to the ability of a system to ensure that every request receives a (non-error) response, without guarantee that it contains the most recent version of the information. In other words, the system is always available, even if some nodes are down or"
+        "content": "The CAP theorem, also known as Brewer's theorem, is a fundamental concept in distributed systems...\n\n1. Consistency\n2. Availability\n3. Partition tolerance"
       },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 46,
+    "completion_tokens": 180,
+    "total_tokens": 226
+  }
 }
 ...
 ```
