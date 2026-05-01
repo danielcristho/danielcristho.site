@@ -1,0 +1,520 @@
+---
+title: "LLM on EKS: Serving with vLLM"
+date: 2026-04-27
+description: Serve LLM on EKS using vLLM
+excerpt: serving an LLM using vLLM, deployed on Amazon EKS, provisioned the infra using AWS CDK, and wrapped into a simple chatbot using Streamlit.
+tags:
+  - AWS
+  - Kubernetes
+  - LLM
+  - Generative AI
+  - Series
+authors:
+  - danielcristho
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1777643746/llm-eks_n0hg9f.webp
+---
+
+Last year, I mentioned that I'm interested in learning how to serve LLMs in production. At first it was just curiosity, but over time I wanted to actually try building something—not just reading about it.
+
+This post is a small step in that direction: serving an LLM using [vLLM](https://github.com/vllm-project/vllm), deployed on [Amazon EKS](https://aws.amazon.com/eks), provisioned the infra using [AWS CDK](https://github.com/aws/aws-cdk), and wrapped into a simple chatbot using [Streamlit](https://github.com/streamlit/streamlit).
+
+## TL;DR
+
+- Exploring LLM serving on a Kubernetes cluster (EKS)
+- Using vLLM as the inference engine
+- Provisioning the infrastructure with AWS CDK (IaC)
+- Building a simple chatbot to interact with the LLM using Streamlit
+
+## What We Tryna Build
+
+The idea is simple: build a small chatbot powered by an LLM and run the model on Kubernetes.
+
+I'm not focusing on training models here. I just want to understand how to serve an LLM properly.
+
+The flow looks like this:
+
+- User interacts with a chatbot (running locally)
+- The chatbot sends a request to a vLLM API
+- The model processes the request and returns a response
+- The vLLM service runs on Amazon EKS
+
+![Project Architecture](https://res.cloudinary.com/diunivf9n/image/upload/v1777186530/vllm-eks_ybekjc.webp)
+
+## Prerequisites
+
+Before we start, you'll need:
+- **AWS CLI** installed and configured (`aws configure`).
+- **AWS CDK** installed (`npm install -g aws-cdk`).
+
+:::caution[G-Instance Quota]
+AWS usually limits new accounts to 0 vCPUs for "Running On-Demand G and VT instances". You'll need to go to the AWS Service Quotas console and request an increase to at least 4 vCPUs to run the `g4dn.xlarge` node.
+:::
+
+## The Stack
+
+- vLLM — inference engine for the LLM. Fast, supports streaming, and exposes an OpenAI-compatible API out of the box.
+- Amazon EKS — managed Kubernetes to run the vLLM workload on a GPU node.
+- AWS CDK — infrastructure as code in Python. One `cdk deploy` and everything is provisioned.
+- Streamlit — simple chatbot UI that talks to the vLLM endpoint.
+
+## Why vLLM?
+
+There are a few ways to serve an LLM — you could use TGI, Triton, or just raw HuggingFace `transformers`. I went with vLLM for a few reasons:
+
+- **PagedAttention** — manages GPU memory more efficiently, which matters a lot on a single `g4dn.xlarge`
+- **OpenAI-compatible API** — the chatbot can use the `openai` Python SDK without any changes
+- **Streaming support** — responses stream token by token, which makes the chatbot feel more responsive
+
+## Why EKS?
+
+II could've just spun up an EC2 instance and SSH'd in. But that's not really building reliable infrastructure — that's just running a script on a server.
+
+EKS gives us a proper environment to run GPU workloads: node groups, taints and tolerations to make sure only the vLLM pod lands on the GPU node, and a LoadBalancer service to expose the endpoint.
+
+## Environment Setup
+
+Before getting into the code, let's set up a `.env` file at the root of the project. We'll use this to manage our HuggingFace token and AWS configurations so we don't hardcode them into the repository.
+
+```bash title='.env'
+# AWS Config
+AWS_DEFAULT_ACCOUNT=<your_aws_account_id>
+AWS_DEFAULT_REGION=<your_aws_best_region>
+AWS_ADMIN_USER=<your_aws_username>
+AWS_BUCKET=eks-llm-model-bucket
+
+# EKS Config
+CLUSTER_NAME=eks-llm
+
+# VLLM Config
+# VLLM_URL will be added later after the deployment is live
+# VLLM_URL=http://<nlb-endpoint>.elb.us-east-1.amazonaws.com
+```
+
+## The Code
+
+### EKS Stack
+
+The `EksStack` provisions everything at the infrastructure level: VPC, EKS cluster, node groups, and an S3 bucket for model storage.
+
+```python title="eks_stack.py"
+vpc = ec2.Vpc(self, "EksVpc", max_azs=2)
+
+cluster = eks.Cluster(
+    self, "EksCluster",
+    version=eks.KubernetesVersion.V1_34,
+    vpc=vpc,
+    default_capacity=0,
+    kubectl_layer=kubectl_layer,
+)
+```
+
+:::note
+`default_capacity=0` means no default node group — we define our own below.
+:::
+
+We have two node groups:
+
+```python title="eks_stack.py"
+# 1. CPU, runs system pods (CoreDNS, kube-proxy, etc.)
+self.cluster.add_nodegroup_capacity(
+    "ManagedNodeGroup",
+    desired_size=1,
+    min_size=1,
+    max_size=1,
+    instance_types=[ec2.InstanceType("t3.medium")],
+    ami_type=eks.NodegroupAmiType.AL2023_X86_64_STANDARD,
+)
+
+# 2. GPU, for running vLLM
+gpu_node_role = iam.Role(
+    self,
+    "GpuNodeRole",
+    assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
+    managed_policies=[
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEKSWorkerNodePolicy"),
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2ContainerRegistryReadOnly"),
+        iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEKS_CNI_Policy"),
+    ],
+)
+
+self.cluster.add_nodegroup_capacity(
+    "GpuNodeGroup",
+    desired_size=1,
+    min_size=0,
+    max_size=2,
+    disk_size=100,
+    instance_types=[ec2.InstanceType("g4dn.xlarge")],
+    node_role=gpu_node_role,
+    ami_type=eks.NodegroupAmiType.AL2023_X86_64_NVIDIA,
+    labels={"workload": "gpu"},
+    taints=[
+        eks.TaintSpec(
+            key="nvidia.com/gpu",
+            value="true",
+            effect=eks.TaintEffect.NO_SCHEDULE,
+        )
+    ],
+)
+
+self.cluster.aws_auth.add_user_mapping(
+    iam.User.from_user_name(self, "AdminUser", os.environ["AWS_ADMIN_USER"]),
+    groups=["system:masters"],
+)
+
+# Allow GPU nodes to read from the model bucket
+self.model_bucket.grant_read(gpu_node_role)
+```
+
+:::note
+- The `disk_size=100` ensures we don't get pod eviction issues, as the default 20GB is too small for the vLLM container image and the model cache.
+- The taint `nvidia.com/gpu=true:NoSchedule` on the GPU node group means no pod will be scheduled there unless it explicitly tolerates it. This keeps system pods off the GPU node.
+:::
+
+The S3 bucket is for model weights, and the GPU node role gets read access to it:
+
+```python title="eks_stack.py"
+# S3 bucket for model weights
+self.model_bucket = s3.Bucket(
+    self,
+    "ModelBucket",
+    bucket_name=os.environ.get("AWS_BUCKET"),
+    removal_policy=RemovalPolicy.RETAIN,
+    block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+)
+```
+
+:::note
+We will create those instances:
+
+| Node      | vCPU| Memory  |
+|-----------|-----|---------|
+| t3.medium | 2   | 4Gi     |
+| g4dn.xlarge | 4 | 16Gi    |
+:::
+
+### vLLM Stack
+
+The `VllmStack` takes the cluster from `EksStack` and deploys vLLM on top of it.
+
+First, we install the NVIDIA device plugin via Helm. This is what makes EKS aware of the GPU on the node — without it, you can't request `nvidia.com/gpu` as a resource in your pod spec.
+
+```python title="vllm_stack.py"
+cluster.add_helm_chart(
+    "NvidiaDevicePlugin",
+    chart="nvidia-device-plugin",
+    repository="https://nvidia.github.io/k8s-device-plugin",
+    namespace="kube-system",
+    values={
+        "nodeSelector": {"workload": "gpu"},
+        "tolerations": [{"key": "nvidia.com/gpu", "operator": "Exists", "effect": "NoSchedule"}],
+    },
+)
+```
+
+:::note
+The toleration on the plugin itself — it needs to run on the GPU node to expose the GPU, so it has to tolerate the taint we set earlier.
+:::
+
+Then the vLLM Deployment:
+
+```python title="vllm_stack.py"
+cluster.add_manifest("VllmDeployment", {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {"name": "vllm", "namespace": "default"},
+    "spec": {
+        "replicas": 1,
+        "selector": {"matchLabels": {"app": "vllm"}},
+        "template": {
+            "metadata": {"labels": {"app": "vllm"}},
+            "spec": {
+                "tolerations": [{"key": "nvidia.com/gpu", "operator": "Exists", "effect": "NoSchedule"}],
+                "nodeSelector": {"workload": "gpu"},
+                "containers": [{
+                    "name": "vllm",
+                    "image": "vllm/vllm-openai:latest",
+                    "args": [
+                        "--model", model_id,
+                        "--download-dir", "/model-cache",
+                        "--dtype", "half",
+                        "--quantization", "awq",
+                        "--max-model-len", "4096",
+                    ],
+                    "env": [
+                        {"name": "AWS_DEFAULT_REGION", "value": self.region},
+                        {"name": "MODEL_BUCKET", "value": model_bucket_name},
+                        {"name": "VLLM_PORT", "value": "8000"},
+                    ],
+                    "ports": [{"containerPort": 8000}],
+                    "resources": {
+                        "limits": {"nvidia.com/gpu": "1"},
+                        "requests": {"memory": "12Gi", "cpu": "2"},
+                    },
+                    "volumeMounts": [{"name": "model-cache", "mountPath": "/model-cache"}],
+                    "readinessProbe": {
+                        "httpGet": {"path": "/health", "port": 8000},
+                        "initialDelaySeconds": 120,
+                        "periodSeconds": 15,
+                    },
+                }],
+                "volumes": [{"name": "model-cache", "emptyDir": {}}],
+            },
+        },
+    },
+})
+```
+
+A few things worth noting:
+
+- `nodeSelector: workload=gpu` pins the pod to the GPU node group
+- `nvidia.com/gpu: 1` requests exactly one GPU
+- `dtype: half` and `quantization: awq` drops the model size to ~5.7GB so it comfortably fits in the 16GB VRAM of `g4dn.xlarge` without OOM
+- `max-model-len: 4096` caps the context window to avoid OOM
+
+Finally, a LoadBalancer service to expose the endpoint publicly:
+
+```python title="vllm_stack.py"
+cluster.add_manifest("VllmService", {
+    "kind": "Service",
+    "metadata": {
+        "annotations": {"service.beta.kubernetes.io/aws-load-balancer-type": "nlb"},
+    },
+    "spec": {
+        "type": "LoadBalancer",
+        "ports": [{"port": 80, "targetPort": 8000}],
+    },
+})
+```
+
+## Deploy
+
+```bash
+cdk bootstrap   # first time only
+cdk deploy --all
+```
+
+After the deployment is success you'll see the node on this cluster:
+
+```bash
+kubectl get nodes
+NAME                          STATUS   ROLES    AGE     VERSION
+ip-10-0-xx-yy.ec2.internal   Ready    <none>   9m18s   v1.34.7-eks-40737a8
+```
+
+```bash
+$ kubectl get nodes --show-labels | grep gpu
+
+ip-10-0-xx-yy.ec2.internal   Ready    <none>   4m23s   v1.34.7-eks-40737a8   beta.kubernetes.io/arch=amd64,
+...
+workload=gpu
+```
+
+Wait for the vLLM pod to be ready (~5-10 minutes, model is downloaded from HuggingFace on first start):
+
+```bash
+kubectl get pods -w
+```
+
+```bash
+NAME                   READY   STATUS    RESTARTS   AGE
+vllm-64c858884-pz4gz   0/1     Running   0          2m24s
+```
+
+```bash
+kubectl logs -f deployment/vllm
+```
+
+```bash
+WARNING 05-01 12:48:00 [argparse_utils.py:257] With `vllm serve`, you should provide the model as a positional argument or in a config file instead of via the `--model` o
+ption. The `--model` option will be removed in a future version.
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]        █     █     █▄   ▄█
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.20.0
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]   █▄█▀ █     █     █     █  model   hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:299]
+(APIServer pid=1) INFO 05-01 12:48:00 [utils.py:233] non-default args: {'model_tag': 'hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4', 'model': 'hugging-quants/Meta-L
+lama-3.1-8B-Instruct-AWQ-INT4', 'dtype': 'half', 'max_model_len': 4096, 'quantization': 'awq', 'download_dir': '/model-cache'}
+...
+```
+
+## Inference
+
+Once the pod is running, grab the NLB endpoint:
+
+```bash
+kubectl get svc vllm -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+Then, check that the model is loaded:
+
+```bash
+curl http://<nlb-endpoint>/v1/models
+```
+
+You should see something like:
+
+```json
+{
+  "object": "list",
+  "data": [{
+    "id": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    "object": "model",
+    "owned_by": "vllm"
+  }]
+}
+```
+
+Next, send it a prompt:
+
+```bash
+curl http://<nlb-endpoint>/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+    "messages": [
+      {"role": "system", "content": "You are a helpful AI assistant."},
+      {"role": "user", "content": "What is CAP theorem?"}
+    ],
+    "max_tokens": 150
+  }'
+```
+
+Response:
+
+```json
+{
+  "id": "chatcmpl-8609921b347e2718",
+  "object": "chat.completion",
+  "created": 1777640350,
+  "model": "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "The CAP theorem, also known as the Brewer's CAP theorem, is a fundamental concept in distributed systems. It was first proposed by Eric Brewer in 2000.\n\n**CAP stands for:**\n\n1. **Consistency**: This refers to the ability of a system to ensure that all nodes in the system have the same view of the data. In other words, all nodes see the same data, and any updates are reflected uniformly across the system.\n2. **Availability**: This refers to the ability of a system to ensure that every request receives a (non-error) response, without guarantee that it contains the most recent version of the information. In other words, the system is always available, even if some nodes are down or"
+      },
+}
+...
+```
+
+The vLLM logs:
+
+```bash
+(APIServer pid=1) INFO:     10.0.253.68:42022 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=1) INFO 05-01 12:59:19 [loggers.py:271] Engine 000: Avg prompt throughput: 1.4 tokens/s, Avg generation throughput: 4.0 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.2%, Prefix cache hit rate: 28.8%
+(APIServer pid=1) INFO:     10.0.253.68:33400 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=1) INFO 05-01 12:59:29 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 4.5 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.3%, Prefix cache hit rate: 28.8%
+(APIServer pid=1) INFO 05-01 12:59:39 [loggers.py:271] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 4.5 tokens/s, Running: 1 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.4%, Prefix cache hit rate: 28.8%
+(APIServer pid=1) INFO:     10.0.253.68:34814 - "GET /health HTTP/1.1" 200 OK
+(APIServer pid=1) INFO:     10.0.228.56:20496 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+```
+
+Finally, if you get a response back, congrats the model is live. 🎉
+
+Working with API endpoint is great, but typing `curl` commands is not exactly a great user experience. Let's build a chatbot UI on top of this.
+
+![That's not enough](https://res.cloudinary.com/diunivf9n/image/upload/v1777184871/not-enough-batman_jpvyc6.gif)
+
+## Chatbot with Streamlit
+
+So let's built a simple chatbot using [Streamlit](https://github.com/streamlit/streamlit) that talks directly to the vLLM.
+
+The nice part? Since vLLM exposes an OpenAI-compatible API, we can just use the openai Python SDK without any efforts.
+
+### Setup
+
+Install the dependencies:
+
+```bash
+pip install streamlit openai
+```
+
+Let's create a simple UI:
+
+```bash
+mkdir src
+touch src/app.py
+```
+
+```py title='app.py'
+import os
+import streamlit as st
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Using the URL from AWS load balancer
+VLLM_URL = os.getenv("VLLM_URL", "http://xx-yy.elb.us-east-1.amazonaws.com")
+MODEL_ID = "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+
+client = OpenAI(base_url=f"{VLLM_URL}/v1", api_key="none")
+
+st.set_page_config(page_title="Llama 3 Chatbot", page_icon="🦙")
+st.title("🦙 Llama 3 Chatbot")
+st.caption("Powered by vLLM on EKS")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+if prompt := st.chat_input("How is you day? Say something..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.chat_message("user").write(prompt)
+
+    with st.chat_message("assistant"):
+        stream = client.chat.completions.create(
+            model=MODEL_ID,
+            messages=st.session_state.messages,
+            stream=True,
+        )
+        response = st.write_stream(chunk.choices[0].delta.content or "" for chunk in stream)
+
+    st.session_state.messages.append({"role": "assistant", "content": response})
+```
+
+### Serve
+
+Run the UI:
+
+```bash
+streamlit run app.py
+```
+
+```bash
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://ww.xx.yy.zz:8501
+```
+
+Open the URL in your browser, and you should see a simple chatbot interface. Type in a message, and watch the response stream back token by token.
+
+![Chatbot response 1](https://res.cloudinary.com/diunivf9n/image/upload/v1777641504/chatbot_response_1_kmbutt.webp)
+
+![Chatbot response 2](https://res.cloudinary.com/diunivf9n/image/upload/v1777641504/chatbot_response_2_mm8ljr.webp)
+
+## Conclusion
+
+Serving an LLM is a bit different than deploying a typical web app. Memory constraints are real—we had to use an AWQ quantized model just to make it fit inside a single `g4dn.xlarge` instance without hitting OOM. But combining vLLM for inference and AWS CDK to spin up the EKS infrastructure makes the whole setup pretty straightforward.
+
+:::danger[Clean Up Resources]
+Don't forget to run `cdk destroy --all` when you're done! Leaving an EKS cluster and a `g4dn.xlarge` node running 24/7 will result in a very hefty AWS bill.😄😄
+:::
+
+Aight. Thanks for reading this post, hope you found something useful 🚀
+
+References:
+
+- [AWS Blog: Serving LLMs using vLLM and Amazon EC2 instances with AWS AI chips](https://aws.amazon.com/blogs/machine-learning/serving-llms-using-vllm-and-amazon-ec2-instances-with-aws-ai-chips)
+- [AWS Blog: Deploy LLMs on Amazon EKS using vLLM Deep Learning Containers](https://aws.amazon.com/blogs/machine-learning/deploy-llms-on-amazon-eks-using-vllm-deep-learning-containers)
+
+:::tip[Source Code]
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)
+:::
