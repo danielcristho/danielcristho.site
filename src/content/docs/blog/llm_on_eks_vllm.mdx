@@ -400,18 +400,26 @@ Response:
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "The CAP theorem, also known as Brewer's theorem, is a fundamental concept in distributed systems...\n\n1. Consistency\n2. Availability\n3. Partition tolerance"
+        "content": "The CAP theorem, also known as the Brewer's CAP theorem, is a fundamental concept in distributed systems. It was first proposed by computer scientist Eric Brewer in 2000.\n\n**What does CAP stand for?**\n\nCAP stands for:\n\n1. **C**onsistency: This refers to the consistency of data across all nodes in a distributed system. In a consistent system, all nodes see the same data, and any updates are reflected across all nodes.\n2. **A**vailability: This refers to the ability of the system to respond to requests from clients, even in the presence of failures or network partitions. An available system ensures that clients can always access the system, even if some nodes are down or disconnected.\n3. **P**art"
       },
-      "finish_reason": "stop"
+      "logprobs": null,
+      "finish_reason": "length",
+      "stop_reason": null,
+      "token_ids": null
     }
   ],
+  "service_tier": null,
+  "system_fingerprint": null,
   "usage": {
     "prompt_tokens": 46,
-    "completion_tokens": 180,
-    "total_tokens": 226
-  }
+    "total_tokens": 196,
+    "completion_tokens": 150,
+    "prompt_tokens_details": null
+  },
+  "prompt_logprobs": null,
+  "prompt_token_ids": null,
+  "kv_transfer_params": null
 }
-...
 ```
 
 The vLLM logs:
