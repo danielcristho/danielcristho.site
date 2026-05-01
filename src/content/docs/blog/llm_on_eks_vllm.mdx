@@ -283,15 +283,27 @@ Finally, a LoadBalancer service to expose the endpoint publicly:
 
 ```python title="vllm_stack.py"
 cluster.add_manifest("VllmService", {
+    "apiVersion": "v1",
     "kind": "Service",
     "metadata": {
+        "name": "vllm",
+        "namespace": "default",
         "annotations": {"service.beta.kubernetes.io/aws-load-balancer-type": "nlb"},
     },
     "spec": {
         "type": "LoadBalancer",
-        "ports": [{"port": 80, "targetPort": 8000}],
+        "selector": {"app": "vllm"},
+        "ports": [{"port": 80, "targetPort": 8000, "protocol": "TCP"}],
     },
 })
+
+# Internal cluster URL for the vLLM service
+self.vllm_url = os.environ.get("VLLM_URL", "http://vllm.default.svc.cluster.local:80")
+
+CfnOutput(self, "VllmUrl",
+    value=self.vllm_url,
+    description="Internal vLLM service URL",
+)
 ```
 
 ## Deploy
