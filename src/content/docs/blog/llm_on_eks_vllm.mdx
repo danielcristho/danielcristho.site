@@ -204,6 +204,9 @@ The `VllmStack` takes the cluster from `EksStack` and deploys vLLM on top of it.
 First, we install the NVIDIA device plugin via Helm. This is what makes EKS aware of the GPU on the node — without it, you can't request `nvidia.com/gpu` as a resource in your pod spec.
 
 ```python title="vllm_stack.py"
+
+model_id = "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4" # Our LLM
+
 cluster.add_helm_chart(
     "NvidiaDevicePlugin",
     chart="nvidia-device-plugin",
