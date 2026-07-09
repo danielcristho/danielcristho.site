@@ -5,12 +5,12 @@ import { ANALYTICS } from "../contants";
 
 const defaultOgImage = new URL("/og/default.png?v=2", Astro.site);
 
-// Get cover image from frontmatter (Cloudinary or local)
-const { entry } = Astro.props;
+// Get cover image from frontmatter
+const { entry } = Astro.locals.starlightRoute;
 const cover = entry?.data?.cover;
 const coverImage = cover?.image;
 
-// Handle both string URLs (Cloudinary) and ImageMetadata objects (local)
+// Handle both string URLs and ImageMetadata objects
 const ogImageSrc =
   typeof coverImage === "string" ? coverImage : coverImage?.src;
 

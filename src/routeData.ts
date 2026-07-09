@@ -28,7 +28,6 @@ export const onRequest = defineRouteMiddleware((context) => {
 
   // Common meta tags
   const metaTags = [
-    { property: "og:image", content: ogImageUrl.href },
     { property: "twitter:domain", content: context.site?.hostname },
     {
       property: "twitter:url",
@@ -36,8 +35,15 @@ export const onRequest = defineRouteMiddleware((context) => {
     },
     { name: "twitter:title", content: entry.data.title },
     { name: "twitter:description", content: entry.data.description },
-    { name: "twitter:image", content: ogImageUrl.href },
   ];
+
+  // Only emit og:image/twitter:image if a matching image file is found
+  if (foundExt) {
+    metaTags.push(
+      { property: "og:image", content: ogImageUrl.href },
+      { name: "twitter:image", content: ogImageUrl.href }
+    );
+  }
 
   metaTags.forEach((meta) => {
     head.push({ tag: "meta", attrs: meta });
