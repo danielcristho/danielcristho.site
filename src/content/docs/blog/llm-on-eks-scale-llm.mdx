@@ -19,7 +19,7 @@ cover:
 
 Hi there, it's been 2 months. Back in May, we deployed an LLM on Amazon EKS using vLLM. It gave me a much better understanding of what it takes to serve an LLM in production.
 
-But after getting it up and running, one question kept coming to mind: *What happens when a single GPU isn't enough?*
+But after getting it up and running, one question kept coming to mind: _What happens when a single GPU isn't enough?_
 
 ![Lindalee Cat GIF](https://res.cloudinary.com/diunivf9n/image/upload/v1783432480/lindalee-cat_em4vzn.gif)
 
@@ -58,7 +58,7 @@ That's where [Karpenter](https://github.com/aws/karpenter-provider-aws) comes in
 - **No fixed node groups** — avoids keeping idle GPU instances running all day.
 - **Scale back down** — automatically removes unused nodes to reduce infrastructure costs.
 
-Together, [Ray](https://github.com/ray-project/ray) and [Karpenter](https://github.com/aws/karpenter-provider-aws) solve different parts of the scaling problem. Ray decides *when* more workers are needed, while Karpenter makes sure there's actually somewhere for those workers to run.
+Together, [Ray](https://github.com/ray-project/ray) and [Karpenter](https://github.com/aws/karpenter-provider-aws) solve different parts of the scaling problem. Ray decides _when_ more workers are needed, while Karpenter makes sure there's actually somewhere for those workers to run.
 
 ## What We Tryna Build
 
@@ -74,7 +74,6 @@ The flow looks like this:
 - Ray creates additional workers as traffic increases
 - Karpenter provisions new GPU nodes when the cluster runs out of capacity
 - Unused workers and nodes are removed once traffic drops
-
 
 ![Project Arch](https://res.cloudinary.com/diunivf9n/image/upload/v1783667929/scale_llm_arch_cdoj0l.webp)
 
@@ -185,9 +184,9 @@ A few things worth noting:
 :::note
 The system node group is now:
 
-| Node      | vCPU| Memory  | Count |
-|-----------|-----|---------|-------|
-| t3.large  | 2   | 8Gi     | 3     |
+| Node     | vCPU | Memory | Count |
+| -------- | ---- | ------ | ----- |
+| t3.large | 2    | 8Gi    | 3     |
 
 GPU nodes are launched by Karpenter, so there's no fixed count, they only exist while there's demand for them.
 :::
@@ -518,11 +517,12 @@ kubectl run -n kuberay checkstatus --image=curlimages/curl:8.10.1 --restart=Neve
 ```
 
 :::note[What that turned up, in the order they surfaced:]
+
 - **`working_dir: /serve-scripts` rejected.** Ray Serve's `runtime_env.working_dir` only accepts remote URIs (`file://`, `s3://`, …), not a bare local path — even though that's exactly where the ConfigMap mounts the script. Fix: drop `working_dir` entirely, set `PYTHONPATH: /serve-scripts` under `runtime_env.env_vars` instead, so `import_path: serve_vllm:build_app` still resolves.
 - **`num_replicas` + `autoscaling_config` together.** Ray Serve won't accept a fixed replica count alongside an autoscaling config — drop `num_replicas`, autoscaling owns replica count now.
 - **KubeRay caches `serveConfigV2` by its own text, not by what's mounted.** Editing `serve_vllm.py` alone (the ConfigMap) didn't get picked up — operator logs showed `"shouldUpdate": false, reason: "Current V2 Serve config matches cached Serve config."` on every reconcile. It only re-submits when the YAML string itself changes. Fix: fold a hash of the script into an (unused) arg in `args:`, so any script edit changes the YAML and busts the cache automatically.
 - **The NVIDIA device plugin never scheduled at all.** With the app finally `RUNNING`, the GPU worker pod sat `Pending` — `Insufficient nvidia.com/gpu`. The `nvidia-device-plugin` Helm chart ships a default `nodeAffinity` requiring an NFD/GPU-Operator label (`nvidia.com/gpu.present`, among others) that nothing in this cluster sets, so it never matched our Karpenter-provisioned node. Passing `affinity: {}` to override it turned out to be a no-op (Helm doesn't let an empty map clear a chart's default nested value) — the actual fix was adding `nvidia.com/gpu.present` and `nvidia.com/mps.capable` labels directly on the Karpenter GPU `NodePool`'s node template.
-:::
+  :::
 
 None of this was visible from `kubectl get pods` — the head and worker pods looked healthy the entire time. The only way to see any of it was polling `/api/serve/applications/` directly.
 
@@ -622,14 +622,20 @@ curl http://<nlb-endpoint>/v1/chat/completions \
 {
   "id": "chatcmpl-89ac1890-c23e-4bb7-85a1-0fcef1f405b8",
   "object": "chat.completion",
-  "choices": [{
-    "message": {
-      "role": "assistant",
-      "content": "To correctly label all the boxes, we need to find a fruit that is unique to one box and can be used to determine the correct labels.\n\nStep 1: \nPull a fruit from the 'APPLES AND ORANGES' box. Since it's labeled incorrectly, it might contain either an apple or an orange. Let's assume we pull an orange from this box.\n\nStep 2: \nNow, we have an orange from the 'APPLES AND ORANGES' box. We know that the 'ORANGES' box cannot be the correct label for this box since we already have an orange from it...\n\n[...]\n\nHere are the correct labels for the boxes:\n\n- 'APPLES AND ORANGES' box: APPLES AND ORANGES\n- 'ORANGES' box: APPLES\n- 'APPLES' box: ORANGES AND APPLES"
-    },
-    "finish_reason": "stop"
-  }],
-  "usage": {"prompt_tokens": 84, "completion_tokens": 509, "total_tokens": 593}
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "To correctly label all the boxes, we need to find a fruit that is unique to one box and can be used to determine the correct labels.\n\nStep 1: \nPull a fruit from the 'APPLES AND ORANGES' box. Since it's labeled incorrectly, it might contain either an apple or an orange. Let's assume we pull an orange from this box.\n\nStep 2: \nNow, we have an orange from the 'APPLES AND ORANGES' box. We know that the 'ORANGES' box cannot be the correct label for this box since we already have an orange from it...\n\n[...]\n\nHere are the correct labels for the boxes:\n\n- 'APPLES AND ORANGES' box: APPLES AND ORANGES\n- 'ORANGES' box: APPLES\n- 'APPLES' box: ORANGES AND APPLES"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 84,
+    "completion_tokens": 509,
+    "total_tokens": 593
+  }
 }
 ```
 
@@ -643,7 +649,7 @@ Same idea as the previous post — a Streamlit chatbot on top of the OpenAI-comp
 
 ![Streamlit Chatbot Story](https://res.cloudinary.com/diunivf9n/image/upload/v1783682435/Screenshot_from_2026-07-10_17-59-41_uzinsk.png)
 
-But that's also exactly why it's the wrong tool for checking whether autoscaling actually works. A chat UI sends one message, waits for the full response, then sends the next — always one request in flight, never more. `target_ongoing_requests: 2` only kicks in once more requests are *in flight simultaneously* than a single replica can comfortably handle, and no amount of typing quickly into Streamlit will ever produce that. So to actually see the autoscaler react, 8 requests went out at once via `curl` instead of one at a time through the UI:
+But that's also exactly why it's the wrong tool for checking whether autoscaling actually works. A chat UI sends one message, waits for the full response, then sends the next — always one request in flight, never more. `target_ongoing_requests: 2` only kicks in once more requests are _in flight simultaneously_ than a single replica can comfortably handle, and no amount of typing quickly into Streamlit will ever produce that. So to actually see the autoscaler react, 8 requests went out at once via `curl` instead of one at a time through the UI:
 
 ```bash
 for i in 1 2 3 4 5 6 7 8; do
@@ -682,13 +688,13 @@ Watched through `Pending` -> `Init` -> `PodInitializing`-> `Running`, while a se
 
 Timing it out end to end, from Ray Serve first asking for a 2nd replica to that replica actually serving:
 
-| Stage | Time | Elapsed |
-|---|---|---|
-| Ray Serve requests a 2nd replica (worker pod `Pending`) | 11:02:29 | — |
-| Karpenter's new GPU node `Ready` | 11:03:17 | ~48s |
-| Worker pod container `Running` (scheduled + image pulled) | 11:06:19 | ~3m |
-| vLLM finishes loading and the 2nd replica goes `RUNNING` | 11:11:56 | ~5m37s |
-| **Total, request to serving** | | **~9m27s** |
+| Stage                                                     | Time     | Elapsed    |
+| --------------------------------------------------------- | -------- | ---------- |
+| Ray Serve requests a 2nd replica (worker pod `Pending`)   | 11:02:29 | —          |
+| Karpenter's new GPU node `Ready`                          | 11:03:17 | ~48s       |
+| Worker pod container `Running` (scheduled + image pulled) | 11:06:19 | ~3m        |
+| vLLM finishes loading and the 2nd replica goes `RUNNING`  | 11:11:56 | ~5m37s     |
+| **Total, request to serving**                             |          | **~9m27s** |
 
 Provisioning the node itself was the fast part. The two things that actually ate the clock were pulling the ~6GB `rayproject/ray:2.43.0-gpu` image on a brand new node (~3 minutes) and vLLM's own model load + CUDA graph capture (~5.5 minutes) — the same cold-start cost from [Deploy](#deploy), just paid a second time for the second replica. This is roughly the real cost of "scale on demand" here: cheap to provision, ~9-10 minutes before a new GPU replica is actually useful. Fine for a slow ramp in traffic, not something you'd want to lean on for a sudden spike.
 
