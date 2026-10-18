@@ -59,10 +59,6 @@ export default function rehypeGitHubBadgeLinks() {
       const href = node.properties.href;
       const normalizedHref = normalize(href);
       const text = normalize(getNodeText(node));
-
-      //
-      // --- 1) Special case badge handling ---
-      //
       const special = normalizedCases.find((s) => s.regex.test(normalizedHref));
 
       if (special) {
@@ -79,9 +75,6 @@ export default function rehypeGitHubBadgeLinks() {
         return;
       }
 
-      //
-      // 2) GitHub-specific logic
-      //
       const ghMatch = href.match(
         /^https:\/\/github\.com\/([^/]+)(?:\/([^/]+))?\/?$/
       );
@@ -91,9 +84,6 @@ export default function rehypeGitHubBadgeLinks() {
       const org = ghMatch[1];
       const repo = ghMatch[2] || null;
 
-      //
-      // 2a) If text is exactly "github"
-      //
       if (text.toLowerCase() === "github") {
         node.properties.className = (node.properties.className || []).concat(
           "gh-badge"
@@ -108,9 +98,6 @@ export default function rehypeGitHubBadgeLinks() {
         return;
       }
 
-      //
-      // 2b) If text equals the repo name (strict rule)
-      //
       if (repo && text === normalize(repo)) {
         node.properties.className = (node.properties.className || []).concat(
           "gh-badge"
@@ -125,12 +112,6 @@ export default function rehypeGitHubBadgeLinks() {
         return;
       }
 
-      //
-      // 2c) ORIGINAL GITHUB FALLBACK LOGIC (kept exactly as you had it)
-      //
-      // - If only an org/user is provided → badge with org avatar
-      // - If a repo is provided but no strict text match → badge with org avatar
-      //
       node.properties.className = (node.properties.className || []).concat(
         "gh-badge"
       );

@@ -38,22 +38,17 @@ main {
   background: var(--til-stock-raised);
 }
 
-/* the floating back-to-top button sits on the stock, not on white */
 .to-top {
   background: var(--til-stock-raised);
   border-color: color-mix(in srgb, currentColor 20%, transparent);
 }
 
-/* The hand is for the titles only. It is a thin monoline face with a small
-   x-height and no bold, which is what makes a long note tiring to read, so the
-   body keeps Atkinson, a face drawn for legibility. */
 h1#_top,
 .sl-markdown-content :is(h2, h3, h4) {
   font-family: "Caveat", var(--sl-font);
   font-weight: 600;
 }
 
-/* the note still reads larger and looser than the rest of the site */
 .sl-markdown-content {
   font-size: 1.0625rem;
   line-height: 1.7;

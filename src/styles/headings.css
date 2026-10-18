@@ -9,14 +9,12 @@
   line-height: var(--sl-line-height-headings);
 }
 
-/* Headings after non-headings have more spacing. */
 .sl-markdown-content
   :not(.heading-wrapper)
   + :is(.heading-wrapper):not(:where(.not-content *)) {
   margin-top: 1.5em;
 }
 
-/* Set font-size on wrapper element, so line-height, margins etc. match heading size. */
 .sl-markdown-content .level-h2 {
   font-size: var(--sl-text-h2);
 }
@@ -48,7 +46,6 @@
   width: var(--icon-size);
 }
 
-/* Prevent double or triple clicks from potentially selecting the anchor link a11y text. */
 .sl-markdown-content .anchor-link .sr-only {
   -webkit-user-select: none;
   user-select: none;
@@ -64,7 +61,6 @@
   opacity: 1;
 }
 
-/* Float anchor links to the left of headings on larger screens. */
 @media (min-width: 95em) {
   .sl-markdown-content .heading-wrapper {
     display: flex;

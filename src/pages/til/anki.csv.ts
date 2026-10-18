@@ -1,8 +1,6 @@
 import type { APIRoute } from "astro";
 import { tilCards, topicSlug, triviaHtml } from "../../utils/til";
 
-/* ponytail: quote every field instead of working out which ones need it —
-   commas, quotes and newlines in the prose are then all covered by one rule. */
 const cell = (s: string) => `"${s.replace(/"/g, '""')}"`;
 
 export const GET: APIRoute = async ({ site }) => {
@@ -18,8 +16,6 @@ export const GET: APIRoute = async ({ site }) => {
       .join(",")
   );
 
-  // Anki reads these directives on import: target deck, field separator, and
-  // which column holds tags. Needs Anki 2.1.55+.
   const head = [
     "#separator:Comma",
     "#html:true",

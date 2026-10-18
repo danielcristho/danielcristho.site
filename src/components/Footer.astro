@@ -88,8 +88,6 @@ const topic = isNote ? tilTopic(id) : undefined;
     height: 1px;
     opacity: 0;
     background: linear-gradient(90deg, transparent, #e8e4c8);
-    /* the streak is only visible for the first fifth of the cycle, the rest of
-       the time it waits off screen */
     animation: shoot 6s linear infinite;
   }
 
@@ -112,9 +110,6 @@ const topic = isNote ? tilTopic(id) : undefined;
     animation-duration: 7.4s;
   }
 
-  /* The streak falls from the top right towards the lower left, and the bar is
-     turned 126deg so its bright end leads along that same line instead of
-     lying across it. */
   @keyframes shoot {
     0% {
       opacity: 0;

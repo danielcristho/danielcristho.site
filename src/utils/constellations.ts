@@ -6,7 +6,6 @@ export type Constellation = {
     hawaiian?: string;
     byak?: string;
   };
-  /* always starts with "When it comes", so every panel reads the same */
   when: string;
   note: string;
   sources: { label: string; url: string }[];

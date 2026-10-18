@@ -83,8 +83,6 @@ const links = [
     gap: 1.2rem;
   }
 
-  /* the social links come from SocialIcons.astro, which paints them accent and
-     lifts them on hover; in this row they behave like the text links instead */
   .nav-icons :global(a) {
     color: inherit;
     opacity: 0.6;
@@ -97,7 +95,6 @@ const links = [
     transform: none;
   }
 
-  /* search keeps only its icon, the bar carries no input box */
   .nav-right :global(site-search button) {
     border: 0;
     padding: 0;
@@ -117,7 +114,6 @@ const links = [
     display: none;
   }
 
-  /* one button, two icons, and CSS picks which one the current theme shows */
   .theme-toggle {
     display: flex;
     align-items: center;
@@ -148,7 +144,6 @@ const links = [
       gap: 0.9rem;
     }
 
-    /* the menu button already crowds this end of the bar */
     .nav-icons {
       display: none;
     }

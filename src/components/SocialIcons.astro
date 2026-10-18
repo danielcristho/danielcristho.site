@@ -3,7 +3,6 @@ import type { Props } from "@astrojs/starlight/props";
 import Default from "@astrojs/starlight/components/SocialIcons.astro";
 ---
 
-<!-- Add custom social link with its SVG icon and a label. -->
 <a href="https://medium.com/@danielpepuho" rel="me" class="sl-flex">
   <span class="sr-only">Medium</span>
   <svg
@@ -20,10 +19,8 @@ import Default from "@astrojs/starlight/components/SocialIcons.astro";
   </svg>
 </a>
 
-<!-- Render the default social links. -->
 <Default {...Astro.props}><slot /></Default>
 
-<!-- Add styles to mimic the default links appearance. -->
 <style>
   a {
     color: var(--sl-color-text-accent);

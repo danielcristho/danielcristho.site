@@ -49,10 +49,8 @@ const { slug, showIcon = true } = Astro.props;
     }
   }
 
-  // Update on initial load and every navigation (View Transitions)
   document.addEventListener("astro:page-load", updatePageViews);
 
-  // Initial check (non-transition load)
   if (document.readyState === "complete") {
     updatePageViews();
   } else {

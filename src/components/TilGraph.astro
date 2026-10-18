@@ -42,14 +42,12 @@ const chart = sorted.map(([, { label }], i) => {
     x,
     y,
     scale,
-    // the name hangs under the lowest star of its own pattern, centred on it
     lx:
       x + scale * (c.stars.reduce((sum, [sx]) => sum + sx, 0) / c.stars.length),
     ly: y + scale * (Math.max(...c.stars.map(([, sy]) => sy)) + 0.16),
   };
 });
 
-// Faint background stars. Seeded so every build renders the same sky.
 let seed = 7;
 const rand = () =>
   (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -453,7 +451,6 @@ const graph = {
       draw();
     }
 
-    // One constellation at a time, the picked one. Clicking it again unpicks it.
     const skyEls = [...view.querySelectorAll<SVGGElement>(".constellation")];
     const panels = [
       ...document.querySelectorAll<HTMLElement>(".sky-caption [data-sky]"),
