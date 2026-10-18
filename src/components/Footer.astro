@@ -94,39 +94,42 @@ const topic = isNote ? tilTopic(id) : undefined;
   }
 
   .shooting-stars span:nth-child(1) {
-    top: 12%;
-    left: 62%;
+    top: -4%;
+    left: 74%;
   }
 
   .shooting-stars span:nth-child(2) {
-    top: 28%;
-    left: 84%;
+    top: 4%;
+    left: 93%;
     animation-delay: 2.2s;
     animation-duration: 6.8s;
   }
 
   .shooting-stars span:nth-child(3) {
-    top: 6%;
-    left: 36%;
+    top: -8%;
+    left: 56%;
     animation-delay: 4.1s;
     animation-duration: 7.4s;
   }
 
+  /* The streak falls from the top right towards the lower left, and the bar is
+     turned 126deg so its bright end leads along that same line instead of
+     lying across it. */
   @keyframes shoot {
     0% {
       opacity: 0;
-      transform: translate3d(0, 0, 0) rotate(28deg);
+      transform: translate3d(0, 0, 0) rotate(126deg);
     }
     3% {
       opacity: 0.85;
     }
     18% {
       opacity: 0;
-      transform: translate3d(-420px, 230px, 0) rotate(28deg);
+      transform: translate3d(-340px, 480px, 0) rotate(126deg);
     }
     100% {
       opacity: 0;
-      transform: translate3d(-420px, 230px, 0) rotate(28deg);
+      transform: translate3d(-340px, 480px, 0) rotate(126deg);
     }
   }
 

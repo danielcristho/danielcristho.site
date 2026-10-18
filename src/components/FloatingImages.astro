@@ -43,10 +43,20 @@
 
   .floating-image {
     position: absolute;
-    filter: grayscale(20%) blur(0.3px) brightness(1.1) contrast(1.05);
-    opacity: 0.6;
+    filter: grayscale(25%) blur(0.3px) brightness(1.04) contrast(1.03)
+      sepia(0.12) hue-rotate(35deg);
+    opacity: 0.75;
     border-radius: 0.8rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  /* on the night sky the prints are dimmer and carry a little of the page's
+     olive, but they stay prints with edges */
+  :global([data-theme="dark"]) .floating-image {
+    filter: grayscale(45%) blur(0.3px) brightness(0.8) contrast(1.06) sepia(0.2)
+      hue-rotate(35deg);
+    opacity: 0.7;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
   }
 
   .floating-image img {
