@@ -1,0 +1,71 @@
+---
+title: "Day 03"
+date: 2026-10-18
+description: Transit Gateway with inspection, gp3 storage, cross-account audit access, pilot light DR, and instance store.
+trivia:
+  - q: Ten VPCs need a central hub, five of them with full reach and five with partial reach, and every path needs deep packet inspection. What serves both needs?
+    a: AWS Transit Gateway for the hub, with multiple route tables to segment who reaches whom, and AWS Network Firewall for the deep packet inspection. Peering would need a mesh and gives no inspection.
+
+  - q: An RDS for MariaDB instance needs 40 GiB and 1,000 IOPS at the lowest cost. Which storage type and size?
+    a: 50 GiB of General Purpose SSD (gp3). gp3 includes 3,000 IOPS at no extra cost whatever the volume size, so provisioned IOPS storage is paying for throughput that gp3 already covers.
+
+  - q: A security team in its own AWS account needs to read settings and resource configurations in the production account during audits. What is the recommended design?
+    a: An IAM role in the production account with the needed permissions, and a trust policy that names the security team account. The team assumes the role. No IAM users, no long lived keys crossing accounts.
+
+  - q: What does a pilot light disaster recovery strategy look like for a self contained application?
+    a: The hosting environment exists in AWS but stays switched off. EC2 instances are created and stopped, then started and sent all traffic when the primary fails. RPO and RTO are tens of minutes, and idle cost stays low.
+
+  - q: A rendering job needs 400 GB of scratch space and about 40,000 random IOPS, and the data is thrown away after each frame. Which storage?
+    a: A storage optimized EC2 instance with instance store. It gives tens of thousands of low latency random IOPS from local disks at no extra cost, and losing the data on stop is fine because it is temporary.
+template: splash
+---
+
+## Network Connectivity
+
+| Service              | What it is                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| Transit Gateway      | Hub and spoke router for many VPCs and on-premises networks. Multiple route tables segment the flows. |
+| AWS Network Firewall | Managed firewall for deep packet inspection of traffic between VPCs and to the internet.              |
+| VPC peering          | One to one links. Ten VPCs need a mesh, and peering does no inspection.                               |
+
+Route tables are the part worth remembering. Full reach for some VPCs and partial reach for others is one Transit Gateway with two route tables, not two designs.
+
+## Database Storage
+
+`General Purpose SSD (gp3)` includes 3,000 IOPS at no extra cost, and that baseline does not depend on volume size. A database asking for 1,000 IOPS on 40 GiB is already covered by the smallest practical gp3 volume.
+
+| Option                 | Cost for 40 GiB and 1,000 IOPS                                   |
+| ---------------------- | ---------------------------------------------------------------- |
+| gp3, 50 GiB            | Cheapest. The 3,000 IOPS baseline is included.                   |
+| gp2                    | IOPS scale with size, so small volumes buy capacity to get IOPS. |
+| Provisioned IOPS (io1) | Pays for IOPS that gp3 already includes.                         |
+
+## Cross-Account Access
+
+A security team with its own account needs to read production settings during audits.
+
+| Step               | What it does                                                      |
+| ------------------ | ----------------------------------------------------------------- |
+| IAM role           | Created in the production account, holding only read permissions. |
+| Permissions policy | States what the auditors can see.                                 |
+| Trust policy       | Names the security team account as allowed to assume the role.    |
+
+The team then assumes the role. No IAM users in the production account, and no access keys passed between teams.
+
+## Disaster Recovery
+
+`Pilot light` means the environment exists but is switched off. EC2 instances are built in an AWS Region and stopped. On failure they start and take all traffic.
+
+- RPO and RTO -> tens of minutes.
+- Cost -> low, because almost nothing runs until a test or a real failover.
+- Recovery -> simple, because the core infrastructure is already in place.
+
+:::note
+Pilot light keeps the parts and turns them off. Warm standby keeps a smaller copy running. Backup and restore keeps nothing but the data.
+:::
+
+## Temporary Storage
+
+`Instance store` is local disk on the host. It disappears when the instance stops, which is a problem for data you keep and a non-issue for data you discard.
+
+Storage optimized instances are built for high, sequential read and write access to large local datasets, and they deliver tens of thousands of low latency random IOPS. For 400 GB of scratch space at 40,000 random IOPS, the instance store comes with the instance and costs nothing more.
