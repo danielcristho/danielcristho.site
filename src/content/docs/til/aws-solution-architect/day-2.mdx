@@ -1,7 +1,76 @@
 ---
 title: "Day 02"
 date: 2026-10-17
-description: Caching, edge protection, compute cost, storage, and decoupling.
+description: Shared file systems, idle cost, private databases, link failover, and what IAM can authenticate.
 trivia:
+  - q: Two EC2 instances in peered VPCs share files through S3 interface endpoints. The team wants the same permission model over NFSv4, fully managed. What replaces it?
+    a: Amazon EFS. It is a fully managed elastic file system that speaks NFSv4 and can be mounted by EC2 instances and on-premises servers at the same time.
+
+  - q: An OLTP application must be available at all times, its traffic is unpredictable, and the company wants to pay as little as possible while it sits idle. What serves both layers?
+    a: Containers on Amazon ECS with AWS Fargate for the application, Amazon Aurora Serverless for the database. Neither charges for compute while idle. Burstable EC2 bursts but keeps billing, and Redshift is built for analytics (OLAP), not transactions.
+
+  - q: How do you keep a backend RDS instance unreachable from the internet while the application tier still reaches it on one port?
+    a: Put the instance in a private subnet, which no internet traffic is routed to, then let a security group allow only the application tier and only that port. The subnet is the layer, the security group is the door.
+
+  - q: A single Direct Connect link joins a data center to several VPCs through a Transit Gateway. What is the cheapest way to add failover?
+    a: A Site-to-Site VPN connection as the backup path. It reaches the same VPCs over the internet and only carries traffic when the dedicated link is down, so a second Direct Connect link is not needed.
+
+  - q: A team wants to manage Amazon DocumentDB access with IAM and streamline authentication. How far does IAM actually reach?
+    a: Only to AWS level actions such as creating or modifying a cluster. Connecting to the database and running operations still uses traditional authentication, a database username and password.
 template: splash
 ---
+
+## File Storage
+
+| Service    | What it is                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------ |
+| Amazon EFS | Fully managed elastic file system, NFSv4 compatible, mountable by many EC2 instances at once.          |
+| Amazon FSx | Fully managed file storage on Windows Server, with SMB and native Windows file system features.        |
+| Amazon S3  | Object storage with its own API. Not a file system, so no NFS semantics and no POSIX permission model. |
+
+EFS also mounts from on-premises servers over Direct Connect or VPN, so one file system can span both sides of a hybrid network.
+
+## Compute & Cost
+
+Minimum cost while idle means nothing is left running, not something small left running.
+
+| Layer           | Option                    | Cost while idle                                      |
+| --------------- | ------------------------- | ---------------------------------------------------- |
+| Application     | Amazon ECS on AWS Fargate | Near zero, no instance stays up between requests.    |
+| Relational OLTP | Amazon Aurora Serverless  | No compute cost while the database sits idle.        |
+| Application     | Burstable EC2             | Full hourly rate, burst is capacity and not scaling. |
+
+Amazon Redshift is built for analytic processing (OLAP), so it is never the answer to an OLTP requirement, whatever the cost question says.
+
+:::note
+"Available at all times" is not the same as "a server stays on". That difference is what separates serverless from a burstable instance.
+:::
+
+## Network Isolation
+
+Two layers keep a backend database off the internet, and neither replaces the other.
+
+| Layer          | What it does                                                                   |
+| -------------- | ------------------------------------------------------------------------------ |
+| Private subnet | No internet traffic is routed to it, so the instance has no path from outside. |
+| Security group | Allows only the application tier, and only on the port the application uses.   |
+
+The subnet decides who can reach the network, the security group decides who can knock on the port.
+
+## Hybrid Connectivity
+
+- `Direct Connect` → a dedicated link from a data center to one or more VPCs, centrally attached through a Transit Gateway.
+- `Site-to-Site VPN` → reaches the same VPCs over the public internet, and is the cost-effective failover for a Direct Connect link.
+
+A second Direct Connect link buys the same redundancy at a far higher price for a path that is meant to sit idle.
+
+## Database Authentication
+
+Amazon DocumentDB (with MongoDB compatibility) splits authentication across two planes, which is the part worth remembering.
+
+| Plane                                                 | Who authenticates              |
+| ----------------------------------------------------- | ------------------------------ |
+| AWS level actions, such as create or modify a cluster | IAM policies                   |
+| Connecting to the database and running operations     | Database username and password |
+
+IAM manages the cluster, not the session. Asking IAM to streamline the login does not remove the database credentials.

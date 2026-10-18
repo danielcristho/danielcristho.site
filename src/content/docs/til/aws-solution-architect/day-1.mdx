@@ -26,6 +26,8 @@ trivia:
 template: splash
 ---
 
+Every note in this series comes from the [Official Practice Question Set: AWS Certified Solutions Architect - Associate (SAA-C03)](https://skillbuilder.aws/learn/6NV91XYP1P/official-practice-question-set-aws-certified-solutions-architect--associate-saac03--english/N1HSPV1K17) on AWS Skill Builder.
+
 ## Caching & Databases
 
 | Service                    | What it is                                                                                      |
@@ -38,10 +40,11 @@ template: splash
 
 AWS Shield fits DDoS attacks, volumetric bots, and vulnerability exploitation attempts. It does **not** protect against XSS or SQL injection.
 
-| Requirement                                                              | Answer                                                      |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| Requirement                                                              | Answer                                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------ |
 | Block SQL injection against an EC2 origin behind an LB behind CloudFront | AWS WAF -> it operates at layer 7, not layer 3.              |
 | Centrally manage firewall rules                                          | Firewall Manager -> a managed service, not installed on EC2. |
+
 —
 :::note
 Migrating a website from EC2 to S3 does not block DDos traffic.

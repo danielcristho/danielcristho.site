@@ -6,6 +6,8 @@ export type Constellation = {
     hawaiian?: string;
     byak?: string;
   };
+  /* always starts with "When it comes", so every panel reads the same */
+  when: string;
   note: string;
   sources: { label: string; url: string }[];
   stars: [number, number][];
@@ -21,7 +23,8 @@ export const constellations: Constellation[] = [
       hawaiian: "Makaliʻi",
       byak: "Bagar, Insandi, Waibaki or Makdwer",
     },
-    note: "Nine stars in Rangi Mātāmua's reading of the Te Kōkau manuscript, seven in many other accounts. Its dawn rising opens the Māori new year.",
+    when: "When it comes at dawn from late June to July, the Māori new year starts.",
+    note: "Nine stars in Rangi Mātāmua's reading, seven in most other accounts.",
     sources: [
       {
         label: "AUT, the nine whetū of Matariki",
@@ -62,7 +65,8 @@ export const constellations: Constellation[] = [
       hawaiian: "Nā Kao, the darts",
       byak: "Sawakoi, the whole figure of Orion",
     },
-    note: "Tautoru means the string of three. Nā Kao covers the belt and the sword; the whole figure of Orion is Ka Heihei o Nā Keiki, the children's string game. Byak sailors of Sowek read Sawakoi, Orion, together with Romanggwandi to tell the turn of the seasons.",
+    when: "When it comes in the evening from December to March, Byak sailors steer by it.",
+    note: "Tautoru means the string of three. Nā Kao covers the belt and the sword.",
     sources: [
       {
         label: "Hōkūleʻa, Hawaiian star lines",
@@ -91,7 +95,8 @@ export const constellations: Constellation[] = [
       hawaiian: "Ka Makau Nui o Māui",
       byak: "Romanggwandi",
     },
-    note: "The fish hook Māui used to haul up land. Hua, which is Antares, is the knot tying the line to the hook. Byak sailors call it Romanggwandi, the sky dragon, and split the twelve months across the parts of its body.",
+    when: "When it comes in the evening from May to August, the Byak year is told by the parts of its body.",
+    note: "The fish hook Māui used to pull up land. Hua, which is Antares, is the knot that ties the line to the hook.",
     sources: [
       {
         label: "Hōkūleʻa, Hawaiian star lines",
@@ -130,7 +135,8 @@ export const constellations: Constellation[] = [
       byak: "Sraiknam",
       maori: "",
     },
-    note: "Byak navigators read these seven stars as a coconut palm. A spoon in China, Japan and Korea, a plough or a bear elsewhere. Sources differ: Wolne Media keeps Sraiknam for Ursa Major and Maksrai for Lyra, while the Pustaka Papua piece uses both names for the palm.",
+    when: "When it comes low in the north from March to May, it stands for the coconut harvest.",
+    note: "Byak navigators read these seven stars as a coconut palm. A spoon in China, Japan and Korea, a plough or a bear elsewhere. Sources differ on the name.",
     sources: [
       {
         label: "Pustaka Papua, Byak astronomy",
@@ -168,7 +174,8 @@ export const constellations: Constellation[] = [
       hawaiian: "Hānaiakamalama",
       byak: "",
     },
-    note: "Its long axis points at the celestial south pole, which is what makes it steer. Te Ara counts at least eight Māori names for it: Te Punga, the anchor of a sky canoe in Tainui accounts, and Māhutonga, a gap in the Milky Way in Wairarapa accounts. The Hawaiian name rests on a secondary source.",
+    when: "When it comes high in the south from March to August, its long axis points at the pole.",
+    note: "The anchor of a sky canoe in Tainui accounts. Wairarapa accounts call it Māhutonga, a gap in the Milky Way. The Hawaiian name rests on a secondary source.",
     sources: [
       {
         label: "Te Ara, Southern Cross",
