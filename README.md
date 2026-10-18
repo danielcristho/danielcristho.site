@@ -183,6 +183,7 @@ authors: ["danielcristho"]
 ## 🙏 Acknowledgments
 
 - [Astro Starlight](https://starlight.astro.build) - The docs framework this site is built on, and the source of every component override here
+- [Starlight Blog](https://starlight-blog-docs.vercel.app) - The plugin that turns Starlight into a blog, with the post list, tags, authors and feed
 - [trueberryless](https://github.com/trueberryless/trueberryless.org) - Some of the layout, styles and components here come from their Starlight setup
 - [antfu](https://antfu.me) - Some of the look and style here follow their site
 - Astro Community - For the plugins I use.
