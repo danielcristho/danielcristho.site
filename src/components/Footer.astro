@@ -32,6 +32,16 @@ const topic = isNote ? tilTopic(id) : undefined;
   )
 }
 
+{
+  /* dark mode only, three streaks on staggered delays so one crosses the sky
+    every two seconds or so without any JS keeping time */
+}
+<div class="shooting-stars" aria-hidden="true">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
 {/* every page gets it, not only the notes */}
 <button type="button" class="to-top" aria-label="Back to top">
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -59,6 +69,73 @@ const topic = isNote ? tilTopic(id) : undefined;
 </footer>
 
 <style>
+  .shooting-stars {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .shooting-stars {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .shooting-stars span {
+    position: absolute;
+    width: 90px;
+    height: 1px;
+    opacity: 0;
+    background: linear-gradient(90deg, transparent, #e8e4c8);
+    /* the streak is only visible for the first fifth of the cycle, the rest of
+       the time it waits off screen */
+    animation: shoot 6s linear infinite;
+  }
+
+  .shooting-stars span:nth-child(1) {
+    top: 12%;
+    left: 62%;
+  }
+
+  .shooting-stars span:nth-child(2) {
+    top: 28%;
+    left: 84%;
+    animation-delay: 2.2s;
+    animation-duration: 6.8s;
+  }
+
+  .shooting-stars span:nth-child(3) {
+    top: 6%;
+    left: 36%;
+    animation-delay: 4.1s;
+    animation-duration: 7.4s;
+  }
+
+  @keyframes shoot {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotate(28deg);
+    }
+    3% {
+      opacity: 0.85;
+    }
+    18% {
+      opacity: 0;
+      transform: translate3d(-420px, 230px, 0) rotate(28deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(-420px, 230px, 0) rotate(28deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shooting-stars {
+      display: none !important;
+    }
+  }
+
   .til-footer-tags {
     display: flex;
     align-items: center;
