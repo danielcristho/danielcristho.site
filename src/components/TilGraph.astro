@@ -1,0 +1,852 @@
+---
+import { getCollection } from "astro:content";
+import { constellations, slots } from "../utils/constellations";
+import { tilTopic, topicSlug } from "../utils/til";
+
+const pages = (
+  await getCollection(
+    "docs",
+    ({ id }) => id.startsWith("til/") && id !== "til" && !!tilTopic(id)
+  )
+).sort(
+  (a, b) =>
+    new Date(b.data.date ?? 0).getTime() - new Date(a.data.date ?? 0).getTime()
+);
+
+// topic slug -> display label + the pages under it
+const tags = new Map<string, { label: string; pages: typeof pages }>();
+for (const page of pages) {
+  const label = tilTopic(page.id)!;
+  const key = topicSlug(label);
+  const entry = tags.get(key) ?? { label, pages: [] };
+  entry.pages.push(page);
+  tags.set(key, entry);
+}
+
+const sorted = [...tags.entries()].sort(
+  (a, b) => b[1].pages.length - a[1].pages.length
+);
+
+/* Each topic gets a constellation, in the order the list defines, so a new
+   topic folder picks up the next one with no edit here. The sky is static
+   decoration, the simulation knows nothing about it. */
+// Topics arrive sorted by note count, so pairing them with the patterns sorted
+// by star count hands the busiest topic the roomiest constellation.
+const bySize = [...constellations].sort(
+  (a, b) => b.stars.length - a.stars.length
+);
+
+const chart = sorted.map(([, { label }], i) => {
+  const c = bySize[i % bySize.length];
+  const [x, y, scale] = slots[i % slots.length];
+  return {
+    ...c,
+    topic: label,
+    x,
+    y,
+    scale,
+    // the name hangs under the lowest star of its own pattern, centred on it
+    lx:
+      x + scale * (c.stars.reduce((sum, [sx]) => sum + sx, 0) / c.stars.length),
+    ly: y + scale * (Math.max(...c.stars.map(([, sy]) => sy)) + 0.16),
+  };
+});
+
+// Faint background stars. Seeded so every build renders the same sky.
+let seed = 7;
+const rand = () =>
+  (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+const dust = Array.from({ length: 48 }, () => ({
+  x: +(rand() * 800).toFixed(1),
+  y: +(rand() * 360).toFixed(1),
+  r: +(0.4 + rand() * 0.9).toFixed(2),
+}));
+
+const graph = {
+  nodes: [
+    ...sorted.map(([key, { label, pages }]) => ({
+      id: `tag:${key}`,
+      label,
+      url: `#${key}`,
+      kind: "tag",
+      weight: pages.length,
+      topic: label,
+    })),
+    ...pages.map((page) => ({
+      id: page.id,
+      label: page.data.title,
+      url: `/${page.id}`,
+      kind: "note",
+      weight: 1,
+      topic: tilTopic(page.id)!,
+    })),
+  ],
+  links: pages.map((page) => ({
+    source: page.id,
+    target: `tag:${topicSlug(tilTopic(page.id)!)}`,
+  })),
+};
+---
+
+<div class="graph-wrap">
+  <svg
+    id="tag-graph"
+    viewBox="0 0 800 360"
+    role="img"
+    aria-label="TIL tag graph"
+  >
+    <g class="sky">
+      {dust.map((d) => <circle class="dust" cx={d.x} cy={d.y} r={d.r} />)}
+      {
+        chart.map((c) => (
+          <g
+            class="constellation"
+            data-sky={c.short}
+            data-topic={c.topic}
+            tabindex="0"
+            role="button"
+            aria-label={`${c.short}, the constellation for ${c.topic}`}
+          >
+            <title>{`${c.names.english}, drawn here for ${c.topic}`}</title>
+            <g transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
+              {c.lines.map(([a, b]) => (
+                <line
+                  x1={c.stars[a][0]}
+                  y1={c.stars[a][1]}
+                  x2={c.stars[b][0]}
+                  y2={c.stars[b][1]}
+                  vector-effect="non-scaling-stroke"
+                />
+              ))}
+              {c.stars.map(([x, y]) => (
+                <circle cx={x} cy={y} r={0.022} />
+              ))}
+            </g>
+            <text class="sky-name" x={c.lx} y={c.ly} text-anchor="middle">
+              {c.short}
+            </text>
+            <text class="sky-topic" x={c.lx} y={c.ly + 11} text-anchor="middle">
+              {c.topic}
+            </text>
+          </g>
+        ))
+      }
+    </g>
+    <g class="edges"></g>
+    <g class="nodes"></g>
+  </svg>
+  <p class="graph-hint">
+    Hover a dot for its title, scroll to zoom, drag a node to pin it,
+    double-click to release it, drag the background to spin.
+  </p>
+  <p class="sky-hint">Click a constellation for its name and its story.</p>
+  <div class="sky-caption">
+    {
+      chart.map((c) => (
+        <div hidden data-sky={c.short}>
+          <b>{c.short}</b>
+          <span class="sky-key-names">
+            {(
+              [
+                ["Byak", c.names.byak],
+                ["Māori", c.names.maori],
+                ["Hawaiian", c.names.hawaiian],
+                ["English", c.names.english],
+              ] as [string, string | undefined][]
+            )
+              .filter(([, name]) => name)
+              .map(([lang, name]) => `${lang}: ${name}`)
+              .join(" · ")}
+          </span>
+          <span class="sky-key-note">{c.note}</span>
+          <span class="sky-key-src">
+            {c.sources.map((src) => (
+              <a href={src.url}>{src.label}</a>
+            ))}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<button type="button" class="sky-toggle til-tag" aria-pressed="false">
+  Show constellations
+</button>
+
+<script
+  type="application/json"
+  id="tag-graph-data"
+  set:html={JSON.stringify({
+    ...graph,
+    sky: chart.map(({ topic, x, y, scale, stars }) => ({
+      topic,
+      x,
+      y,
+      scale,
+      stars,
+    })),
+  })}
+/>
+
+<style>
+  .graph-wrap {
+    --til-sky: #f0efe0;
+    --til-ink: #4a4a24;
+    background: var(--til-sky);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  #tag-graph {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: grab;
+  }
+
+  .sky-toggle {
+    display: inline-block;
+    cursor: pointer;
+    margin-bottom: 0.6rem;
+  }
+
+  /* hint, sky hint and caption share the one strip under the chart, so the
+     explanation never piles up on top of the post list */
+  .sky-hint,
+  .sky-caption {
+    display: none;
+  }
+
+  .graph-wrap.sky-on .graph-hint {
+    display: none;
+  }
+
+  .graph-wrap.sky-on .sky-hint {
+    display: block;
+    margin: 0.25rem 0 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .graph-wrap.picking .sky-hint {
+    display: none;
+  }
+
+  .graph-wrap.picking .sky-caption {
+    display: block;
+    padding: 0.4rem 0.6rem 0.2rem;
+    font-size: 0.8125rem;
+  }
+
+  .sky-key-names,
+  .sky-key-note,
+  .sky-key-src {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .sky-key-src a + a::before {
+    content: " · ";
+    color: var(--sl-color-gray-3);
+  }
+
+  .graph-hint {
+    margin: 0.25rem 0 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-3);
+  }
+</style>
+
+<style is:global>
+  /* gray-5 is the same lightness as the stock, so lines need black at low
+     alpha instead, same as the tables. */
+  #tag-graph line {
+    stroke: rgba(0, 0, 0, 0.15);
+    stroke-width: 1;
+  }
+
+  /* the dust ignores the pointer, a constellation is the one thing in the sky
+     you can click */
+  #tag-graph .sky {
+    pointer-events: none;
+  }
+
+  #tag-graph .constellation {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  #tag-graph .constellation.off {
+    display: none;
+  }
+
+  #tag-graph .sky:has(.picked) .constellation:not(.picked) {
+    opacity: 0.3;
+  }
+
+  #tag-graph .constellation.picked line {
+    stroke: rgba(74, 74, 36, 0.7);
+  }
+
+  #tag-graph .constellation:focus-visible {
+    outline: none;
+  }
+
+  #tag-graph .constellation:focus-visible .sky-name {
+    text-decoration: underline;
+  }
+
+  /* off until the button asks for it */
+  #tag-graph:not(.sky-on) .sky {
+    display: none;
+  }
+
+  /* in constellation mode the pattern supplies the lines, and the sky label
+     already names the topic, so the spokes and the tag dots step aside */
+  #tag-graph.sky-on .edges,
+  #tag-graph.sky-on .nodes g {
+    display: none;
+  }
+
+  /* A note title only shows while the pointer lights it up, otherwise the
+     middle of the graph is a pile of overlapping text. :not(.lit) carries two
+     classes so it beats the .focusing dimming rule below. */
+  #tag-graph .nodes a text {
+    transition: opacity 0.15s;
+  }
+
+  #tag-graph .nodes a text:not(.lit) {
+    opacity: 0;
+  }
+
+  /* ponytail: no drop-shadow glow. The simulation repaints this SVG every
+     frame and a filter is re-rastered with it, which is what made the
+     animation heavy. Plain fills cost nothing. */
+  #tag-graph .sky circle {
+    fill: var(--til-ink);
+    stroke: none;
+  }
+
+  #tag-graph .sky .dust {
+    fill: rgba(74, 74, 36, 0.3);
+  }
+
+  #tag-graph .sky line {
+    stroke: rgba(74, 74, 36, 0.35);
+  }
+
+  #tag-graph .sky-topic {
+    font-size: 7.5px;
+    letter-spacing: 0.06em;
+    fill: rgba(74, 74, 36, 0.75);
+  }
+
+  #tag-graph .sky-name {
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: rgba(74, 74, 36, 0.55);
+  }
+
+  #tag-graph.grabbing {
+    cursor: grabbing;
+  }
+
+  #tag-graph circle {
+    stroke: var(--til-sky);
+    stroke-width: 1.5;
+    cursor: pointer;
+  }
+
+  #tag-graph circle.tag {
+    fill: #2e8555;
+  }
+
+  #tag-graph circle.note {
+    fill: var(--sl-color-gray-3);
+  }
+
+  #tag-graph text {
+    font-size: 9px;
+    fill: var(--sl-color-gray-2);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  #tag-graph text.tag-label {
+    font-size: 11px;
+    fill: var(--sl-color-white);
+  }
+
+  #tag-graph.focusing :is(circle, text, line):not(.lit) {
+    opacity: 0.15;
+  }
+
+  #tag-graph .off {
+    display: none;
+  }
+
+  #tag-graph circle.pinned {
+    stroke: #2e8555;
+  }
+
+  /* On a phone the 800-unit chart lands in roughly 340 CSS px, so everything
+     in it shrinks to about 0.43. Only the text stops being readable at that
+     scale, so only the text is bumped back. More crowding is the trade. */
+  @media (max-width: 50rem) {
+    #tag-graph text {
+      font-size: 16px;
+    }
+
+    #tag-graph text.tag-label {
+      font-size: 18px;
+    }
+
+    #tag-graph .sky-name {
+      font-size: 13px;
+    }
+
+    #tag-graph .sky-topic {
+      font-size: 12px;
+    }
+  }
+</style>
+
+<script>
+  const svg = document.getElementById("tag-graph");
+  const raw = document.getElementById("tag-graph-data");
+  if (svg && raw) {
+    const view = svg;
+    const NS = "http://www.w3.org/2000/svg";
+    const W = 800;
+    const H = 360;
+    const { nodes, links, sky } = JSON.parse(raw.textContent || "{}") as {
+      sky: {
+        topic: string;
+        x: number;
+        y: number;
+        scale: number;
+        stars: [number, number][];
+      }[];
+      nodes: {
+        id: string;
+        label: string;
+        url: string;
+        kind: string;
+        weight: number;
+        topic: string;
+      }[];
+      links: { source: string; target: string }[];
+    };
+
+    /* Constellation mode parks each note on a star of its own topic's pattern.
+       ponytail: notes past the last star orbit 7px out from the one they reuse,
+       which beats inventing extra stars the constellation does not have. */
+    let skyOn = false;
+    let topicFilter = "";
+
+    function parkOnStars() {
+      for (const c of sky) {
+        let k = 0;
+        nodes.forEach((note, i) => {
+          if (note.kind !== "note" || note.topic !== c.topic) return;
+          const [sx, sy] = c.stars[k % c.stars.length];
+          const ring = Math.floor(k / c.stars.length) * 7;
+          pts[i].x = c.x + sx * c.scale + ring;
+          pts[i].y = c.y + sy * c.scale + ring;
+          pts[i].vx = pts[i].vy = 0;
+          k++;
+        });
+      }
+      draw();
+    }
+
+    // One constellation at a time: every panel is in the page already, picking
+    // is only a matter of which one is not hidden.
+    const skyEls = [...view.querySelectorAll<SVGGElement>(".constellation")];
+    const panels = [
+      ...document.querySelectorAll<HTMLElement>(".sky-caption [data-sky]"),
+    ];
+    const wrap = view.closest<HTMLElement>(".graph-wrap");
+
+    function pickSky(name: string | null) {
+      skyEls.forEach((g) =>
+        g.classList.toggle("picked", g.dataset.sky === name)
+      );
+      panels.forEach((el) => (el.hidden = el.dataset.sky !== name));
+      wrap?.classList.toggle("picking", name !== null);
+    }
+
+    // A filtered graph shows one topic, so it shows that topic's pattern only.
+    function syncSky() {
+      for (const g of skyEls)
+        g.classList.toggle(
+          "off",
+          !!topicFilter && g.dataset.topic !== topicFilter
+        );
+      const picked = skyEls.find((g) => g.classList.contains("picked"));
+      if (picked?.classList.contains("off")) pickSky(null);
+    }
+
+    for (const g of skyEls) {
+      const hit = () =>
+        pickSky(g.classList.contains("picked") ? null : g.dataset.sky!);
+      g.addEventListener("click", hit);
+      g.addEventListener("keydown", (event: KeyboardEvent) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          hit();
+        }
+      });
+    }
+
+    const toggle = document.querySelector<HTMLButtonElement>(".sky-toggle");
+    toggle?.addEventListener("click", () => {
+      const on = view.classList.toggle("sky-on");
+      toggle.setAttribute("aria-pressed", String(on));
+      toggle.textContent = on ? "Hide constellations" : "Show constellations";
+      skyOn = on;
+      wrap?.classList.toggle("sky-on", on);
+      if (on) {
+        syncSky();
+        parkOnStars();
+      } else {
+        pickSky(null);
+        for (const pt of pts) pt.pinned = false;
+        stir(1);
+      }
+    });
+
+    const byId = new Map(nodes.map((n, i) => [n.id, i]));
+    const neighbours = new Map<string, Set<string>>(
+      nodes.map((n) => [n.id, new Set([n.id])])
+    );
+    for (const link of links) {
+      neighbours.get(link.source)?.add(link.target);
+      neighbours.get(link.target)?.add(link.source);
+    }
+
+    const pts = nodes.map((node, i) => {
+      const a = (i / nodes.length) * Math.PI * 2;
+      const r = node.kind === "tag" ? 110 : 210;
+      return {
+        x: W / 2 + Math.cos(a) * r,
+        y: H / 2 + Math.sin(a) * r,
+        vx: 0,
+        vy: 0,
+        pinned: false,
+      };
+    });
+
+    const edges = view.querySelector(".edges")!;
+    const groups = view.querySelector(".nodes")!;
+
+    const lineEls = links.map((link) => {
+      const el = document.createElementNS(NS, "line");
+      el.dataset.source = link.source;
+      el.dataset.target = link.target;
+      edges.appendChild(el);
+      return el;
+    });
+
+    const nodeEls = nodes.map((node) => {
+      const a = document.createElementNS(NS, node.kind === "tag" ? "g" : "a");
+      if (node.kind !== "tag") a.setAttribute("href", node.url);
+      const circle = document.createElementNS(NS, "circle");
+      circle.setAttribute(
+        "r",
+        String(node.kind === "tag" ? 4 + node.weight : 3.5)
+      );
+      circle.setAttribute("class", node.kind);
+      const title = document.createElementNS(NS, "title");
+      title.textContent = node.label;
+      circle.appendChild(title);
+      const text = document.createElementNS(NS, "text");
+      text.textContent =
+        node.label.length > 30 ? node.label.slice(0, 29) + "…" : node.label;
+      text.setAttribute("text-anchor", "middle");
+      if (node.kind === "tag") text.setAttribute("class", "tag-label");
+      a.append(circle, text);
+      a.addEventListener("mouseenter", () => focus(node.id));
+      a.addEventListener("mouseleave", () => focus(null));
+      // a pinned node is released by double-clicking it
+      a.addEventListener("dblclick", () => {
+        const pt = pts[byId.get(node.id)!];
+        pt.pinned = false;
+        circle.classList.remove("pinned");
+        stir();
+      });
+      groups.appendChild(a);
+      return { el: a, circle, text };
+    });
+
+    function focus(id: string | null) {
+      view.classList.toggle("focusing", id !== null);
+      const lit = id ? neighbours.get(id)! : new Set<string>();
+      nodeEls.forEach(({ circle, text }, i) => {
+        const on = lit.has(nodes[i].id);
+        circle.classList.toggle("lit", on);
+        text.classList.toggle("lit", on);
+      });
+      lineEls.forEach((el, i) => {
+        el.classList.toggle(
+          "lit",
+          lit.has(links[i].source) && lit.has(links[i].target)
+        );
+      });
+    }
+
+    function draw() {
+      nodeEls.forEach(({ circle, text }, i) => {
+        circle.setAttribute("cx", String(pts[i].x));
+        circle.setAttribute("cy", String(pts[i].y));
+        text.setAttribute("x", String(pts[i].x));
+        text.setAttribute(
+          "y",
+          String(
+            nodes[i].kind === "tag"
+              ? pts[i].y - 9 - nodes[i].weight
+              : pts[i].y + 13
+          )
+        );
+      });
+      lineEls.forEach((el, i) => {
+        const a = pts[byId.get(links[i].source)!];
+        const b = pts[byId.get(links[i].target)!];
+        el.setAttribute("x1", String(a.x));
+        el.setAttribute("y1", String(a.y));
+        el.setAttribute("x2", String(b.x));
+        el.setAttribute("y2", String(b.y));
+      });
+    }
+
+    // ponytail: the topic select owns the filter, the graph just reads it.
+    // An inactive node keeps its element and its point, it is only hidden and
+    // skipped by the forces.
+    let active = nodes.map(() => true);
+
+    function filterTo(topic: string) {
+      topicFilter = topic;
+      syncSky();
+      active = nodes.map((n) => !topic || n.topic === topic);
+      nodeEls.forEach(({ el }, i) => el.classList.toggle("off", !active[i]));
+      lineEls.forEach((el, i) =>
+        el.classList.toggle(
+          "off",
+          !(
+            active[byId.get(links[i].source)!] &&
+            active[byId.get(links[i].target)!]
+          )
+        )
+      );
+      if (skyOn) {
+        parkOnStars();
+        return;
+      }
+      // lay the survivors out again, two nodes left in a corner read as broken
+      const live = nodes.map((_, i) => i).filter((i) => active[i]);
+      live.forEach((idx, k) => {
+        const a = (k / live.length) * Math.PI * 2;
+        const r = nodes[idx].kind === "tag" ? 70 : 150;
+        pts[idx].x = W / 2 + Math.cos(a) * r;
+        pts[idx].y = H / 2 + Math.sin(a) * r;
+        pts[idx].vx = pts[idx].vy = 0;
+        pts[idx].pinned = false;
+        nodeEls[idx].circle.classList.remove("pinned");
+      });
+      stir(1);
+    }
+
+    const topicSelect = document.querySelector<HTMLSelectElement>("#til-topic");
+    topicSelect?.addEventListener("change", () => filterTo(topicSelect.value));
+    if (topicSelect?.value) filterTo(topicSelect.value);
+
+    let alpha = 1;
+    let running = false;
+    let held: (typeof pts)[number] | null = null;
+
+    // any interaction re-heats the simulation and restarts the loop
+    function stir(to = 0.5) {
+      if (skyOn) {
+        draw();
+        return;
+      }
+      alpha = Math.max(alpha, to);
+      if (!running) {
+        running = true;
+        requestAnimationFrame(tick);
+      }
+    }
+
+    function tick() {
+      // The shape is the whole point in constellation mode, so the forces stop
+      // dead. Without this an already-running loop keeps pulling notes off
+      // their stars, back towards their tag and the centre.
+      if (skyOn) {
+        running = false;
+        draw();
+        return;
+      }
+      for (let i = 0; i < pts.length; i++) {
+        if (!active[i]) continue;
+        for (let j = i + 1; j < pts.length; j++) {
+          if (!active[j]) continue;
+          let dx = pts[j].x - pts[i].x;
+          let dy = pts[j].y - pts[i].y;
+          const d2 = Math.max(dx * dx + dy * dy, 25);
+          const f = (2400 / d2) * alpha;
+          const d = Math.sqrt(d2);
+          dx = (dx / d) * f;
+          dy = (dy / d) * f;
+          pts[i].vx -= dx;
+          pts[i].vy -= dy;
+          pts[j].vx += dx;
+          pts[j].vy += dy;
+        }
+      }
+      for (const link of links) {
+        if (!active[byId.get(link.source)!] || !active[byId.get(link.target)!])
+          continue;
+        const a = pts[byId.get(link.source)!];
+        const b = pts[byId.get(link.target)!];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const f = ((d - 85) * 0.015 * dx) / d;
+        const g = ((d - 85) * 0.015 * dy) / d;
+        a.vx += f;
+        a.vy += g;
+        b.vx -= f;
+        b.vy -= g;
+      }
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        // a pinned node still pushes the others around, it just never moves
+        if (p === held || p.pinned || !active[i]) continue;
+        p.vx += (W / 2 - p.x) * 0.004;
+        p.vy += (H / 2 - p.y) * 0.004;
+        p.x = Math.min(W - 20, Math.max(20, p.x + (p.vx *= 0.82)));
+        p.y = Math.min(H - 20, Math.max(20, p.y + (p.vy *= 0.82)));
+      }
+      draw();
+      alpha *= 0.985;
+      running = alpha > 0.05 || held !== null;
+      if (running) requestAnimationFrame(tick);
+    }
+
+    // the visible window onto the graph, moved by zooming
+    const vb = { x: 0, y: 0, w: W, h: H };
+
+    function applyView() {
+      view.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    }
+
+    // cursor coords -> world coords, through the live viewBox
+    function at(event: PointerEvent | WheelEvent) {
+      const box = view.getBoundingClientRect();
+      return {
+        x: vb.x + ((event.clientX - box.left) / box.width) * vb.w,
+        y: vb.y + ((event.clientY - box.top) / box.height) * vb.h,
+      };
+    }
+
+    // wheel zooms around the cursor, 3x in to 2x out
+    view.addEventListener(
+      "wheel",
+      (event: WheelEvent) => {
+        event.preventDefault();
+        const p = at(event);
+        const w = Math.min(
+          W * 2,
+          Math.max(W / 3, vb.w * Math.exp(event.deltaY * 0.0015))
+        );
+        const scale = w / vb.w;
+        vb.x = p.x - (p.x - vb.x) * scale;
+        vb.y = p.y - (p.y - vb.y) * scale;
+        vb.w = w;
+        vb.h = (w * H) / W;
+        applyView();
+      },
+      { passive: false }
+    );
+
+    let spin: { x: number; y: number } | null = null;
+    let pressed: string | null = null;
+    let moved = 0;
+
+    view.addEventListener("pointerdown", (event: PointerEvent) => {
+      // a click on a constellation is a pick, not a drag of the background
+      if ((event.target as Element).closest?.(".constellation")) return;
+      const index = nodeEls.findIndex(
+        ({ circle, text }) => circle === event.target || text === event.target
+      );
+      moved = 0;
+      if (index >= 0) {
+        held = pts[index];
+        pressed = nodes[index].kind === "tag" ? null : nodes[index].url;
+      } else {
+        pressed = null;
+        spin = at(event);
+      }
+      view.setPointerCapture(event.pointerId);
+      view.classList.add("grabbing");
+      stir();
+    });
+
+    view.addEventListener("pointermove", (event: PointerEvent) => {
+      const p = at(event);
+      if (held) {
+        moved += Math.abs(p.x - held.x) + Math.abs(p.y - held.y);
+        held.x = p.x;
+        held.y = p.y;
+        held.vx = held.vy = 0;
+        stir(0.3);
+      } else if (spin) {
+        // drag on empty space spins the whole graph around its centre
+        const angle =
+          Math.atan2(p.y - H / 2, p.x - W / 2) -
+          Math.atan2(spin.y - H / 2, spin.x - W / 2);
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        for (const q of pts) {
+          const dx = q.x - W / 2;
+          const dy = q.y - H / 2;
+          q.x = W / 2 + dx * cos - dy * sin;
+          q.y = H / 2 + dx * sin + dy * cos;
+        }
+        spin = p;
+        draw();
+      }
+    });
+
+    const release = (event: PointerEvent) => {
+      if (!held && !spin) return;
+      const target = moved <= 6 ? pressed : null;
+      if (held && moved > 6) {
+        held.pinned = true;
+        nodeEls[pts.indexOf(held)].circle.classList.add("pinned");
+      }
+      held = null;
+      spin = null;
+      pressed = null;
+      view.classList.remove("grabbing");
+      view.releasePointerCapture(event.pointerId);
+      stir(0.3);
+      if (target) window.location.href = target;
+    };
+
+    view.addEventListener("pointerup", release);
+    view.addEventListener("pointercancel", release);
+    view.addEventListener("click", (event) => {
+      if (moved > 6) event.preventDefault();
+    });
+
+    stir(1);
+  }
+</script>

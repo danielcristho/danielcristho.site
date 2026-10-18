@@ -23,6 +23,15 @@ import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
         Blog
       </a>
       <a
+        href="/til"
+        class="animated-underline"
+        aria-current={Astro.url.pathname.startsWith("/til")
+          ? "page"
+          : undefined}
+      >
+        TIL
+      </a>
+      <a
         href="https://docs.danielcristho.site"
         class="animated-underline"
         target="_blank"

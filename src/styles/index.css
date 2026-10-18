@@ -28,3 +28,37 @@ starlight-theme-select {
     margin-bottom: 0.5rem !important;
   }
 }
+
+/* Tables: a header rule and quiet row lines instead of the theme's zebra. */
+.sl-markdown-content table:not(:where(.not-content *)) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--sl-text-sm);
+}
+
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+  padding: 0.6rem 0.8rem;
+  text-align: start;
+  vertical-align: top;
+  /* ponytail: translucent black, not --sl-color-gray-5. That grey is oklch(88%)
+     in light mode, which disappears on the olive TIL stock. Black at 10% reads
+     the same on white and on paper. */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sl-markdown-content th:not(:where(.not-content *)) {
+  color: var(--sl-color-white);
+  font-weight: 600;
+  border-bottom-color: rgba(0, 0, 0, 0.3);
+}
+
+.sl-markdown-content tbody tr:nth-child(2n):not(:where(.not-content *)) {
+  background-color: transparent;
+}
+
+.sl-markdown-content
+  tbody
+  tr:last-child
+  :is(th, td):not(:where(.not-content *)) {
+  border-bottom: 0;
+}

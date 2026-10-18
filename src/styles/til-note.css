@@ -1,0 +1,32 @@
+body {
+  background-color: #e6e5d1;
+  background-image:
+    /* coarse fibre */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E"),
+    /* fine speckle */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23s)' opacity='0.22'/%3E%3C/svg%3E");
+  background-blend-mode: multiply;
+  background-attachment: fixed;
+}
+
+/* the nav strip is part of the same sheet */
+:root {
+  --sl-color-bg-nav: #dedcc5;
+}
+
+.page,
+.main-frame,
+.main-pane,
+main {
+  background: transparent;
+}
+
+.expressive-code .frame pre {
+  background: #f4f3e6;
+}
+
+/* the floating back-to-top button sits on the stock, not on white */
+.til-top {
+  background: #f4f3e6;
+  border-color: rgba(0, 0, 0, 0.15);
+}

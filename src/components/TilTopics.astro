@@ -1,0 +1,78 @@
+---
+import { getCollection } from "astro:content";
+import { tilTopic } from "../utils/til";
+
+const notes = await getCollection(
+  "docs",
+  ({ id, data }) => id.startsWith("til/") && id !== "til" && !data.draft
+);
+
+const topics = [
+  ...new Set(notes.map((note) => tilTopic(note.id)).filter(Boolean)),
+].sort() as string[];
+---
+
+{
+  topics.length > 1 && (
+    <div class="til-topics">
+      <label for="til-topic" class="til-topics-label">
+        Topic
+      </label>
+      <select id="til-topic" class="til-tag">
+        <option value="">All topics</option>
+        {topics.map((topic) => (
+          <option value={topic}>{topic}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+<script>
+  const select = document.querySelector<HTMLSelectElement>("#til-topic");
+  const box = document.querySelector<HTMLElement>(".til-trivia");
+  const trivia = [
+    ...document.querySelectorAll<HTMLDetailsElement>(".til-trivia details"),
+  ];
+  const rows = [
+    ...document.querySelectorAll<HTMLElement>(".til-list li[data-topic]"),
+  ];
+
+  const apply = () => {
+    const want = select?.value ?? "";
+    rows.forEach((row) => (row.hidden = !!want && row.dataset.topic !== want));
+
+    const pool = trivia.filter((d) => !want || d.dataset.topic === want);
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    trivia.forEach((d) => {
+      d.hidden = d !== pick;
+      d.open = false;
+    });
+    if (box) box.hidden = pool.length === 0;
+  };
+
+  apply();
+  select?.addEventListener("change", apply);
+  document.querySelector(".til-trivia-next")?.addEventListener("click", apply);
+</script>
+
+<style>
+  .til-topics {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .til-topics-label {
+    font-family: var(--sl-font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+
+  .til-topics select {
+    cursor: pointer;
+  }
+</style>

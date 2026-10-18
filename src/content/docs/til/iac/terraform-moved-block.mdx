@@ -1,0 +1,20 @@
+---
+title: "moved blocks instead of terraform state mv"
+date: 2026-10-10
+description: Rename or refactor resources in code, let the plan handle the state move.
+trivia:
+  q: "What does a Terraform `moved` block save you from running?"
+  a: "`terraform state mv` on every machine and every CI runner. The rename lives in code instead, and `plan` reports a move rather than a destroy/create."
+template: splash
+---
+
+Renaming a resource used to mean a manual `terraform state mv` on every machine and every CI runner. Since 1.1 the rename lives in the code:
+
+```hcl
+moved {
+  from = aws_instance.web
+  to   = aws_instance.api
+}
+```
+
+`terraform plan` then reports a move rather than a destroy/create, and the block is safe to delete once the change is applied everywhere. Works for modules too (`from = module.old`), which is the real win when splitting a monolith module.

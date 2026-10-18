@@ -1,6 +1,54 @@
 ---
+import Pagination from "@astrojs/starlight/components/Pagination.astro";
+import { tilTopic } from "../utils/til";
 
+const { id } = Astro.locals.starlightRoute;
+
+// TIL notes close with their topic, the list page shows it inline instead
+const isNote = id.startsWith("til/");
+const topic = isNote ? tilTopic(id) : undefined;
 ---
+
+{
+  isNote && (
+    <div class="til-footer-tags">
+      {topic && (
+        <>
+          <b class="til-tag-label">Tag:</b>
+          <span class="til-tag">{topic}</span>
+        </>
+      )}
+      <a href="/til" class="til-back">
+        ← All TIL notes
+      </a>
+    </div>
+  )
+}
+
+{
+  isNote && (
+    <div class="til-pagination">
+      <Pagination />
+    </div>
+  )
+}
+
+{
+  isNote && (
+    <button type="button" class="til-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 19V5M5 12l7-7 7 7"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  )
+}
 
 <footer class="custom-footer">
   <div class="footer-container">
@@ -9,6 +57,85 @@
 </footer>
 
 <style>
+  .til-footer-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    max-width: 68ch;
+    margin: 2.5rem auto 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .til-pagination {
+    max-width: 68ch;
+    margin: 1.5rem auto 0;
+  }
+
+  .til-tag-label {
+    font-size: 0.875rem;
+    margin-right: 0.1rem;
+  }
+
+  .til-back {
+    margin-left: auto;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .til-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 50%;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-gray-2);
+    box-shadow: 0 2px 8px rgba(40, 39, 40, 0.12);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .til-top.is-visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .til-top:hover {
+    color: var(--sl-color-white);
+    border-color: var(--sl-color-gray-4);
+  }
+
+  .til-top svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .til-top {
+      transition: none;
+    }
+  }
+
+  .til-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.3rem;
+  }
+
   .custom-footer {
     width: 100%;
     padding: 2rem 0;
@@ -24,3 +151,22 @@
     font-size: 0.875rem;
   }
 </style>
+
+<script>
+  const top = document.querySelector<HTMLButtonElement>(".til-top");
+  if (top) {
+    // ponytail: plain passive scroll listener, a class toggle is cheap enough
+    // that rAF throttling would be more code than it saves
+    const sync = () => top.classList.toggle("is-visible", window.scrollY > 400);
+    addEventListener("scroll", sync, { passive: true });
+    sync();
+    top.addEventListener("click", () =>
+      window.scrollTo({
+        top: 0,
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      })
+    );
+  }
+</script>

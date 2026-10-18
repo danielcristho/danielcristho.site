@@ -1,0 +1,36 @@
+---
+title: "Batch Mining vs Stream Mining"
+date: 2026-10-16
+description: Which one is better to manage Data
+trivia:
+  q: Why is stream mining more challenging than batch mining, even when both process the same amount of data?
+
+  a: Stream mining must handle continuously arriving data under strict latency and memory constraints. It also needs to account for data ordering and changing distributions, which can make previously learned patterns less reliable.
+template: splash
+---
+
+`Batch Mining`: Processes a finite dataset that has been collected and stored, often through multiple passes.
+
+`Stream Mining`: Processes continuously arriving data under latency and memory constraints.
+
+`Online Learning vs. Stream Mining`: Online learning updates models incrementally, while stream mining also covers monitoring, querying, summarization, and pattern detection.
+
+### Streaming Design
+
+![Data stream mining pipeline](https://res.cloudinary.com/diunivf9n/image/upload/v1792146840/stream-mining-pipeline_ejgwyz.svg)
+
+> Source: https://doi.org/10.13140/RG.2.2.30295.83367
+
+:::note
+Streaming is not just large-scale batch processing. Time, data ordering, latency, and changing data distributions are first-class concerns.
+:::
+
+## Design Tension
+
+A streaming system must balance three goals:
+
+| Goal                   | What it demands                                                       |
+| ---------------------- | --------------------------------------------------------------------- |
+| **Detect quickly**     | Identify patterns or anomalies with minimal delay.                    |
+| **Adapt safely**       | Respond to changing data distributions without overreacting to noise. |
+| **Stay within budget** | Operate within latency, memory, and computational constraints.        |
