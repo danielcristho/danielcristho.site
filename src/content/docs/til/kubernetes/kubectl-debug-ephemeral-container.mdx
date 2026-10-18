@@ -1,0 +1,19 @@
+---
+title: "kubectl debug beats sidecar hacks"
+date: 2026-10-08
+description: Attach a throwaway container to a running pod instead of rebuilding the image with curl in it.
+trivia:
+  q: "What does `--target` do in `kubectl debug`?"
+  a: "It puts the ephemeral container in the same process namespace as the target container, so `ps`, `/proc`, and localhost networking work as if you were inside it."
+template: splash
+---
+
+Distroless image, no shell, pod misbehaving. Instead of rebuilding the image with `curl` baked in:
+
+```sh
+kubectl debug -it my-pod --image=nicolaka/netshoot --target=app
+```
+
+`--target` puts the ephemeral container in the same process namespace as the `app` container, so `ps`, `/proc`, and localhost networking all work as if you were inside it. Nothing is added to the pod spec, and the container disappears when the pod does.
+
+Copying the pod instead (`--copy-to=my-pod-debug`) is the escape hatch when the original is crash-looping. The copy keeps the volumes and env, but gets a command you choose.

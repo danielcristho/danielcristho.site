@@ -1,0 +1,190 @@
+---
+// TIL trivia, showing a random question and answer from the notes.
+
+import { tilCards, triviaHtml } from "../utils/til";
+
+const items = await tilCards();
+---
+
+{
+  items.length > 0 && (
+    <div class="til-trivia">
+      <span class="til-trivia-label">Trivia</span>
+
+      {items.map((item) => (
+        <details hidden data-topic={item.topic} class="til-card">
+          <summary>
+            <span class="til-face til-front">
+              <span class="til-card-top">
+                <span class="til-tag">{item.topic}</span>
+                <span class="til-card-mark">Q</span>
+              </span>
+              <span class="til-q" set:html={triviaHtml(item.q)} />
+              <span class="til-flip til-tag">Show answer</span>
+            </span>
+            <span class="til-face til-back">
+              <span class="til-card-top">
+                <span class="til-tag">{item.topic}</span>
+                <span class="til-card-mark">A</span>
+              </span>
+              <span set:html={triviaHtml(item.a)} />
+              <span class="til-card-bottom">
+                <span class="til-flip til-tag">Back</span>
+                <span class="til-trivia-src">
+                  from <a href={item.url}>{item.title}</a>
+                </span>
+              </span>
+            </span>
+          </summary>
+        </details>
+      ))}
+
+      <button type="button" class="til-trivia-next til-tag">
+        Another one
+      </button>
+    </div>
+  )
+}
+
+<style>
+  .til-trivia {
+    margin-bottom: 2rem;
+  }
+
+  .til-trivia-label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-family: var(--sl-font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+
+  /* Fixed height*/
+  .til-card {
+    position: relative;
+    height: 11rem;
+    perspective: 1000px;
+  }
+
+  .til-trivia .til-card {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+
+  .til-card summary {
+    display: block;
+    height: 100%;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .til-card summary::marker,
+  .til-card summary::-webkit-details-marker {
+    display: none;
+    content: "";
+  }
+
+  .til-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    overflow: auto;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background: var(--sl-color-bg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    backface-visibility: hidden;
+    transition: transform 0.5s;
+  }
+
+  /* The front keeps a hint of the base colour; delete the gradient for plain white. */
+  .til-front {
+    z-index: 3;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--sl-color-bg) 40%, #e7f1ec 100%);
+  }
+
+  :global([data-theme="dark"]) .til-front {
+    background: linear-gradient(135deg, var(--sl-color-bg) 40%, #1d3b2c 100%);
+  }
+
+  .til-back {
+    color: var(--sl-color-gray-2);
+    transform: rotateY(180deg);
+  }
+
+  .til-card[open] .til-front {
+    z-index: 0;
+    transform: rotateY(-180deg);
+  }
+
+  .til-card[open] .til-back {
+    transform: rotateY(0);
+  }
+
+  .til-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .til-card-mark {
+    font-family: var(--sl-font-mono);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #cfe0d6;
+  }
+
+  .til-q {
+    font-size: 1.0625rem;
+  }
+
+  .til-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .til-card .til-flip {
+    align-self: flex-start;
+    cursor: pointer;
+    background: #dedcc5;
+    color: #4a4a24;
+  }
+
+  .til-card .til-flip:hover {
+    border-color: #4a4a24;
+  }
+
+  .til-hint,
+  .til-trivia-src {
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .til-trivia-next {
+    display: block;
+    margin: 0.9rem auto 0;
+    cursor: pointer;
+  }
+
+  @media (max-width: 50rem) {
+    .til-card {
+      height: 15rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .til-face {
+      transition: none;
+    }
+  }
+</style>

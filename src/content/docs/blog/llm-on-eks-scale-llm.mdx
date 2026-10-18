@@ -50,7 +50,7 @@ Rather than treating each pod as an isolated deployment, Ray lets them work toge
 
 ## Why Karpenter?
 
-Ray can create additional worker pods, but it can't magically create GPU node. If every GPU node is already busy, those worker pods will remain in the 'Pending' state until Kubernetes finds available capacity.
+Ray can create additional worker pods, but it can't provision GPU nodes on its own. If every GPU node is already busy, those worker pods will remain in the 'Pending' state until Kubernetes finds available capacity.
 
 That's where [Karpenter](https://github.com/aws/karpenter-provider-aws) comes in:
 
@@ -62,9 +62,7 @@ Together, [Ray](https://github.com/ray-project/ray) and [Karpenter](https://gith
 
 ## What We Tryna Build
 
-This time, the architecture is a little different.
-
-Instead of running a single vLLM pod, we'll build a small Ray cluster on Amazon EKS. Ray will distribute inference requests across multiple workers, while Karpenter automatically provisions GPU nodes whenever the cluster needs more capacity.
+This time, the architecture is a little different. Instead of running a single vLLM pod, we'll build a small Ray cluster on Amazon EKS. Ray will distribute inference requests across multiple workers, while Karpenter automatically provisions GPU nodes whenever the cluster needs more capacity.
 
 The flow looks like this:
 

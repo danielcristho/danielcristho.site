@@ -1,0 +1,84 @@
+---
+// The logo is an SVG file, but we want to inline it so we can animate it with CSS.
+
+import logoFile from "../../public/logo/favicon.svg?raw";
+
+const logo = logoFile
+  .replace(/<\?xml[\s\S]*?\?>/, "")
+  .replace(/<sodipodi:namedview[\s\S]*?(\/>|<\/sodipodi:namedview>)/, "")
+  .replace(/<defs[\s\S]*?(\/>|<\/defs>)/, "")
+  .trim();
+---
+
+<a href="/" class="site-logo" aria-label="Home">
+  <span class="lockup" set:html={logo} />
+</a>
+
+<style is:global>
+  .site-logo {
+    display: flex;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .site-logo .lockup {
+    display: flex;
+  }
+
+  .site-logo svg {
+    width: 3.25rem;
+    height: 3.25rem;
+    overflow: visible;
+    animation: logo-sway 7s ease-in-out infinite;
+  }
+
+  @keyframes logo-sway {
+    0%,
+    100% {
+      transform: rotate(-1.5deg);
+    }
+    50% {
+      transform: rotate(1.5deg);
+    }
+  }
+
+  .site-logo:hover .lockup,
+  .site-logo.bloom .lockup {
+    animation: logo-press 0.42s ease-out;
+  }
+
+  .site-logo:hover #leaves,
+  .site-logo.bloom #leaves {
+    animation: logo-open 0.42s ease-out;
+    transform-origin: 0 0;
+  }
+
+  @keyframes logo-press {
+    40% {
+      transform: scale(0.95);
+    }
+  }
+
+  @keyframes logo-open {
+    40% {
+      transform: rotate(6deg) scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-logo svg,
+    .site-logo:hover .lockup,
+    .site-logo:hover #leaves,
+    .site-logo.bloom .lockup,
+    .site-logo.bloom #leaves {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  const logo = document.querySelector<HTMLElement>(".site-logo");
+  logo?.addEventListener("click", () => logo.classList.add("bloom"));
+  logo?.addEventListener("animationend", () => logo.classList.remove("bloom"));
+</script>

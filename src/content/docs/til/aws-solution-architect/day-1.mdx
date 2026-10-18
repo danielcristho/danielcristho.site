@@ -1,0 +1,75 @@
+---
+title: "Day 01"
+date: 2026-09-30
+description: Caching, edge protection, compute cost, storage, and decoupling.
+trivia:
+  - q: An EC2 instance sits behind a load balancer that is the origin of a CloudFront distribution. Which service blocks SQL injection against it?
+    a: AWS WAF. Shield handles DDoS, volumetric bots, and vulnerability exploitation, but it does not inspect for SQL injection or XSS. WAF operates at layer 7, Shield at layer 3/4.
+
+  - q: A website needs to cache static content close to users worldwide. Which AWS service should be used?
+    a: Amazon CloudFront. It caches and delivers content through global edge locations. ElastiCache is an in-memory cache for application data, not a content delivery network.
+
+  - q: A company needs enhanced DDoS protection, access to the AWS DDoS Response Team, and cost protection against certain scaling charges caused by DDoS attacks. Which service should it choose?
+    a: AWS Shield Advanced. Shield Standard provides baseline DDoS protection automatically, while Advanced offers enhanced protection and additional response capabilities.
+
+  - q: A company stores archival data that is rarely accessed but must be retrieved in milliseconds when needed. Which S3 storage class is appropriate?
+    a: S3 Glacier Instant Retrieval. It provides millisecond retrieval for rarely accessed archive data. S3 Glacier Flexible Retrieval is intended for archives where retrieval can take minutes to hours.
+
+  - q: An application processes financial transactions and requires messages to be processed in order with deduplication. Which SQS queue type should it use?
+    a: Amazon SQS FIFO. It supports message ordering within message groups and deduplication. Standard queues offer higher throughput but provide at-least-once delivery and best-effort ordering.
+
+  - q: A company wants to transparently insert third-party virtual firewalls and network appliances into its traffic path. Which load balancer should it use?
+    a: Gateway Load Balancer (GWLB). It distributes traffic to virtual appliances using the GENEVE protocol. Application Load Balancer (ALB) handles HTTP/HTTPS traffic at Layer 7.
+
+  - q: An application uses DynamoDB and needs microsecond read latency without changing its existing DynamoDB API calls. Which service is designed for this use case?
+    a: DynamoDB Accelerator (DAX). It provides a managed, in-memory cache specifically for DynamoDB workloads, while ElastiCache is a general-purpose in-memory data store.
+template: splash
+---
+
+Every note in this series comes from the [Official Practice Question Set: AWS Certified Solutions Architect - Associate (SAA-C03)](https://skillbuilder.aws/learn/6NV91XYP1P/official-practice-question-set-aws-certified-solutions-architect--associate-saac03--english/N1HSPV1K17) on AWS Skill Builder.
+
+## Caching & Databases
+
+| Service                    | What it is                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| ElastiCache                | In-memory data store used to cache data. Two engines: Redis and Memcached.                      |
+| DynamoDB Accelerator (DAX) | In-memory cache in front of DynamoDB. Improves data load times, response times in microseconds. |
+| DocumentDB                 | Database service for storing JSON-like documents.                                               |
+
+## Edge Protection
+
+AWS Shield fits DDoS attacks, volumetric bots, and vulnerability exploitation attempts. It does **not** protect against XSS or SQL injection.
+
+| Requirement                                                              | Answer                                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Block SQL injection against an EC2 origin behind an LB behind CloudFront | AWS WAF -> it operates at layer 7, not layer 3.              |
+| Centrally manage firewall rules                                          | Firewall Manager -> a managed service, not installed on EC2. |
+
+:::note
+Migrating a website from EC2 to S3 does not block DDos traffic.
+:::
+
+## Compute & Cost
+
+| Option                 | Why it costs more                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lambda                 | Fully managed, scales automatically, highly available. Reduces cost the most.                                                              |
+| Large burstable EC2    | Keeps the instance running 24 hours a day.                                                                                                 |
+| AWS Instance Scheduler | Creates windows where the application is unavailable if launches are not scheduled correctly, and bills per hour instead of exact runtime. |
+
+## Storage
+
+`Amazon FSx`: Fully managed file storage built on Windows Server, with native support for Windows file system features and the SMB protocol for network file access.
+
+`S3 + Glacier Instant Retrieval`: S3 is the cost-effective landing zone; Glacier Instant Retrieval is the cheapest archival tier that still meets a 2-hour retrieval requirement.
+
+## Decoupling & Scaling
+
+SQS acts as a buffer for incoming requests, decoupling upload from processing.
+
+- Lambda + SQS → serverless, no servers to provision or manage.
+- ECS on Fargate + SQS → containerised workloads without managing the underlying infrastructure. Auto scaling on SQS queue metrics adjusts the number of tasks to the workload, so it scales horizontally and efficiently.
+
+:::note
+Gateway Load Balancers are not designed to handle web application traffic.
+:::

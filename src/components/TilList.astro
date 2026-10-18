@@ -1,0 +1,92 @@
+---
+// TIL list, showing the notes in reverse order.
+
+import { getCollection } from "astro:content";
+import { tilTopic } from "../utils/til";
+
+const notes = (
+  await getCollection(
+    "docs",
+    ({ id, data }) => id.startsWith("til/") && id !== "til" && !data.draft
+  )
+).sort(
+  (a, b) =>
+    new Date(b.data.date ?? 0).getTime() - new Date(a.data.date ?? 0).getTime()
+);
+
+const fmt = (date: Date | undefined) =>
+  date
+    ? new Date(date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+---
+
+<ul class="til-list">
+  {
+    notes.map((note) => (
+      <li data-topic={tilTopic(note.id)}>
+        {note.data.date && (
+          <time datetime={new Date(note.data.date).toISOString()}>
+            {fmt(note.data.date)}
+          </time>
+        )}
+        <h2>
+          <a href={`/${note.id}`}>{note.data.title}</a>
+        </h2>
+        {note.data.description && <p>{note.data.description}</p>}
+        {tilTopic(note.id) && (
+          <div class="til-tag-row" style="margin-top: 0.7rem">
+            <b>Tag:</b>
+            <span class="til-tag">{tilTopic(note.id)}</span>
+          </div>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+{notes.length === 0 && <p>Nothing here yet.</p>}
+
+<style>
+  .til-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .til-list li + li {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .til-list time {
+    font-family: var(--sl-font-mono);
+    font-size: 0.8125rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  .til-list h2 {
+    font-size: 1.3rem;
+    line-height: 1.3;
+    margin: 0.15rem 0 0.35rem;
+  }
+
+  .til-list h2 a {
+    text-decoration: none;
+  }
+
+  .til-list h2 a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3rem;
+  }
+
+  .til-list p {
+    margin: 0;
+    color: var(--sl-color-gray-2);
+  }
+</style>

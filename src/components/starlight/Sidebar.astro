@@ -9,7 +9,7 @@ const allPosts = await getCollection("docs", ({ id }) =>
   id.startsWith("blog/")
 );
 const postsByYear = allPosts
-  .filter((post) => post.data.date) // Only posts with dates
+  .filter((post) => post.data.date)
   .sort((a, b) => {
     const dateA = new Date(a.data.date as string);
     const dateB = new Date(b.data.date as string);
@@ -33,7 +33,6 @@ const years = Object.keys(postsByYear)
 ---
 
 <Default {...Astro.props}>
-  <!-- Archive Section - Only show on blog pages -->
   {
     Astro.url.pathname.startsWith("/blog") && (
       <div class="sl-sidebar-group">

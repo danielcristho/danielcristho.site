@@ -1,4 +1,6 @@
 ---
+// The PageViews component displays the number of views for a given page, identified by its slug.
+
 interface Props {
   slug: string;
   showIcon?: boolean;
@@ -47,10 +49,8 @@ const { slug, showIcon = true } = Astro.props;
     }
   }
 
-  // Update on initial load and every navigation (View Transitions)
   document.addEventListener("astro:page-load", updatePageViews);
 
-  // Initial check (non-transition load)
   if (document.readyState === "complete") {
     updatePageViews();
   } else {

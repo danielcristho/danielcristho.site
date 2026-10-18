@@ -1,6 +1,15 @@
 @import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
 @import "@fontsource-variable/jetbrains-mono/wght.css";
 
+/* TIL fonts.*/
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/caveat-latin-wght.woff2") format("woff2");
+}
+
 :root {
   --sl-font: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
   --sl-font-mono: "JetBrains Mono Variable", monospace;

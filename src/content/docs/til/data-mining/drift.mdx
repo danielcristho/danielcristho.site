@@ -1,0 +1,29 @@
+---
+title: "Concept Drift"
+date: 2026-10-16
+description: Concept drift in stream mining.
+trivia:
+  q: Can a machine learning model become less accurate even when the input data continues to arrive correctly?
+
+  a: Yes. Concept drift can change the patterns the model relies on, making its previously learned relationships less reliable even when the data pipeline itself works correctly.
+template: splash
+---
+
+## What is Drift?
+
+Concept Drift occurs when the underlying data distribution or the relationship between input features and target labels changes over time. As a result, a machine learning model that previously performed well may become less accurate.
+
+| Type of Drift           | Description                                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| Sudden (Abrupt)         | An old concept is quickly replaced by a new one.                                                      |
+| Gradual                 | Old and new concepts overlap, while the probability of observing the new concept increases over time. |
+| Incremental             | The concept gradually evolves through a sequence of intermediate states.                              |
+| Recurring (Reappearing) | A previously observed concept returns, often due to seasonality or recurring operating conditions.    |
+
+![Drift Types](https://res.cloudinary.com/diunivf9n/image/upload/v1792147767/concept-drift-types-sketch_wf3rck.svg)
+
+> Source: https://www.geeksforgeeks.org/machine-learning/data-drift-in-machine-learning
+
+:::note
+Drift ≠ Outliers/Noise
+:::

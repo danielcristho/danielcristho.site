@@ -1,14 +1,218 @@
 ---
+import Pagination from "@astrojs/starlight/components/Pagination.astro";
+import { tilTopic } from "../utils/til";
 
+const { id } = Astro.locals.starlightRoute;
+
+const isNote = id.startsWith("til/");
+const topic = isNote ? tilTopic(id) : undefined;
 ---
+
+{
+  isNote && (
+    <div class="til-footer-tags">
+      {topic && (
+        <>
+          <b class="til-tag-label">Tag:</b>
+          <span class="til-tag">{topic}</span>
+        </>
+      )}
+      <a href="/til" class="til-back">
+        ← All TIL notes
+      </a>
+    </div>
+  )
+}
+
+{
+  isNote && (
+    <div class="til-pagination">
+      <Pagination />
+    </div>
+  )
+}
+
+{
+  /* dark mode only, three streaks on staggered delays so one crosses the sky
+    every two seconds or so without any JS keeping time */
+}
+<div class="shooting-stars" aria-hidden="true">
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+
+{/* every page gets it, not only the notes */}
+<button type="button" class="to-top" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 19V5M5 12l7-7 7 7"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+  </svg>
+</button>
 
 <footer class="custom-footer">
   <div class="footer-container">
-    <p class="copyright">&copy; 2026 · Daniel Pepuho</p>
+    <p class="copyright">
+      &copy; 2023-Present · Daniel Pepuho ·
+      <a
+        href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        target="_blank"
+        rel="noopener noreferrer license">CC BY-NC-SA 4.0</a
+      >
+    </p>
   </div>
 </footer>
 
 <style>
+  .shooting-stars {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .shooting-stars {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .shooting-stars span {
+    position: absolute;
+    width: 90px;
+    height: 1px;
+    opacity: 0;
+    background: linear-gradient(90deg, transparent, #e8e4c8);
+    animation: shoot 6s linear infinite;
+  }
+
+  .shooting-stars span:nth-child(1) {
+    top: -4%;
+    left: 74%;
+  }
+
+  .shooting-stars span:nth-child(2) {
+    top: 4%;
+    left: 93%;
+    animation-delay: 2.2s;
+    animation-duration: 6.8s;
+  }
+
+  .shooting-stars span:nth-child(3) {
+    top: -8%;
+    left: 56%;
+    animation-delay: 4.1s;
+    animation-duration: 7.4s;
+  }
+
+  @keyframes shoot {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotate(126deg);
+    }
+    3% {
+      opacity: 0.85;
+    }
+    18% {
+      opacity: 0;
+      transform: translate3d(-340px, 480px, 0) rotate(126deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(-340px, 480px, 0) rotate(126deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shooting-stars {
+      display: none !important;
+    }
+  }
+
+  .til-footer-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    max-width: 68ch;
+    margin: 2.5rem auto 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+  }
+
+  .til-pagination {
+    max-width: 68ch;
+    margin: 1.5rem auto 0;
+  }
+
+  .til-tag-label {
+    font-size: 0.875rem;
+    margin-right: 0.1rem;
+  }
+
+  .til-back {
+    margin-left: auto;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 50%;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-gray-2);
+    box-shadow: 0 2px 8px rgba(40, 39, 40, 0.12);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .to-top.is-visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .to-top:hover {
+    color: var(--sl-color-white);
+    border-color: var(--sl-color-gray-4);
+  }
+
+  .to-top svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .to-top {
+      transition: none;
+    }
+  }
+
+  .til-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.3rem;
+  }
+
   .custom-footer {
     width: 100%;
     padding: 2rem 0;
@@ -23,4 +227,32 @@
     color: var(--sl-color-gray-3);
     font-size: 0.875rem;
   }
+
+  .copyright a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--sl-color-gray-4);
+    text-underline-offset: 0.2rem;
+  }
+
+  .copyright a:hover {
+    color: var(--sl-color-text-accent);
+  }
 </style>
+
+<script>
+  const top = document.querySelector<HTMLButtonElement>(".to-top");
+  if (top) {
+    const sync = () => top.classList.toggle("is-visible", window.scrollY > 400);
+    addEventListener("scroll", sync, { passive: true });
+    sync();
+    top.addEventListener("click", () =>
+      window.scrollTo({
+        top: 0,
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      })
+    );
+  }
+</script>

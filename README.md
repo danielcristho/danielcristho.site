@@ -40,41 +40,55 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 
 ```sh
 .
-├── public/                 # Static files
+├── patches/                # pnpm patch for starlight-blog (lazy blog covers)
+├── public/
+│   ├── diagrams/           # Hand drawn SVG diagrams used in posts
+│   ├── fonts/              # Self hosted woff2 subsets
+│   └── logo/               # Clover mark, used as favicon and header logo
 ├── src/
-│   ├── components/         # Reusable components
-│   │   ├── FloatingImages.astro    # Image animations
-│   │   ├── Footer.astro            # Site footer
+│   ├── components/
+│   │   ├── FloatingImages.astro    # Hero photos
+│   │   ├── Footer.astro            # Footer, back to top, shooting stars
 │   │   ├── Giscus.astro            # Comment system
-│   │   ├── Head.astro              # HTML head with analytics
-│   │   ├── Header.astro            # Site header
+│   │   ├── Head.astro              # HTML head, analytics, font preloads
+│   │   ├── Header.astro            # Nav bar
+│   │   ├── Logo.astro              # Inlines public/logo/favicon.svg, animates it
 │   │   ├── PageViews.astro         # Page view counter
-│   │   ├── PublicStats.astro       # Public analytics dashboard
-│   │   ├── RealtimeVisitors.astro  # Live visitor count (optional component)
 │   │   ├── ShareButtons.astro      # Social share buttons
 │   │   ├── SocialIcons.astro       # Social media icons
+│   │   ├── SubscribeLinks.astro    # Feed and newsletter links
 │   │   ├── TableOfContents.astro   # TOC component
-│   │   ├── TotalReads.astro        # Read completion tracker
+│   │   ├── TilGraph.astro          # Tag graph and constellation mode
+│   │   ├── TilList.astro           # TIL note list
+│   │   ├── TilTopics.astro         # TIL topic filter
+│   │   ├── TilTrivia.astro         # TIL flip cards
 │   │   └── starlight/              # Starlight overrides
 │   │       ├── ContentPanel.astro      # Main content wrapper
 │   │       ├── MarkdownContent.astro   # Content with social features
 │   │       ├── PageTitle.astro         # Title with analytics
-│   │       ├── Sidebar.astro           # Custom sidebar
-│   │       └── ThemeSelect.astro       # Dark mode toggle
+│   │       ├── Pagination.astro        # Prev and next links
+│   │       └── Sidebar.astro           # Custom sidebar
 │   ├── content/
-│   │   └── docs/blog/      # Blog posts (.mdx)
+│   │   └── docs/
+│   │       ├── blog/       # Blog posts (.mdx)
+│   │       └── til/        # TIL notes, one folder per topic
 │   ├── pages/
-│   │   └── api/            # API endpoints
-│   │       ├── debug.ts            # Debug endpoint (dev only)
-│   │       ├── visitors.ts         # Current visitors
-│   │       ├── pageviews/[slug].ts # Page views per post
-│   │       └── reads/[slug].ts     # Read tracking
-│   ├── styles/             # CSS files
-│   │   ├── custom.css      # Custom styles
-│   │   └── gruvbox.css     # Dark theme
-│   └── utils/              # Helper functions
-│       └── umami-auth.ts   # Umami API authentication
+│   │   ├── api/            # Analytics endpoints
+│   │   │   ├── debug-umami.js      # Debug endpoint (dev only)
+│   │   │   ├── pageviews/[slug].js # Page views per post
+│   │   │   └── reads/[slug].js     # Read tracking
+│   │   ├── rss.xml.js      # Feed
+│   │   └── til/anki.csv.ts # Trivia export for Anki
+│   ├── plugins/            # remark and rehype plugins
+│   ├── styles/             # CSS, injected per route by routeData.ts
+│   ├── utils/
+│   │   ├── constellations.ts   # Star patterns and their names
+│   │   ├── til.ts              # TIL topics and trivia helpers
+│   │   └── umami-auth.ts       # Umami API authentication
+│   ├── content.config.ts   # Content collections and frontmatter schema
+│   └── routeData.ts        # Per route CSS and TIL pagination
 ├── astro.config.mjs        # Astro configuration
+├── pnpm-workspace.yaml     # Holds patchedDependencies
 └── package.json
 ```
 
@@ -165,6 +179,13 @@ authors: ["danielcristho"]
 - Try redeploying after updating DATABASE_URL
 
 **Database connection errors**: Neon DB generally has fewer connection issues than Supabase for Vercel deployments.
+
+## 🙏 Acknowledgments
+
+- [Astro Starlight](https://starlight.astro.build) - The docs framework this site is built on, and the source of every component override here
+- [trueberryless](https://github.com/trueberryless/trueberryless.org) - Some of the layout, styles and components here come from their Starlight setup
+- [antfu](https://antfu.me) - Some of the look and style here follow their site
+- Astro Community - For the plugins I use.
 
 ## License
 

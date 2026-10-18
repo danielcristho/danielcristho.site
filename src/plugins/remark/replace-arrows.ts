@@ -1,9 +1,7 @@
 import { visit } from "unist-util-visit";
 
 export default function remarkArrows() {
-  // Ordered longest → shortest
   const replacements: Record<string, string> = {
-    // Long arrows
     "<--": "⟵",
     "-->": "⟶",
     "<-->": "⟷",
@@ -16,17 +14,17 @@ export default function remarkArrows() {
     "|==>": "⟾",
     "~>": "⟿",
 
-    // Basic arrows
     "<-": "←",
     "->": "→",
 
-    // Triangle-headed
     "<|-": "⭠",
     "-|>": "⭢",
     "<-|>": "⭤",
 
-    // Double triangle
     "|><|": "⮂",
+
+    "!==": "≢",
+    "!=": "≠",
   };
 
   // Build a global regex matching all Latin patterns

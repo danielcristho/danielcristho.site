@@ -89,13 +89,9 @@ export async function GET({ request }) {
     console.log("Target Website ID:", websiteId);
 
     const endDate = new Date();
-    // Use a compatible old timestamp instead of 0 to ensure All Time data
     const startAtTs = 1000;
     const endAtTs = endDate.getTime();
-
     const results = {};
-
-    // 1. Basic Stats
     const statsResponse = await makeUmamiRequest(
       `/api/websites/${websiteId}/stats?startAt=${startAtTs}&endAt=${endAtTs}`
     );
@@ -103,7 +99,6 @@ export async function GET({ request }) {
       results["baseline_stats"] = await statsResponse.json();
     }
 
-    // 2. Active Visitors
     const activeResponse = await makeUmamiRequest(
       `/api/websites/${websiteId}/active`
     );
@@ -111,7 +106,6 @@ export async function GET({ request }) {
       results["active_visitors"] = await activeResponse.json();
     }
 
-    // 3. TOP PAGES (Metric Discovery - Column Test)
     const metricColumns = ["views", "pageviews", "hits", "count", "visitors"];
     results["column_test_results"] = {};
 
@@ -133,7 +127,6 @@ export async function GET({ request }) {
       }
     }
 
-    // 4. TOP PAGES (Metric Discovery - Path Variant)
     const metricFormats = [
       `/api/websites/${websiteId}/metrics?type=url&startAt=${startAtTs}&endAt=${endAtTs}&limit=5000&column=views`,
       `/api/websites/${websiteId}/metrics?type=path&startAt=${startAtTs}&endAt=${endAtTs}&limit=5000&column=views`,
@@ -148,10 +141,8 @@ export async function GET({ request }) {
         if (Array.isArray(data)) {
           results["working_metric_endpoint"] = endpoint;
 
-          // Aggregated metrics for easy debugging
           const merged = {};
           data.forEach((item) => {
-            // Split by ? and # to get the clean pathname
             let path =
               (item.x || "").split(/[?#]/)[0].replace(/\/$/, "").trim() || "/";
             if (!path.startsWith("/")) path = "/" + path;
@@ -164,7 +155,6 @@ export async function GET({ request }) {
             .sort((a, b) => b.views - a.views)
             .slice(0, 500);
 
-          // --- PARAMETER STRESS TEST for the 109 vs 99 discrepancy ---
           const stressSlug = "/blog/caddy-log-comprehensive";
           const stressParams = [
             "url",
@@ -207,7 +197,6 @@ export async function GET({ request }) {
             target: stressSlug,
             results: stressResults,
           };
-          // -----------------------------------------------------------
 
           results["target_post_search"] = {
             slug: "caddy-log-comprehensive",
@@ -222,7 +211,6 @@ export async function GET({ request }) {
       }
     }
 
-    // 4. Try the Pageviews endpoint with units
     const pvUrl = `/api/websites/${websiteId}/pageviews?startAt=${startAtTs}&endAt=${endAtTs}&unit=day&timezone=UTC`;
     const pvResponse = await makeUmamiRequest(pvUrl);
     if (pvResponse && pvResponse.ok) {

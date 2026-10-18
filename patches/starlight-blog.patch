@@ -1,0 +1,13 @@
+diff --git a/components/Cover.astro b/components/Cover.astro
+index 996ef6fefc8eb06a6c2664ef5a6ddba2da3794d1..7150b95d416e8a8cbf94c5628be1c627fbd2791a 100644
+--- a/components/Cover.astro
++++ b/components/Cover.astro
+@@ -13,7 +13,7 @@ const { cover } = Astro.props
+ const darkImage = 'dark' in cover ? cover.dark : cover.image
+ const lightImage = 'light' in cover ? cover.light : undefined
+ 
+-const commonImageProps = { alt: cover.alt, loading: 'eager' } as const
++const commonImageProps = { alt: cover.alt, loading: 'lazy' } as const
+ const commonDarkImageProps = { ...commonImageProps, 'class:list': { 'light:sl-hidden': Boolean(lightImage) } } as const
+ const commonLightImageProps = { ...commonImageProps, 'class:list': 'dark:sl-hidden' } as const
+ 
