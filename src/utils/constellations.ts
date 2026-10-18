@@ -1,5 +1,4 @@
 export type Constellation = {
-  /* what the graph itself is labelled with, one name only */
   short: string;
   names: {
     english: string;

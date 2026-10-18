@@ -9,13 +9,37 @@
 @import "./links.css" layer(blog);
 @import "./separators.css" layer(blog);
 
-:root,
-[data-theme="dark"] {
-  color-scheme: light !important;
+:root {
+  --sl-hue-base: 110;
 }
 
-starlight-theme-select {
-  display: none !important;
+header.header {
+  border-bottom: 0;
+}
+
+/* The theme's dark steps sit at chroma 0.002, so hue 110 alone stays invisible.
+   These lift the three darkest steps and give them real chroma; text colours
+   are untouched, so contrast only improves. */
+:root:not([data-theme="light"]) {
+  --sl-color-black: oklch(23% 0.022 110);
+  --sl-color-gray-7: oklch(25.5% 0.022 110);
+  --sl-color-gray-6: oklch(28% 0.022 110);
+  --sl-color-gray-5: oklch(34% 0.016 110);
+}
+
+:root:not([data-theme="light"]) body {
+  /* Three constellations, two to the right of the reading column and one to
+     its left, drawn from the same coordinates as the TIL graph in
+     src/utils/constellations.ts: Bagar, Sraiknam, Romanggwandi. Under them 54
+     seeded stars on a 900px tile, same LCG and seed as that graph, and the
+     olive wash under those. All fixed, so nothing drifts and there is no seam. */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900' fill='%23e8e4c8' stroke='%23e8e4c8' stroke-width='1' stroke-opacity='0.13' fill-opacity='0.5'%3E%3Cline x1='68' y1='274' x2='113' y2='240'/%3E%3Cline x1='113' y1='240' x2='194' y2='252'/%3E%3Cline x1='194' y1='252' x2='264' y2='263'/%3E%3Cline x1='113' y1='240' x2='152' y2='285'/%3E%3Cline x1='152' y1='285' x2='230' y2='302'/%3E%3Cline x1='132' y1='336' x2='180' y2='358'/%3E%3Cline x1='68' y1='274' x2='132' y2='336'/%3E%3Cline x1='132' y1='336' x2='96' y2='364'/%3E%3Ccircle cx='68' cy='274' r='2'/%3E%3Ccircle cx='113' cy='240' r='2'/%3E%3Ccircle cx='152' cy='285' r='2'/%3E%3Ccircle cx='194' cy='252' r='2'/%3E%3Ccircle cx='230' cy='302' r='2'/%3E%3Ccircle cx='132' cy='336' r='2'/%3E%3Ccircle cx='180' cy='358' r='2'/%3E%3Ccircle cx='264' cy='263' r='2'/%3E%3Ccircle cx='96' cy='364' r='2'/%3E%3Cline x1='1180' y1='140' x2='1198' y2='224'/%3E%3Cline x1='1198' y1='224' x2='1270' y2='236'/%3E%3Cline x1='1270' y1='236' x2='1264' y2='170'/%3E%3Cline x1='1264' y1='170' x2='1180' y2='140'/%3E%3Cline x1='1264' y1='170' x2='1330' y2='152'/%3E%3Cline x1='1330' y1='152' x2='1396' y2='134'/%3E%3Cline x1='1396' y1='134' x2='1465' y2='110'/%3E%3Ccircle cx='1180' cy='140' r='2'/%3E%3Ccircle cx='1198' cy='224' r='2'/%3E%3Ccircle cx='1270' cy='236' r='2'/%3E%3Ccircle cx='1264' cy='170' r='2'/%3E%3Ccircle cx='1330' cy='152' r='2'/%3E%3Ccircle cx='1396' cy='134' r='2'/%3E%3Ccircle cx='1465' cy='110' r='2'/%3E%3Cline x1='1260' y1='525' x2='1245' y2='575'/%3E%3Cline x1='1245' y1='575' x2='1255' y2='625'/%3E%3Cline x1='1255' y1='625' x2='1290' y2='665'/%3E%3Cline x1='1290' y1='665' x2='1340' y2='685'/%3E%3Cline x1='1340' y1='685' x2='1385' y2='670'/%3E%3Cline x1='1385' y1='670' x2='1400' y2='630'/%3E%3Cline x1='1400' y1='630' x2='1370' y2='602'/%3E%3Ccircle cx='1260' cy='525' r='2'/%3E%3Ccircle cx='1245' cy='575' r='2'/%3E%3Ccircle cx='1255' cy='625' r='2'/%3E%3Ccircle cx='1290' cy='665' r='2'/%3E%3Ccircle cx='1340' cy='685' r='2'/%3E%3Ccircle cx='1385' cy='670' r='2'/%3E%3Ccircle cx='1400' cy='630' r='2'/%3E%3Ccircle cx='1370' cy='602' r='2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900' fill='%23e8e4c8'%3E%3Ccircle cx='537.4' cy='269.3' r='0.96' opacity='0.57'/%3E%3Ccircle cx='893.5' cy='92.4' r='1.68' opacity='0.71'/%3E%3Ccircle cx='219.3' cy='299.7' r='0.98' opacity='0.61'/%3E%3Ccircle cx='813.8' cy='710.7' r='0.63' opacity='0.22'/%3E%3Ccircle cx='389.6' cy='649.7' r='1.24' opacity='0.33'/%3E%3Ccircle cx='6.9' cy='507.2' r='0.77' opacity='0.67'/%3E%3Ccircle cx='496.1' cy='401.7' r='1.66' opacity='0.5'/%3E%3Ccircle cx='727.1' cy='415.0' r='1.07' opacity='0.42'/%3E%3Ccircle cx='736.6' cy='123.3' r='1.52' opacity='0.59'/%3E%3Ccircle cx='570.1' cy='94.3' r='0.94' opacity='0.68'/%3E%3Ccircle cx='550.9' cy='373.5' r='0.63' opacity='0.66'/%3E%3Ccircle cx='133.1' cy='431.9' r='1.05' opacity='0.33'/%3E%3Ccircle cx='149.7' cy='95.4' r='0.9' opacity='0.63'/%3E%3Ccircle cx='213.5' cy='529.0' r='1.26' opacity='0.66'/%3E%3Ccircle cx='581.9' cy='297.6' r='0.61' opacity='0.48'/%3E%3Ccircle cx='243.8' cy='874.9' r='1.14' opacity='0.55'/%3E%3Ccircle cx='538.4' cy='422.3' r='1.19' opacity='0.42'/%3E%3Ccircle cx='665.2' cy='110.0' r='0.89' opacity='0.58'/%3E%3Ccircle cx='694.3' cy='1.4' r='1.21' opacity='0.48'/%3E%3Ccircle cx='237.6' cy='674.6' r='1.61' opacity='0.64'/%3E%3Ccircle cx='287.9' cy='199.6' r='0.69' opacity='0.53'/%3E%3Ccircle cx='888.1' cy='846.6' r='1.59' opacity='0.37'/%3E%3Ccircle cx='337.6' cy='745.1' r='1.44' opacity='0.25'/%3E%3Ccircle cx='296.5' cy='165.9' r='0.64' opacity='0.63'/%3E%3Ccircle cx='896.3' cy='348.7' r='1.2' opacity='0.56'/%3E%3Ccircle cx='117.8' cy='246.5' r='1.62' opacity='0.35'/%3E%3Ccircle cx='443.0' cy='608.9' r='1.34' opacity='0.4'/%3E%3Ccircle cx='143.6' cy='76.1' r='1.32' opacity='0.38'/%3E%3Ccircle cx='112.4' cy='805.5' r='0.77' opacity='0.59'/%3E%3Ccircle cx='899.5' cy='203.1' r='1.61' opacity='0.68'/%3E%3Ccircle cx='161.2' cy='680.6' r='1.18' opacity='0.47'/%3E%3Ccircle cx='281.0' cy='511.5' r='1.1' opacity='0.56'/%3E%3Ccircle cx='373.0' cy='406.8' r='0.66' opacity='0.6'/%3E%3Ccircle cx='426.2' cy='582.9' r='1.68' opacity='0.28'/%3E%3Ccircle cx='799.5' cy='443.2' r='0.86' opacity='0.37'/%3E%3Ccircle cx='526.7' cy='845.8' r='0.96' opacity='0.6'/%3E%3Ccircle cx='140.5' cy='378.5' r='1.41' opacity='0.46'/%3E%3Ccircle cx='775.6' cy='13.2' r='0.75' opacity='0.29'/%3E%3Ccircle cx='759.9' cy='362.2' r='1.36' opacity='0.36'/%3E%3Ccircle cx='352.7' cy='506.9' r='1.44' opacity='0.59'/%3E%3Ccircle cx='540.5' cy='622.7' r='0.99' opacity='0.27'/%3E%3Ccircle cx='248.1' cy='269.7' r='1.36' opacity='0.51'/%3E%3Ccircle cx='375.8' cy='873.3' r='0.79' opacity='0.44'/%3E%3Ccircle cx='122.1' cy='664.9' r='0.85' opacity='0.23'/%3E%3Ccircle cx='299.1' cy='505.5' r='0.78' opacity='0.41'/%3E%3Ccircle cx='3.8' cy='763.7' r='1.29' opacity='0.29'/%3E%3Ccircle cx='450.4' cy='469.9' r='1.41' opacity='0.29'/%3E%3Ccircle cx='526.5' cy='519.3' r='1.2' opacity='0.3'/%3E%3Ccircle cx='580.5' cy='544.4' r='1.53' opacity='0.38'/%3E%3Ccircle cx='800.5' cy='229.7' r='1.63' opacity='0.55'/%3E%3Ccircle cx='793.3' cy='90.4' r='1.19' opacity='0.26'/%3E%3Ccircle cx='224.0' cy='786.6' r='0.88' opacity='0.56'/%3E%3Ccircle cx='824.5' cy='495.7' r='1.57' opacity='0.32'/%3E%3Ccircle cx='630.9' cy='213.1' r='0.65' opacity='0.62'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, oklch(31% 0.038 110) 0%, transparent 45%);
+  background-repeat: no-repeat, repeat, no-repeat;
+  background-size: cover, auto, auto;
+  background-attachment: fixed, fixed, fixed;
 }
 
 /* Firefox-based Browser List Fix */
@@ -29,7 +53,6 @@ starlight-theme-select {
   }
 }
 
-/* Tables: a header rule and quiet row lines instead of the theme's zebra. */
 .sl-markdown-content table:not(:where(.not-content *)) {
   width: 100%;
   border-collapse: collapse;
@@ -40,16 +63,13 @@ starlight-theme-select {
   padding: 0.6rem 0.8rem;
   text-align: start;
   vertical-align: top;
-  /* ponytail: translucent black, not --sl-color-gray-5. That grey is oklch(88%)
-     in light mode, which disappears on the olive TIL stock. Black at 10% reads
-     the same on white and on paper. */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .sl-markdown-content th:not(:where(.not-content *)) {
   color: var(--sl-color-white);
   font-weight: 600;
-  border-bottom-color: rgba(0, 0, 0, 0.3);
+  border-bottom-color: color-mix(in srgb, currentColor 35%, transparent);
 }
 
 .sl-markdown-content tbody tr:nth-child(2n):not(:where(.not-content *)) {

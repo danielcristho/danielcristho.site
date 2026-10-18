@@ -4,7 +4,6 @@ import { tilTopic } from "../utils/til";
 
 const { id } = Astro.locals.starlightRoute;
 
-// TIL notes close with their topic, the list page shows it inline instead
 const isNote = id.startsWith("til/");
 const topic = isNote ? tilTopic(id) : undefined;
 ---
@@ -33,26 +32,29 @@ const topic = isNote ? tilTopic(id) : undefined;
   )
 }
 
-{
-  isNote && (
-    <button type="button" class="til-top" aria-label="Back to top">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M12 19V5M5 12l7-7 7 7"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </button>
-  )
-}
+{/* every page gets it, not only the notes */}
+<button type="button" class="to-top" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 19V5M5 12l7-7 7 7"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+  </svg>
+</button>
 
 <footer class="custom-footer">
   <div class="footer-container">
-    <p class="copyright">&copy; 2026 · Daniel Pepuho</p>
+    <p class="copyright">
+      &copy; 2023-Present · Daniel Pepuho ·
+      <a
+        href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        target="_blank"
+        rel="noopener noreferrer license">CC BY-NC-SA 4.0</a
+      >
+    </p>
   </div>
 </footer>
 
@@ -84,7 +86,7 @@ const topic = isNote ? tilTopic(id) : undefined;
     text-decoration: none;
   }
 
-  .til-top {
+  .to-top {
     position: fixed;
     right: 1.5rem;
     bottom: 1.5rem;
@@ -109,24 +111,24 @@ const topic = isNote ? tilTopic(id) : undefined;
       color 0.2s ease;
   }
 
-  .til-top.is-visible {
+  .to-top.is-visible {
     opacity: 1;
     transform: none;
     pointer-events: auto;
   }
 
-  .til-top:hover {
+  .to-top:hover {
     color: var(--sl-color-white);
     border-color: var(--sl-color-gray-4);
   }
 
-  .til-top svg {
+  .to-top svg {
     width: 1.1rem;
     height: 1.1rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .til-top {
+    .to-top {
       transition: none;
     }
   }
@@ -150,13 +152,22 @@ const topic = isNote ? tilTopic(id) : undefined;
     color: var(--sl-color-gray-3);
     font-size: 0.875rem;
   }
+
+  .copyright a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--sl-color-gray-4);
+    text-underline-offset: 0.2rem;
+  }
+
+  .copyright a:hover {
+    color: var(--sl-color-text-accent);
+  }
 </style>
 
 <script>
-  const top = document.querySelector<HTMLButtonElement>(".til-top");
+  const top = document.querySelector<HTMLButtonElement>(".to-top");
   if (top) {
-    // ponytail: plain passive scroll listener, a class toggle is cheap enough
-    // that rAF throttling would be more code than it saves
     const sync = () => top.classList.toggle("is-visible", window.scrollY > 400);
     addEventListener("scroll", sync, { passive: true });
     sync();

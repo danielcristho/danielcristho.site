@@ -10,7 +10,7 @@ import TilList from "../../../components/TilList.astro";
 import TilTopics from "../../../components/TilTopics.astro";
 import TilTrivia from "../../../components/TilTrivia.astro";
 
-Today I Learn. Just some stuff I write down while learning.
+Today I Learned. Just some stuff I write down while learning.
 
 <TilTopics />
 
@@ -19,3 +19,23 @@ Today I Learn. Just some stuff I write down while learning.
 <TilTrivia />
 
 <TilList />
+
+{/* same emerald sweep as the name on / and /about */}
+
+<style is:global>{`
+  h1#_top {
+    background: linear-gradient(45deg, #2e8555, #4ade80, #2e8555);
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 3s ease-in-out infinite;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    h1#_top { animation: none; }
+  }
+`}</style>

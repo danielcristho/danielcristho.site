@@ -21,7 +21,7 @@ export const topicSlug = (label: string) =>
     .trim()
     .replace(/[^a-z0-9]+/g, "-");
 
-/** Every TIL note that carries a trivia card. */
+// Every TIL note that carries a trivia card.
 export async function tilCards() {
   const notes = await getCollection(
     "docs",

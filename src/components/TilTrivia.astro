@@ -1,4 +1,6 @@
 ---
+// TIL trivia, showing a random question and answer from the notes.
+
 import { tilCards, triviaHtml } from "../utils/til";
 
 const items = await tilCards();
@@ -59,16 +61,13 @@ const items = await tilCards();
     color: var(--sl-color-gray-3);
   }
 
-  /* Fixed height, because a flip needs both faces stacked and that
-     means absolute positioning.*/
+  /* Fixed height*/
   .til-card {
     position: relative;
     height: 11rem;
     perspective: 1000px;
   }
 
-  /* Starlight borders and indents every <details> inside markdown content.
-     The trivia cards are already styled, so remove the extra chrome. */
   .til-trivia .til-card {
     border-inline-start: 0;
     padding-inline-start: 0;
@@ -111,13 +110,15 @@ const items = await tilCards();
     background: linear-gradient(135deg, var(--sl-color-bg) 40%, #e7f1ec 100%);
   }
 
+  :global([data-theme="dark"]) .til-front {
+    background: linear-gradient(135deg, var(--sl-color-bg) 40%, #1d3b2c 100%);
+  }
+
   .til-back {
     color: var(--sl-color-gray-2);
     transform: rotateY(180deg);
   }
 
-  /* z-index drops with the flip, otherwise the hidden front face keeps
-     swallowing clicks and the link on the back is unreachable. */
   .til-card[open] .til-front {
     z-index: 0;
     transform: rotateY(-180deg);
@@ -175,8 +176,6 @@ const items = await tilCards();
     cursor: pointer;
   }
 
-  /* The faces are absolute, so the card cannot grow with its text. A narrow
-     screen wraps the question onto more lines, hence the taller box. */
   @media (max-width: 50rem) {
     .til-card {
       height: 15rem;

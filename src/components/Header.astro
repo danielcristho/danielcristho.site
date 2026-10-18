@@ -1,130 +1,166 @@
 ---
 import type { Props } from "@astrojs/starlight/props";
 
+import { Icon } from "@astrojs/starlight/components";
 import Search from "@astrojs/starlight/components/Search.astro";
-import SiteTitle from "@astrojs/starlight/components/SiteTitle.astro";
-// import ThemeSelect from "./starlight/ThemeSelect.astro";
+import Logo from "./Logo.astro";
+import SocialIcons from "./SocialIcons.astro";
+
+const path = Astro.url.pathname;
+
+const links = [
+  { href: "/blog", label: "Blog" },
+  { href: "/til", label: "TIL" },
+  { href: "https://docs.danielcristho.site", label: "Docs", external: true },
+  { href: "/about", label: "About" },
+];
 ---
 
 <div class="header">
-  <div class="site-title">
-    <SiteTitle {...Astro.props} />
-  </div>
+  <Logo />
 
-  <div class="center-group">
-    <nav class="blog-links">
-      <a
-        href="/blog"
-        class="animated-underline"
-        aria-current={Astro.url.pathname.startsWith("/blog")
-          ? "page"
-          : undefined}
-      >
-        Blog
-      </a>
-      <a
-        href="/til"
-        class="animated-underline"
-        aria-current={Astro.url.pathname.startsWith("/til")
-          ? "page"
-          : undefined}
-      >
-        TIL
-      </a>
-      <a
-        href="https://docs.danielcristho.site"
-        class="animated-underline"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Docs
-      </a>
-      <a
-        href="/about"
-        class="animated-underline"
-        aria-current={Astro.url.pathname === "/about" ? "page" : undefined}
-      >
-        About
-      </a>
-    </nav>
+  <nav class="nav-right">
+    {
+      links.map(({ href, label, external }) => (
+        <a
+          href={href}
+          class="nav-link"
+          aria-current={!external && path.startsWith(href) ? "page" : undefined}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noopener noreferrer" : undefined}
+        >
+          {label}
+        </a>
+      ))
+    }
     <Search {...Astro.props} />
-  </div>
-  <!-- <div class="right-group">
-      <ThemeSelect {...Astro.props} />
-  </div> -->
+    <div class="nav-icons">
+      <SocialIcons {...Astro.props} />
+    </div>
+    <button
+      type="button"
+      class="theme-toggle"
+      title="Toggle dark mode"
+      aria-label="Toggle dark mode"
+    >
+      <Icon name="sun" class="icon-light" />
+      <Icon name="moon" class="icon-dark" />
+    </button>
+  </nav>
 </div>
 
 <style>
   .header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: var(--sl-nav-gap);
     height: 100%;
     padding-inline: var(--sl-content-padding);
   }
 
-  .site-title {
-  }
-
-  .center-group {
+  .nav-right {
     display: flex;
     align-items: center;
-    margin-left: auto;
-    margin-right: auto;
-    gap: 1.5rem;
+    gap: 1.2rem;
+    margin-inline-start: auto;
   }
 
-  .blog-links {
-    display: flex;
-    gap: 2rem;
-    border-inline-end: 1px solid var(--sl-color-gray-5);
-    padding-inline-end: var(--sl-nav-gap);
+  .nav-link {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
   }
 
-  .blog-links a {
-    font-size: 120%; /**Font size */
-    color: #2e8555 !important;
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    opacity: 1;
   }
 
-  .search-mobile {
+  .nav-icons {
     display: flex;
     align-items: center;
+    gap: 1.2rem;
   }
 
-  .right-group {
+  /* the social links come from SocialIcons.astro, which paints them accent and
+     lifts them on hover; in this row they behave like the text links instead */
+  .nav-icons :global(a) {
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .nav-icons :global(a:hover) {
+    color: inherit;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* search keeps only its icon, the bar carries no input box */
+  .nav-right :global(site-search button) {
+    border: 0;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .nav-right :global(site-search button:hover) {
+    opacity: 1;
+  }
+
+  .nav-right :global(site-search button > span),
+  .nav-right :global(site-search button > kbd) {
+    display: none;
+  }
+
+  /* one button, two icons, and CSS picks which one the current theme shows */
+  .theme-toggle {
     display: flex;
-    gap: 1rem;
     align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    opacity: 1;
+  }
+
+  .theme-toggle .icon-dark,
+  :global([data-theme="dark"]) .theme-toggle .icon-light {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .theme-toggle .icon-dark {
+    display: block;
   }
 
   @media (max-width: 50rem) {
-    .header {
-      justify-content: flex-start;
-      gap: 1rem;
+    .nav-right {
+      gap: 0.9rem;
     }
 
-    .center-group {
-      display: flex;
-      gap: 0.5rem;
-
-      margin-left: 0.5rem;
-      margin-right: 0;
+    /* the menu button already crowds this end of the bar */
+    .nav-icons {
+      display: none;
     }
-
-    .blog-links {
-      border-inline-end: none;
-      padding-inline-end: 0;
-    }
-  }
-
-  .right-group > div:nth-child(1) select {
-    text-indent: -9999px;
-    margin-inline-end: 0.5rem;
-  }
-  .right-group > div:nth-child(1) select {
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
   }
 </style>
+
+<script>
+  document.querySelector(".theme-toggle")?.addEventListener("click", () => {
+    const next =
+      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("starlight-theme", next);
+    (window as any).StarlightThemeProvider?.updatePickers(next);
+  });
+</script>

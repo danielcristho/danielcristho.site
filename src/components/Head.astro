@@ -2,6 +2,11 @@
 import type { Props } from "@astrojs/starlight/props";
 import DefaultHead from "@astrojs/starlight/components/Head.astro";
 import { ANALYTICS } from "../contants";
+// The font files are reached from inside the CSS bundle, so the browser only
+// learns about them after it has parsed that CSS. Importing them here hands the
+// same hashed URL to a preload hint, which starts both fetches at once.
+import fontBody from "@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2?url";
+import fontMono from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 
 const defaultOgImage = new URL("/og/default.png?v=2", Astro.site);
 
@@ -19,12 +24,10 @@ const ogImageUrl = ogImageSrc
   : defaultOgImage;
 ---
 
-<script is:inline>
-  localStorage.setItem("starlight-theme", "light");
-  document.documentElement.setAttribute("data-theme", "light");
-</script>
-
 <DefaultHead {...Astro.props} />
+
+<link rel="preload" href={fontBody} as="font" type="font/woff2" crossorigin />
+<link rel="preload" href={fontMono} as="font" type="font/woff2" crossorigin />
 
 <link
   rel="alternate"

@@ -9,27 +9,16 @@ export const onRequest = defineRouteMiddleware(async (context) => {
   const routeId = ["blog", ""].includes(context.locals.starlightRoute.id)
     ? "blog/deep-thoughts"
     : context.locals.starlightRoute.id;
-
-  // Directory of your public assets
   const publicDir = path.join(process.cwd(), "public");
-
-  // Possible image extensions
   const extensions = [".png", ".jpg", ".webp"];
-
-  // Find the first matching image file
   const foundExt = extensions.find((ext) =>
     fs.existsSync(path.join(publicDir, `${routeId}${ext}`))
   );
-
   // Build the final URL
-  const ogImageUrl = new URL(
-    `/${routeId}${foundExt ?? ".jpg"}`, // default fallback
-    context.site
-  );
+  const ogImageUrl = new URL(`/${routeId}${foundExt ?? ".jpg"}`, context.site);
 
   const { head, entry } = context.locals.starlightRoute;
 
-  // TIL pages: reading column everywhere, paper stock on the notes only
   const tilId = context.locals.starlightRoute.id;
   if (tilId.startsWith("til")) {
     head.push({ tag: "style", content: tilCss });
@@ -37,9 +26,6 @@ export const onRequest = defineRouteMiddleware(async (context) => {
   if (tilId.startsWith("til/")) {
     head.push({ tag: "style", content: tilNoteCss });
 
-    // Starlight's own pagination is off site-wide and TIL notes never enter the
-    // sidebar, so hand it the same date order the /til list reads in. Prev is
-    // the note above in that list, next the one below.
     const notes = (
       await getCollection(
         "docs",
@@ -50,7 +36,6 @@ export const onRequest = defineRouteMiddleware(async (context) => {
         new Date(b.data.date ?? 0).getTime() -
         new Date(a.data.date ?? 0).getTime()
     );
-    // Starlight does not export the link type, so borrow it from the route
     type PageLink = NonNullable<
       typeof context.locals.starlightRoute.pagination.prev
     >;
@@ -85,7 +70,6 @@ export const onRequest = defineRouteMiddleware(async (context) => {
     { name: "twitter:description", content: entry.data.description },
   ];
 
-  // Only emit og:image/twitter:image if a matching image file is found
   if (foundExt) {
     metaTags.push(
       { property: "og:image", content: ogImageUrl.href },

@@ -17,7 +17,7 @@ import rehypeGitHubBadgeLinks from "./src/plugins/rehype/github-badge-links";
 import remarkReplaceArrows from "./src/plugins/remark/replace-arrows";
 import expressiveCodeConfig from "./ec.config.mjs";
 
-// Auto-optimize Cloudinary images in markdown
+/// Custom Rehype Plugin to optimize Cloudinary images and add lazy loading
 const rehypeCloudinaryOptimize = () => (tree) => {
   visit(tree, "element", (node) => {
     if (node.tagName === "img" && node.properties?.src) {
@@ -46,7 +46,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "dc.",
-      favicon: "/favicon.svg",
+      favicon: "/logo/favicon.svg",
       lastUpdated: true,
       editLink: {
         baseUrl:

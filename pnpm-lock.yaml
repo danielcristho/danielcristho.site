@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  starlight-blog:
+    hash: a1a3532192aaeb1381af91b364495053e11897f0a17b7423753fca2331535199
+    path: patches/starlight-blog.patch
+
 importers:
 
   .:
@@ -70,7 +75,7 @@ importers:
         version: 0.33.0
       starlight-blog:
         specifier: ^0.26.1
-        version: 0.26.1(@astrojs/starlight@0.38.4(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
+        version: 0.26.1(patch_hash=a1a3532192aaeb1381af91b364495053e11897f0a17b7423753fca2331535199)(@astrojs/starlight@0.38.4(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))
       starlight-cooler-credit:
         specifier: ^0.6.0
         version: 0.6.0(@astrojs/starlight@0.38.4(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))
@@ -8592,7 +8597,7 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
-  starlight-blog@0.26.1(@astrojs/starlight@0.38.4(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)):
+  starlight-blog@0.26.1(patch_hash=a1a3532192aaeb1381af91b364495053e11897f0a17b7423753fca2331535199)(@astrojs/starlight@0.38.4(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)))(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3)):
     dependencies:
       '@astrojs/markdown-remark': 7.1.1
       '@astrojs/mdx': 5.0.3(astro@6.1.9(@types/node@25.0.3)(@vercel/functions@3.4.4)(jiti@1.21.7)(lightningcss@1.30.2)(rollup@4.60.2)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.3))

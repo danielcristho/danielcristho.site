@@ -1,17 +1,30 @@
+:root {
+  --til-stock: #e6e5d1;
+  --til-stock-nav: #dedcc5;
+  --til-stock-raised: #f4f3e6;
+}
+
+[data-theme="dark"] {
+  --til-stock: #15150f;
+  --til-stock-nav: #1b1b13;
+  --til-stock-raised: #20201a;
+}
+
 body {
-  background-color: #e6e5d1;
+  background-color: var(--til-stock);
   background-image:
-    /* coarse fibre */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E"),
-    /* fine speckle */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23s)' opacity='0.22'/%3E%3C/svg%3E");
   background-blend-mode: multiply;
   background-attachment: fixed;
 }
 
-/* the nav strip is part of the same sheet */
+[data-theme="dark"] body {
+  background-blend-mode: screen;
+}
+
 :root {
-  --sl-color-bg-nav: #dedcc5;
+  --sl-color-bg-nav: var(--til-stock-nav);
 }
 
 .page,
@@ -22,11 +35,26 @@ main {
 }
 
 .expressive-code .frame pre {
-  background: #f4f3e6;
+  background: var(--til-stock-raised);
 }
 
 /* the floating back-to-top button sits on the stock, not on white */
-.til-top {
-  background: #f4f3e6;
-  border-color: rgba(0, 0, 0, 0.15);
+.to-top {
+  background: var(--til-stock-raised);
+  border-color: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* The hand is for the titles only. It is a thin monoline face with a small
+   x-height and no bold, which is what makes a long note tiring to read, so the
+   body keeps Atkinson, a face drawn for legibility. */
+h1#_top,
+.sl-markdown-content :is(h2, h3, h4) {
+  font-family: "Caveat", var(--sl-font);
+  font-weight: 600;
+}
+
+/* the note still reads larger and looser than the rest of the site */
+.sl-markdown-content {
+  font-size: 1.0625rem;
+  line-height: 1.7;
 }

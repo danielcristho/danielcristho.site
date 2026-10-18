@@ -1,4 +1,6 @@
 ---
+// TIL tag graph, showing the topics and their notes.
+
 import { getCollection } from "astro:content";
 import { constellations, slots } from "../utils/constellations";
 import { tilTopic, topicSlug } from "../utils/til";
@@ -27,11 +29,6 @@ const sorted = [...tags.entries()].sort(
   (a, b) => b[1].pages.length - a[1].pages.length
 );
 
-/* Each topic gets a constellation, in the order the list defines, so a new
-   topic folder picks up the next one with no edit here. The sky is static
-   decoration, the simulation knows nothing about it. */
-// Topics arrive sorted by note count, so pairing them with the patterns sorted
-// by star count hands the busiest topic the roomiest constellation.
 const bySize = [...constellations].sort(
   (a, b) => b.stars.length - a.stars.length
 );
@@ -194,10 +191,15 @@ const graph = {
     --til-sky: #f0efe0;
     --til-ink: #4a4a24;
     background: var(--til-sky);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid color-mix(in srgb, var(--til-ink) 18%, transparent);
     border-radius: 0.5rem;
     padding: 0.5rem;
     margin-bottom: 0.75rem;
+  }
+
+  :global([data-theme="dark"]) .graph-wrap {
+    --til-sky: #1b1b13;
+    --til-ink: #d9d6b4;
   }
 
   #tag-graph {
@@ -213,8 +215,6 @@ const graph = {
     margin-bottom: 0.6rem;
   }
 
-  /* hint, sky hint and caption share the one strip under the chart, so the
-     explanation never piles up on top of the post list */
   .sky-hint,
   .sky-caption {
     display: none;
@@ -264,15 +264,11 @@ const graph = {
 </style>
 
 <style is:global>
-  /* gray-5 is the same lightness as the stock, so lines need black at low
-     alpha instead, same as the tables. */
   #tag-graph line {
-    stroke: rgba(0, 0, 0, 0.15);
+    stroke: color-mix(in srgb, var(--til-ink) 22%, transparent);
     stroke-width: 1;
   }
 
-  /* the dust ignores the pointer, a constellation is the one thing in the sky
-     you can click */
   #tag-graph .sky {
     pointer-events: none;
   }
@@ -291,7 +287,7 @@ const graph = {
   }
 
   #tag-graph .constellation.picked line {
-    stroke: rgba(74, 74, 36, 0.7);
+    stroke: color-mix(in srgb, var(--til-ink) 70%, transparent);
   }
 
   #tag-graph .constellation:focus-visible {
@@ -307,16 +303,12 @@ const graph = {
     display: none;
   }
 
-  /* in constellation mode the pattern supplies the lines, and the sky label
-     already names the topic, so the spokes and the tag dots step aside */
   #tag-graph.sky-on .edges,
   #tag-graph.sky-on .nodes g {
     display: none;
   }
 
-  /* A note title only shows while the pointer lights it up, otherwise the
-     middle of the graph is a pile of overlapping text. :not(.lit) carries two
-     classes so it beats the .focusing dimming rule below. */
+  /* A note title only shows while the pointer lights it up.*/
   #tag-graph .nodes a text {
     transition: opacity 0.15s;
   }
@@ -325,33 +317,30 @@ const graph = {
     opacity: 0;
   }
 
-  /* ponytail: no drop-shadow glow. The simulation repaints this SVG every
-     frame and a filter is re-rastered with it, which is what made the
-     animation heavy. Plain fills cost nothing. */
   #tag-graph .sky circle {
     fill: var(--til-ink);
     stroke: none;
   }
 
   #tag-graph .sky .dust {
-    fill: rgba(74, 74, 36, 0.3);
+    fill: color-mix(in srgb, var(--til-ink) 30%, transparent);
   }
 
   #tag-graph .sky line {
-    stroke: rgba(74, 74, 36, 0.35);
+    stroke: color-mix(in srgb, var(--til-ink) 35%, transparent);
   }
 
   #tag-graph .sky-topic {
     font-size: 7.5px;
     letter-spacing: 0.06em;
-    fill: rgba(74, 74, 36, 0.75);
+    fill: color-mix(in srgb, var(--til-ink) 75%, transparent);
   }
 
   #tag-graph .sky-name {
     font-size: 8px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    fill: rgba(74, 74, 36, 0.55);
+    fill: color-mix(in srgb, var(--til-ink) 55%, transparent);
   }
 
   #tag-graph.grabbing {
@@ -396,9 +385,6 @@ const graph = {
     stroke: #2e8555;
   }
 
-  /* On a phone the 800-unit chart lands in roughly 340 CSS px, so everything
-     in it shrinks to about 0.43. Only the text stops being readable at that
-     scale, so only the text is bumped back. More crowding is the trade. */
   @media (max-width: 50rem) {
     #tag-graph text {
       font-size: 16px;
@@ -445,9 +431,7 @@ const graph = {
       links: { source: string; target: string }[];
     };
 
-    /* Constellation mode parks each note on a star of its own topic's pattern.
-       ponytail: notes past the last star orbit 7px out from the one they reuse,
-       which beats inventing extra stars the constellation does not have. */
+    /* Constellation mode parks each note on a star of its own topic's pattern.*/
     let skyOn = false;
     let topicFilter = "";
 
@@ -467,8 +451,7 @@ const graph = {
       draw();
     }
 
-    // One constellation at a time: every panel is in the page already, picking
-    // is only a matter of which one is not hidden.
+    // One constellation at a time, the picked one. Clicking it again unpicks it.
     const skyEls = [...view.querySelectorAll<SVGGElement>(".constellation")];
     const panels = [
       ...document.querySelectorAll<HTMLElement>(".sky-caption [data-sky]"),
@@ -483,7 +466,6 @@ const graph = {
       wrap?.classList.toggle("picking", name !== null);
     }
 
-    // A filtered graph shows one topic, so it shows that topic's pattern only.
     function syncSky() {
       for (const g of skyEls)
         g.classList.toggle(
@@ -575,7 +557,6 @@ const graph = {
       a.append(circle, text);
       a.addEventListener("mouseenter", () => focus(node.id));
       a.addEventListener("mouseleave", () => focus(null));
-      // a pinned node is released by double-clicking it
       a.addEventListener("dblclick", () => {
         const pt = pts[byId.get(node.id)!];
         pt.pinned = false;
@@ -626,9 +607,6 @@ const graph = {
       });
     }
 
-    // ponytail: the topic select owns the filter, the graph just reads it.
-    // An inactive node keeps its element and its point, it is only hidden and
-    // skipped by the forces.
     let active = nodes.map(() => true);
 
     function filterTo(topic: string) {
@@ -671,7 +649,6 @@ const graph = {
     let running = false;
     let held: (typeof pts)[number] | null = null;
 
-    // any interaction re-heats the simulation and restarts the loop
     function stir(to = 0.5) {
       if (skyOn) {
         draw();
@@ -685,9 +662,7 @@ const graph = {
     }
 
     function tick() {
-      // The shape is the whole point in constellation mode, so the forces stop
-      // dead. Without this an already-running loop keeps pulling notes off
-      // their stars, back towards their tag and the centre.
+      // The shape is the whole point in constellation mode.
       if (skyOn) {
         running = false;
         draw();
@@ -727,7 +702,6 @@ const graph = {
       }
       for (let i = 0; i < pts.length; i++) {
         const p = pts[i];
-        // a pinned node still pushes the others around, it just never moves
         if (p === held || p.pinned || !active[i]) continue;
         p.vx += (W / 2 - p.x) * 0.004;
         p.vy += (H / 2 - p.y) * 0.004;
@@ -740,14 +714,13 @@ const graph = {
       if (running) requestAnimationFrame(tick);
     }
 
-    // the visible window onto the graph, moved by zooming
+    // The visible window onto the graph, moved by zooming
     const vb = { x: 0, y: 0, w: W, h: H };
 
     function applyView() {
       view.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
     }
 
-    // cursor coords -> world coords, through the live viewBox
     function at(event: PointerEvent | WheelEvent) {
       const box = view.getBoundingClientRect();
       return {
@@ -756,7 +729,7 @@ const graph = {
       };
     }
 
-    // wheel zooms around the cursor, 3x in to 2x out
+    // Wheel zooms around the cursor. 3 -> 2 -> 1 etc
     view.addEventListener(
       "wheel",
       (event: WheelEvent) => {
@@ -781,7 +754,6 @@ const graph = {
     let moved = 0;
 
     view.addEventListener("pointerdown", (event: PointerEvent) => {
-      // a click on a constellation is a pick, not a drag of the background
       if ((event.target as Element).closest?.(".constellation")) return;
       const index = nodeEls.findIndex(
         ({ circle, text }) => circle === event.target || text === event.target
