@@ -1,0 +1,87 @@
+---
+title: "Day 04"
+date: 2026-10-19
+description: "Designing secure access: accounts, IAM identities, credentials, policies, and traceability."
+trivia:
+  - q: What level of service is AWS IAM, zonal, regional or global?
+    a: Global. The IAM database is secured across all AWS Regions, so an identity is not tied to one Region.
+
+  - q: What permissions does a new IAM user, group or role start with?
+    a: None. IAM identities start with no permissions, and permissions are granted after that.
+
+  - q: Why is working as the account root user a risk?
+    a: Its permissions cannot be changed or reduced, so if the root user is compromised then the whole AWS environment is compromised. Protect it with MFA and work as a limited user instead.
+
+  - q: When should an application hold hard coded AWS credentials?
+    a: Never. Give the application a role instead, so credentials are issued at run time and rotate on their own.
+
+  - q: What separates a resource based policy from an identity based policy?
+    a: The Principal element. A resource policy names who may act on the resource, while an identity policy says what the identity it is attached to may do.
+
+  - q: Which AWS services accept resource based policies?
+    a: Amazon S3 buckets, Amazon SQS queues, VPC endpoints and AWS KMS keys, among others.
+template: splash
+---
+
+This one is about designing secure access, and the video frames it as a set of questions rather than a list of services.
+
+![How an AWS request is allowed](https://res.cloudinary.com/diunivf9n/image/upload/v1792684389/aws-request-flow_zmmeqs.svg)
+
+## Scope
+
+Security is the earliest decision in an architecture, not a step at the end. What matters here is how people, tools and the applications you build reach AWS services and your data: who can launch or terminate resources, when access is given, and what each call is allowed to do.
+
+Environments to tell apart: `public`, `private`, `hybrid` and `multi-cloud`. The exam expects secure access designed for each of them.
+
+AWS accounts themselves count as required fundamentals here, together with the Shared Responsibility Model, the global infrastructure, and the resilience level of each service.
+
+## IAM Identities
+
+`AWS IAM is a global service.` The identities live across all Regions, not inside one.
+
+| Identity              | Where it starts                                              |
+| --------------------- | ------------------------------------------------------------ |
+| Account root user     | Full permissions that cannot be changed or reduced.          |
+| IAM user, group, role | No permissions at all. Everything is granted after creation. |
+
+The root user is the risk worth stating plainly: its permissions are fixed, so a compromise of that one login is a compromise of the whole environment. Add MFA to it, then stop using it and work as a user with limited permissions.
+
+Least privilege is what limits the blast radius. For users, groups and roles, know how each is created, what each is for, and which scenario pushes you from one to another.
+
+## Credentials And Federation
+
+| Method                     | What it is for                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| Assume a role              | Short lived credentials instead of long lived keys.                                 |
+| Role assigned to a service | An AWS service acts on your behalf without any stored secret.                       |
+| AWS Security Token Service | Issues those credentials, inside one account and across accounts.                   |
+| Federation                 | Identities from a corporate directory or a third party provider map to an IAM role. |
+
+Users who already exist in your directory do not need a second identity in AWS. An IAM role carries the permissions, and federation points the existing identity at that role.
+
+:::note
+Hard coded credentials in an application: never. That is the whole answer to that question, and the alternatives are roles.
+:::
+
+## Policies
+
+A policy is an object that defines permissions once it is attached to an identity or a resource.
+
+| Type           | Attached to                                     | Answers                      |
+| -------------- | ----------------------------------------------- | ---------------------------- |
+| Identity based | An IAM user, group or role                      | What can this identity do    |
+| Resource based | S3 buckets, SQS queues, VPC endpoints, KMS keys | Who can act on this resource |
+
+The structural difference is the `Principal` element. A resource policy names the principals it affects, an identity policy does not need to, because it is already attached to one.
+
+The exam does not ask you to write advanced policies. It asks you to read them: the parts of a statement, which parts are required, how policies narrow permissions, and how IAM evaluates several policies attached to one identity.
+
+## Traceability
+
+Knowing who and what reached your resources is the other half of security. Monitor, alert and audit in real time, and wire log and metric collection into systems that can investigate or act on their own.
+
+For more than one account, the design questions are visibility, enforcement and automation:
+
+- `AWS Organizations` -> groups the accounts.
+- `Service control policies` -> set the ceiling on what any account may do.
+- `AWS Control Tower` -> sets up and governs the whole multi-account environment.

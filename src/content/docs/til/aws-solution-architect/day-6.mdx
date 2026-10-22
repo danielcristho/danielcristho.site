@@ -1,0 +1,93 @@
+---
+title: "Day 06"
+date: 2026-10-21
+description: "Encryption at rest and in transit, key management, S3 encryption, compliance, and backup."
+trivia:
+  - q: What separates encryption at rest from encryption in transit?
+    a: At rest protects stored data against theft and unauthorised access, and usually involves one party. In transit protects data moving between two places, so two or more parties are involved.
+
+  - q: Name the four terms encryption is built from.
+    a: Plaintext, which is unencrypted data of any kind. An algorithm, which takes plaintext and a key. A key, which is the password the algorithm uses. Ciphertext, which is the encrypted result.
+
+  - q: Which three server side encryption options does Amazon S3 offer?
+    a: SSE-C with customer provided keys, SSE-S3 with keys S3 manages, and SSE-KMS with keys held in AWS KMS. Client side encryption is the fourth option, where the object is encrypted before it leaves the source.
+
+  - q: Data is generated on an EC2 instance using an EBS volume and has to be protected while staying durable. Encrypted EBS volume or copy to an encrypted S3 bucket?
+    a: The encrypted EBS volume. It is the least effort, since the data is already there and the protection is a property of the volume.
+
+  - q: Where do you find AWS security and compliance reports and online agreements?
+    a: AWS Artifact. It is the self service repository for them, and it exists because compliance is shared between AWS and you.
+
+  - q: Which service gives one place to configure, schedule and monitor backups across services?
+    a: AWS Backup. It covers EBS volumes, EC2 instances, RDS and Aurora, DynamoDB tables, EFS, Storage Gateway volumes, and FSx for Windows and Lustre, and it can copy backups to another Region.
+template: splash
+---
+
+Data protection is the part the exam keeps coming back to, and the guidance is blunt about it. The best solution is usually the most secure one.
+
+## Encryption Fundamentals
+
+| Term       | What it is                                                         |
+| ---------- | ------------------------------------------------------------------ |
+| Plaintext  | Unencrypted data. Not only text, also documents, images, binaries. |
+| Algorithm  | Code that takes the plaintext and a key.                           |
+| Key        | The password the algorithm works with.                             |
+| Ciphertext | The encrypted result.                                              |
+
+Two kinds to tell apart, and the difference is how many parties are involved:
+
+- `At rest` -> protects stored data from theft and unauthorised access. Usually one party.
+- `In transit` -> protects data moving between two places. Two or more parties.
+
+Keys come as `symmetric` and `asymmetric`. Know what each can do, and how often each type can be rotated.
+
+## Key Management
+
+| Service                 | What it is for                                                           |
+| ----------------------- | ------------------------------------------------------------------------ |
+| AWS KMS                 | Managed keys, key policies, rotation. The default answer for most cases. |
+| AWS CloudHSM            | Dedicated hardware when you need single tenant control of the keys.      |
+| AWS Certificate Manager | Certificates for encryption in transit, with renewal handled for you.    |
+
+Questions the exam asks in scenario form: why KMS rather than CloudHSM, how the two work together, how keys are managed across Regions, and how access policies for keys are written. Root keys and data keys are handled differently, and that difference is worth knowing on its own.
+
+## S3 Encryption
+
+![The four ways S3 encrypts an object at rest](https://res.cloudinary.com/diunivf9n/image/upload/v1792684463/s3-encryption_xbrgpa.svg)
+
+S3 covers both directions. In transit it uses HTTPS by default. At rest you choose:
+
+| Option      | Who encrypts, and where                                                     |
+| ----------- | --------------------------------------------------------------------------- |
+| Client side | The object is encrypted before it leaves the source. You control all of it. |
+| SSE-C       | S3 encrypts at arrival, with a key you supply.                              |
+| SSE-S3      | S3 encrypts at arrival, with keys S3 manages.                               |
+| SSE-KMS     | S3 encrypts at arrival, with a key held in AWS KMS.                         |
+
+## Compliance And Classification
+
+`AWS Artifact` is the self service repository for AWS security and compliance reports and online agreements.
+
+The Cloud Adoption Framework security perspective lists five capabilities: IAM, detective controls, infrastructure security, data protection, and incident response.
+
+Two ideas sit under all of it:
+
+- Not all data is equal, so classify it before you decide how to protect it.
+- Layer the controls, preventative and detective together, so one gap is not the whole story.
+
+:::note
+Encryption can cost a little performance. Know which services take no measurable hit and which take a slight one, for example retrieval speed with RDS and KMS, or reads from S3.
+:::
+
+## Backup And Recovery
+
+Four approaches, from cheap and simple to expensive and fast: `backup and restore`, `pilot light`, `warm standby`, `multi-site active-active`. The first covers the loss of one data center for a workload that is already highly available. The rest are for losing a Region, or for rules that demand more.
+
+Backup frequency is what sets the recovery point you can actually achieve.
+
+| Service group                                             | Backup mechanism                                                                         |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| EBS, RDS, Aurora, Redshift, Neptune, DocumentDB, DynamoDB | Snapshots and point in time backups.                                                     |
+| Amazon S3                                                 | Cross-Region Replication, asynchronous, with versioning so you can pick a restore point. |
+| AWS Backup                                                | One place to configure, schedule and monitor, and it copies backups across Regions.      |
+| AWS Storage Gateway                                       | The hybrid answer, for workloads that still live on-premises.                            |

@@ -1,0 +1,87 @@
+---
+title: "Day 05"
+date: 2026-10-20
+description: "VPC design, network controls, private connectivity, and the services that guard data."
+trivia:
+  - q: Is an Amazon VPC a zonal, regional or global service?
+    a: Regional. A VPC is created in one Region and one account. The subnets inside it are the Availability Zone level resource.
+
+  - q: What actually makes a subnet public rather than private?
+    a: A route to an internet gateway in its route table. Nothing else about the subnet changes, which is why the route table is the thing to check first.
+
+  - q: Which AWS service discovers and classifies personally identifiable information in Amazon S3?
+    a: Amazon Macie. It uses machine learning to find and classify sensitive data in buckets, then reports what it found.
+
+  - q: A secret needs high volume access and automatic rotation on a schedule. Secrets Manager or Systems Manager Parameter Store?
+    a: AWS Secrets Manager. It is built for secrets and can force rotation at a chosen interval in days. Parameter Store holds configuration and does not rotate for you.
+
+  - q: Where can AWS WAF be attached?
+    a: Application Load Balancer, Amazon API Gateway and Amazon CloudFront. It is not something you point at any service you like, which is often what the wrong answer assumes.
+
+  - q: An application has to reach tens or hundreds of VPCs in other accounts without the internet. Peering or PrivateLink?
+    a: AWS PrivateLink. Peering means one link per pair and it exposes everything else in the peered VPCs. PrivateLink exposes one service, with no peering, internet gateway or NAT gateway.
+template: splash
+---
+
+Day 04 was about identities. This one is about the network they reach through, and the data at the end of it.
+
+![Where each network control sits in a VPC](https://res.cloudinary.com/diunivf9n/image/upload/v1792684434/vpc-controls_b4jxgd.svg)
+
+## VPC Fundamentals
+
+| Resource | Resilience | Note                                                             |
+| -------- | ---------- | ---------------------------------------------------------------- |
+| VPC      | Regional   | Lives in one Region and one account.                             |
+| Subnet   | Zonal      | Sits in one Availability Zone, which is where your services run. |
+
+There are two kinds of VPC, `default` and `custom`, and their starting security is not the same. Know which filters are already open in each before you add anything.
+
+Networking fundamentals sit under all of this: protocols, CIDR, subnetting, routing, security filters and gateways.
+
+## Network Controls
+
+| Control        | What it does                                                    |
+| -------------- | --------------------------------------------------------------- |
+| Security group | Rules at the instance level, stateful, allow rules only.        |
+| Network ACL    | Rules at the subnet level, stateless, allow and deny, in order. |
+| Route table    | Decides where traffic leaving a subnet goes.                    |
+| NAT gateway    | Lets a private subnet reach out without being reachable.        |
+
+These are meant to be read together, not one at a time. A request that fails usually fails at one specific layer, and knowing the order of processing is how you find which.
+
+The difference between a public and a private subnet is the route table, not a setting named public.
+
+## Private Connectivity
+
+| Option             | What it is for                                                                                                 |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| VPC endpoint       | A gateway object inside your VPC that reaches AWS public services with no internet gateway and no NAT gateway. |
+| AWS PrivateLink    | Exposes one of your services to many VPCs and accounts, without peering.                                       |
+| VPC peering        | One link per pair. Management grows with scale, and it exposes the rest of the peered VPCs.                    |
+| Transit Gateway    | A hub for many VPCs and on-premises networks.                                                                  |
+| Site-to-Site VPN   | Encrypted tunnel from a data center over the internet.                                                         |
+| AWS Client VPN     | The same idea for individual users.                                                                            |
+| AWS Direct Connect | A dedicated private link.                                                                                      |
+
+For each of the last three, know the capacity, the security and the resilience options.
+
+:::note
+A scenario worth rehearsing: traffic arrives from on-premises over a VPN and has to reach application servers in a private subnet, while the public internet stays shut out. The answer touches the route table, the network ACL and the security group together, not one of them.
+:::
+
+## Guarding The Data
+
+| Service                 | What it is for                                                      |
+| ----------------------- | ------------------------------------------------------------------- |
+| Amazon Macie            | Finds and classifies sensitive data in S3, including PII.           |
+| Amazon GuardDuty        | Watches for threats and unusual behaviour.                          |
+| Amazon Cognito          | User pools, identity pools, single sign on and identity federation. |
+| AWS IAM Identity Center | Workforce access across accounts.                                   |
+| AWS Shield              | DDoS protection. Know what Advanced adds over Standard.             |
+| AWS WAF                 | Layer 7 rules on ALB, API Gateway and CloudFront.                   |
+| AWS Secrets Manager     | Secrets, with rotation on a schedule.                               |
+| SSM Parameter Store     | Configuration values, no rotation of its own.                       |
+
+PII is any data that establishes who a person is: name, address, email, government numbers, date of birth, bank and card details.
+
+The exam asks these as scenarios, so the question is rarely what a service does. It is which one fits the requirement in front of you, and why the other three do not.

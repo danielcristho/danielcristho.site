@@ -1,0 +1,51 @@
+---
+title: "Day 07"
+date: 2026-10-22
+description: "A checklist of the security questions to be able to answer before moving on."
+trivia:
+  - q: Which service enforces the ceiling on permissions across many accounts?
+    a: AWS Organizations, through service control policies. Control Tower sets up and governs the environment on top of it, and Service Catalog publishes approved products. Only the SCP actually caps what an account may do.
+
+  - q: When do you reach for an IAM role instead of an IAM user?
+    a: Whenever the caller can be given credentials at run time, so a workload, a service, a federated person, or anyone from another account. A user is for a long lived identity with its own credentials, which is the case to avoid where a role will do.
+
+  - q: Name the four kinds of policy this domain keeps asking about.
+    a: Identity policy on a user, group or role. Resource policy on the resource itself. Permissions boundary, which caps what an identity policy can grant. Service control policy, which caps a whole account.
+
+  - q: Two services manage encryption keys. Which do you pick, and why?
+    a: AWS KMS by default, because it is managed and integrates with the other services. AWS CloudHSM when you need single tenant hardware and full control of the keys, usually for a compliance rule that demands it.
+template: splash
+---
+
+The closing lesson of the security material adds no new services. It is a list of questions, so this note keeps it as one. If a line here does not get an answer out of you, that is the next thing to read.
+
+## Accounts And Identity
+
+- Which service caps permissions across many accounts, `Organizations`, `Control Tower` or `Service Catalog`, and what does each actually do?
+- When is an IAM role the right answer and when is an IAM user?
+- What separates an identity policy, a resource policy, a permissions boundary and a service control policy?
+- How is a request evaluated when allow and deny rules overlap?
+
+## Federation
+
+- What are the ways into AWS from an identity that already exists elsewhere?
+- What is `IAM Identity Center` for?
+- Which cases call for `AWS Directory Service`?
+
+## Visibility
+
+- Which monitoring services exist beyond `CloudTrail`, `CloudWatch` and `VPC Flow Logs`?
+
+:::note
+The lesson asks this one without answering it. The usual additions are `AWS Config` for configuration history and drift, `GuardDuty` for threat detection, `Security Hub` to collect findings in one place, `Inspector` for workload vulnerabilities, and `Macie` for sensitive data in S3.
+:::
+
+## Network And Application
+
+- How do you build a VPC with the right controls, and which control sits at which layer?
+- What are the use cases and the limits of `Shield`, `WAF`, `Secrets Manager` and `Systems Manager Parameter Store`?
+
+## Data
+
+- How is data protected in transit and at rest?
+- When is `AWS KMS` the answer, and when is `AWS CloudHSM`?
