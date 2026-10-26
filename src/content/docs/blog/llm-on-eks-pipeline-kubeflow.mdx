@@ -29,15 +29,23 @@ Hi there! 👋🏽 Let's continue this series. Previous posts we got a Llama-3.1
 
 ## The Stack
 
-- Amazon EKS: runs Kubeflow Pipelines, Argo Workflows, and Ray workloads.
-- Amazon RDS for MySQL: stores Kubeflow Pipelines and ML Metadata.
-- Amazon S3: stores pipeline artifacts and model assets.
-- AWS CDK: provisions the infrastructure as code.
-- Kubeflow Pipelines: orchestrates machine learning workflows.
-- Argo Workflows: executes each pipeline step.
-- vLLM: serves the trained model through an OpenAI-compatible API.
+| Technology           | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| Amazon EKS           | Runs Kubeflow Pipelines, Argo Workflows, and Ray workloads. |
+| Amazon RDS for MySQL | Stores Kubeflow Pipelines and ML Metadata.                  |
+| Amazon S3            | Stores pipeline artifacts and model files.                  |
+| AWS CDK              | Provisions infrastructure as code.                          |
+| Kubeflow Pipelines   | Manages machine learning workflows.                         |
+| Argo Workflows       | Executes each pipeline step.                                |
+| vLLM                 | Serves the trained model through an OpenAI-compatible API.  |
 
-![Pipeline](https://res.cloudinary.com/diunivf9n/image/upload/v1793001545/pipeline_uefyfj.png)
+## Architecture
+
+Here's how the pieces fit together. The diagram covers the whole flow: deploying the infrastructure, running the training pipeline in Kubeflow, storing artifacts in S3 and RDS, serving the model with Ray and vLLM, and Karpenter adding GPU nodes when more capacity is needed.
+
+![Pipeline](https://res.cloudinary.com/diunivf9n/image/upload/v1793009255/pipeline_uefyfj.webp)
+
+> Click the image to zoom in.
 
 Everything runs on the same EKS cluster as before. Karpenter still creates GPU nodes on demand using the same g4dn.xlarge NodePool for vLLM autoscaling.
 
@@ -125,11 +133,13 @@ The goal isn’t to achieve high accuracy. We use a small dataset and one epoch 
 
 ### Why a Different Base Model for Training?
 
-The earlier posts in this series serve `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`, already quantized to INT4. The fine-tuning pipeline here doesn't start from that checkpoint. LoRA fine-tuning needs to update full-precision weights; you can't meaningfully train on top of a checkpoint that's already been quantized down to 4-bit. So the pipeline starts from full-precision weights, fine-tunes with LoRA, merges the adapter, then re-quantizes the result with AWQ as the last step, landing it back in S3 in the same INT4 format `vllm_stack.py` already expects.
+The earlier posts use hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 for serving. However, fine-tuning requires full-precision weights, so the pipeline starts from a full-precision model, applies LoRA, merges the adapter, and quantizes the result to AWQ INT4.
 
-For the base weights, the first attempts used `NousResearch/Meta-Llama-3.1-8B-Instruct` instead of Meta's official `meta-llama/Llama-3.1-8B-Instruct` repo: same weights, same license, an ungated re-upload that needs no `HF_TOKEN`. That kept the pipeline credential-free, but ran into a real wall on `g4dn.xlarge`'s T4 (14.74GB usable VRAM): QLoRA training itself worked, but merging the LoRA adapter back into full-precision weights afterward didn't. A full fp16 reload for an 8B model doesn't physically fit, and reloading in 4-bit or 8-bit to merge instead left the state dict partially quantized, breaking the AWQ step downstream with shape and dtype errors that no amount of cleanup fixed.
+Initially, we tried Llama-3.1-8B, but the g4dn.xlarge GPU (T4, 14.74 GB VRAM) could handle QLoRA training but not merging the adapter into full-precision weights. Reloading in 4-bit or 8-bit also caused errors during AWQ quantization.
 
-Rather than add a second GPU node pool just for the merge step, `base_model` defaults to `Qwen/Qwen2.5-1.5B-Instruct` now. At that size, fp16 training and merging both fit comfortably on the same T4 with room to spare, no 4-bit/8-bit quantization needed anywhere in `finetune_lora`, which also means the whole class of merge-time dtype bugs above simply doesn't come up. The trade-off: `vllm_stack.py` still serves `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` from the earlier posts, so this pipeline's output isn't a drop-in replacement for it. Swapping to a matching base model (or back to Llama, on bigger GPU) is still just the `base_model` pipeline parameter.
+To avoid adding a larger GPU, we switched to Qwen/Qwen2.5-1.5B-Instruct, which fits comfortably on the same GPU for training and merging.
+
+The trade-off is that the output model cannot directly replace the Llama model currently served by vllm_stack.py. Using a matching base model or a larger GPU would be needed to make them compatible.
 
 ## Deploy
 
@@ -161,7 +171,7 @@ Redeploying from scratch weeks later (after the base model swap below) surfaced 
 
 - `cluster.add_helm_chart()`/`add_manifest()`, called from `karpenter_stack.py`, `ray_stack.py`, `vllm_stack.py`, and `kubeflow_stack.py`, all parent to the `Cluster` construct that `eks_stack.py` owns. CDK resolves which CloudFormation stack a resource belongs to by walking up the construct tree, not by which file the code lives in, so every one of those Helm charts and manifests physically deploys as part of `eks-stack`, regardless of which Python stack class wrote the call. Running `cdk deploy eks-stack` alone deployed the entire app, Karpenter, Ray, vLLM, and Kubeflow Pipelines included; the later `cdk deploy karpenter-stack`/`ray-stack`/`vllm-stack`/`kubeflow-stack` commands just confirmed to CDK that nothing had changed:
 
-  ```
+  ```sh
   eks-stack: deploying... [1/3]
   ✅  eks-stack (no changes)
   ✨  Deployment time: 0s
@@ -203,9 +213,9 @@ Dataset pulled from Hugging Face, subset generated, uploaded to S3. Then it's `f
 
 The GPU `NodePool` had `consolidationPolicy: WhenEmpty`, `consolidateAfter: "30s"`. A brand-new node needs time to join, have the NVIDIA device plugin register `nvidia.com/gpu`, then get a pod actually bound to it, routinely more than 30 seconds. Karpenter's disruption loop ran its "empty" check in that window, saw zero pods yet, and deleted the node out from under `finetune-lora` mid-schedule, twice in a row on two separate runs. Bumping `consolidateAfter` to `"5m"` fixed it; the third run's node survived long enough to actually get used.
 
-The next retry failed differently, a packaging conflict, not infra this time:
+The next retry failed due to a packaging conflict, not an infrastructure issue.
 
-```
+```sh
 ImportError: pyarrow requires NumPy 2.0 or newer, found 1.26.4
 ```
 
@@ -271,6 +281,9 @@ There is still one limitation: the fine-tuned model does not automatically repla
 
 The process also involved several practical issues, including outdated image references, CloudFormation limitations, IRSA credential conflicts, leftover S3 resources, CDK configuration quirks, Python dependency conflicts, and Karpenter removing GPU nodes too early. None was particularly unusual, but each required proper debugging. The pipeline now runs end to end because these issues were investigated and fixed rather than simply worked around.
 
+By the way, the diagram in this post also shows the chatbot (a Streamlit web app), which we haven't covered here. We'll get to it in the next post on hyperparameter tuning.
+Aight. Thanks for reading this one too, hope you found something useful 🚀
+
 References:
 
 - [Kubeflow](https://www.kubeflow.org)
@@ -279,3 +292,9 @@ References:
 - [Kubeflow Pipelines manifests (kustomize/env/platform-agnostic-emissary)](https://github.com/kubeflow/pipelines/tree/2.2.0/manifests/kustomize/env/platform-agnostic-emissary)
 - [Kubeflow Pipelines manifests (kustomize/cluster-scoped-resources)](https://github.com/kubeflow/pipelines/tree/2.2.0/manifests/kustomize/cluster-scoped-resources)
 - [AWS Labs Kubeflow manifests (RDS + S3 overlay)](https://github.com/awslabs/kubeflow-manifests/tree/main/awsconfigs/apps/pipeline)
+- [Flaticon: User Icon](https://www.flaticon.com/free-icon/user_6175043)
+
+
+:::tip[Source Code]
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)
+:::
