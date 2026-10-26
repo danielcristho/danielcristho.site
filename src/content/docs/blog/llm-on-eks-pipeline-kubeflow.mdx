@@ -54,7 +54,7 @@ Following the numbers in the diagram:
 | 5   | Download Model                     | vLLM workers download the model from S3 at startup. To serve a specific run's output, `vllm_stack.py`'s `model_id` must still be updated.                                                                              |
 | 6   | Scale Out vLLM Workers             | When traffic increases, the Ray autoscaler requests more workers. Their pods enter `Pending` state, and Karpenter provisions GPU nodes.                                                                                |
 | 7   | Send Prompt                        | Users interact through the Streamlit UI, which routes requests through the NLB to Ray Head and then to a vLLM worker.                                                                                                  |
-| 8   | Return Response                    | The generated response follows the same path back to the user.            
+| 8   | Return Response                    | The generated response follows the same path back to the user.                                                                                                                                                         |
 
 ### Why Kubeflow over Ray Tune + Ray Train?
 
