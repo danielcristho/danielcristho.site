@@ -1,7 +1,7 @@
 ---
 title: "LLM on EKS: Hyperparameter Tuning with Ray Tune"
-date: 2026-10-30
-description: Tune LoRA hyperparameters with Ray Tune inside a Kubeflow pipeline on EKS, keep the old settings as a baseline, and roll out a new model when it wins.
+date: 2026-11-09
+description: Tune LoRA hyperparameters with Ray Tune inside a Kubeflow pipeline on EKS, keep the old settings as a baseline, and roll out a new model when the best config is better.
 excerpt: The LoRA settings from the pipeline post were a guess. This time we measure the settings with Ray Tune, and check if our event chatbot needs fine-tuning at all.
 tags:
   - AWS
@@ -22,7 +22,7 @@ Hi there! 👋🏽 A quick recap before we start. In the [Kubeflow pipeline post
 
 The chatbot from the previous post is an assistant for AWS Community Day Jakarta 2026, where this series became a talk. The chatbot answers questions about the agenda, rooms and speakers from a small knowledge base built from the event page.
 
-But one thing bugged me: the LoRA settings behind model A were a guess. So in this post, we will measure those settings. The pipeline searches for better settings with Ray Tune, and when one config wins, the new model (model B) gets rolled out. The full architecture is in the [previous post](/blog/llm-on-eks-gitops/#architecture).
+But the LoRA settings behind model A were a guess. So in this post, we will set up a way to measure those settings. The pipeline searches for better settings with Ray Tune, and when a config is better than the old one, we roll out the new model (model B). The full architecture is in the [previous post](/blog/llm-on-eks-gitops/#architecture).
 
 ## TL;DR
 
@@ -32,12 +32,13 @@ But one thing bugged me: the LoRA settings behind model A were a guess. So in th
 - The hand-picked settings from the pipeline post run as one of the trials (the baseline), so we can see where that guess ranks.
 - If the best config does not beat the baseline, the pipeline stops and the served model stays as it is.
 - Each run writes its model to its own S3 prefix. Rolling the model out is the same Git commit as in the previous post.
+- The pipeline has not run yet. What we measured so far: model A scores 6/15 with the whole knowledge base in the prompt, and 11/15 when the prompt gets the matching lines instead.
 
 ## Why Tune at All?
 
 In the pipeline post, I picked the LoRA settings (`r=16`, `alpha=32`, `lr=5e-5`) because those are common defaults, not because I measured them. The pipeline trained on all 200 examples with no held-out set. The one signal we had was training loss, and the loss was going down when the epoch ended. That tells us the model was learning. It does not tell us the settings were good. Also, `5e-5` is on the low side for LoRA. Most setups use something between `1e-4` and `2e-4`.
 
-So the problem is not that the first model is bad. We did not measure the first model. In this post, we hold out 20% of the data, try several LoRA configs under the same conditions, and keep the config with the lowest eval loss. The old defaults run as one of the trials. If the old defaults win, that is a real answer too: we know the settings are good instead of guessing.
+So the problem is not that the first model is bad. We did not measure the first model. In this post, we hold out 20% of the data, try several LoRA configs under the same conditions, and keep the config with the lowest eval loss. The old defaults run as one of the trials. If the old defaults have the lowest loss, that is also a result: we know the settings are good.
 
 ## Does the Chatbot Need Fine-Tuning at All?
 
@@ -51,7 +52,7 @@ Eval loss is not chatbot quality either. A lower loss does not mean the model ge
 
 ### What Fine-Tuning Could Teach
 
-The knowledge base goes into every request, so the training data has to look the same: context in the prompt, answer taken from the context. The goal is not to memorize the agenda. The goal is to teach the behavior around the agenda: find the answer in the context, and say "I don't know" when the answer is not there. That second part is where a 1.5B model tends to slip and make up a time or a speaker.
+The knowledge base goes into every request, so the training data has to look the same: context in the prompt, answer taken from the context. The goal is not to memorize the agenda. The goal is to teach the behavior around the agenda: find the answer in the context, and say "I don't know" when the answer is not there. A 1.5B model often gets the second part wrong and makes up a time or a speaker.
 
 **The dataset, generated from `src/knowledge_base.md` with templates (no LLM in the loop):**
 
@@ -84,7 +85,7 @@ My guess: the base model can handle simple lookups like "what time is X?". If th
 
 ## What Changed in the Pipeline
 
-The pipeline grabs 200 examples, then Ray Tune tries 6 LoRA configs. One of the 6 is the old config from the pipeline post. The best config has to beat that old config. If the best config does not, the pipeline stops and model A stays. If the best config wins, we train with the winner, shrink the model with AWQ, and push the result to S3.
+The pipeline grabs 200 examples, then Ray Tune tries 6 LoRA configs. One of the 6 is the old config from the pipeline post. The best config has to beat that old config. If the best config does not, the pipeline stops and model A stays. If the best config is better, we train with that config, shrink the model with AWQ, and push the result to S3.
 
 The diagram shows the trials side by side, but on our single T4 the trials run one at a time. The last box, "Serve with vLLM", is the Git commit from the previous post. The pipeline itself stops at S3.
 
@@ -112,7 +113,7 @@ param_space={
 },
 ```
 
-Each trial is a short LoRA training on 80% of the data, evaluated on the other 20% at the end of every epoch. The trial reports `eval_loss` to Ray Tune after each epoch, and ASHA works with that number. ASHA (`grace_period=1`, `reduction_factor=2`) compares trials after the first epoch and stops the weak ones, so weak trials do not burn GPU time on epochs 2 and 3. A config that keeps winning runs up to `max_t`, 3 epochs.
+Each trial is a short LoRA training on 80% of the data, evaluated on the other 20% at the end of every epoch. The trial reports `eval_loss` to Ray Tune after each epoch, and ASHA works with that number. ASHA (`grace_period=1`, `reduction_factor=2`) compares trials after the first epoch and stops the weak ones, so weak trials do not use GPU time on epochs 2 and 3. A config that stays in the top half runs up to `max_t`, 3 epochs.
 
 Two settings are there because of the single T4:
 
@@ -137,11 +138,11 @@ with dsl.If(search.outputs["beats_baseline"] == True):
     quant = quantize_and_upload(model_in=train.outputs["model_out"], ...)
 ```
 
-If the baseline wins, model A was trained with the best config we found, and training again changes nothing. The pipeline skips the full training and AWQ, the two longest GPU steps, and model A stays.
+If the baseline has the lowest loss, model A was trained with the best config we found, and training again changes nothing. The pipeline skips the full training and AWQ, the two longest GPU steps, and model A stays.
 
-## Rolling Out the Winner
+## Rolling Out the New Model
 
-When a config wins, `quantize_and_upload` writes model B to `pipeline-output/<run-id>`. The pipeline stops there and has no access to the cluster. Rolling out model B is the commit from the [previous post](/blog/llm-on-eks-gitops/#rolling-out-model-b):
+When a config is better than the baseline, `quantize_and_upload` writes model B to `pipeline-output/<run-id>`. The pipeline stops there and has no access to the cluster. Rolling out model B is the commit from the [previous post](/blog/llm-on-eks-gitops/#rolling-out-model-b):
 
 ```bash
 $ sed -i 's|^modelPrefix:.*|modelPrefix: pipeline-output/<run-id>|' manifests/vllm/values.yaml
@@ -187,7 +188,7 @@ Upload `finetune_pipeline.yaml`, hit **Create run**, and set `bucket_name`. The 
 | `tune_max_epochs` | 3                            |
 | `s3_prefix`       | `pipeline-output`            |
 
-{/* TODO: trials table from the KFP UI, best config vs baseline, and the run's S3 prefix */}
+The trials table shows up as the `trials_report` artifact of the `tune-hyperparams` step.
 
 To score a model on the knowledge base questions, port-forward vLLM and run the eval script. `--no-kb` leaves the knowledge base out of the system prompt:
 
@@ -197,18 +198,34 @@ $ just eval --label model-v1+kb
 $ just eval --label model-v1-no-kb --no-kb
 ```
 
-## Results
+## What We Know So Far
 
-{/* TODO: test accuracy for base vs old-settings LoRA vs tuned LoRA, and a few answers side by side (for example the parking question) */}
+I have not run this pipeline yet, so there is no trials table and no model B in this post. What we do have is the baseline the run has to beat: model A with the knowledge base, measured on the AWS Community Day cluster with `just eval`:
 
-## Chatting with the Model
+| Setup                                                           | Score |
+| --------------------------------------------------------------- | ----- |
+| Model A, whole knowledge base in the prompt                     | 6/15  |
+| Model A, keyword retrieval (the prompt gets the matching lines) | 11/15 |
 
-{/* TODO: the chatbot setup is in the GitOps post. Here, the same questions against the tuned model. */}
+The misses are not random. Questions about one line work: where and when the event is, or which room a talk is in when you give its full title. Questions where the model has to scan many lines fail: "who speaks from AWS?" or "what is on the Main Stage after lunch?". A section that groups speakers by company turned the first one into a one-line lookup, and the model got it right 3 times out of 3.
+
+That changes my guess from the start of this post. The biggest gap so far is how much context the 1.5B model gets, not its weights. Sending fewer, better lines (retrieval) gained more than any LoRA setting is likely to.
+
+## What's Next
+
+The pipeline in this post is ready to run, but it needs two changes first (see [What Fine-Tuning Could Teach](#what-fine-tuning-could-teach)):
+
+1. A dataset built from the knowledge base, in place of `guanaco-llama2-1k`.
+2. Loss masking, so training counts the answer and not the prompt.
+
+Then one run answers three questions with the same test set: does LoRA beat base Qwen with the knowledge base, does tuning beat the old settings, and does either one beat retrieval. I will add the results here once that run happens.
 
 ## Conclusion
 
-{/* TODO */}
+Ray Tune fits into the pipeline as one more step, without touching the RayCluster that serves users. Ray Tune runs in the training pod, ASHA stops the weak trials after one epoch, and the old settings run as one of the trials. When the old settings have the lowest loss, the pipeline skips the training and keeps model A.
+
+The bigger lesson came before any tuning: measure the thing you want to improve. For our event chatbot, the numbers so far point at the prompt, not the weights. Tuning is ready for the day a dataset says the weights matter.
 
 :::tip[Source Code]
-Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-llm](https://github.com/danielcristho/eks-cdk-llm)
 :::

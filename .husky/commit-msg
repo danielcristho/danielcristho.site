@@ -1,0 +1,21 @@
+msg=$(head -n 1 "$1")
+
+case "$msg" in
+Merge*| Revert* | fixup!* | squash!*) exit 0 ;;
+esac
+
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore'
+
+if ! printf '%s\n' "$msg" | grep -qE "^($types)(\([a-z0-9._/-]+\))?!?: .+"; then
+  printf '\n  The Commit does not follow the convention:\n\n'
+  printf '    %s\n\n' "$msg"
+  printf '  Expected   type(scope): summary\n'
+  printf '  Types      %s\n\n' "$(printf '%s' "$types" | tr '|' ' ')"
+  printf '  Examples   feat(component): add new feature\n'
+  printf '             docs: update installation instructions\n\n'
+  exit 1
+fi
+
+if [ ${#msg} -gt 72 ]; then
+  printf '\n  Heads up: subject is %s characters, over the usual 72.\n\n' "${#msg}"
+fi

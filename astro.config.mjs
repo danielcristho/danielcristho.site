@@ -84,6 +84,12 @@ export default defineConfig({
               title: "IT Infra. Lost in the Cloud(s)",
               picture: "https://avatars.githubusercontent.com/u/69733783?s=200",
             },
+            masnurrm: {
+              name: "Nur Muhammad 'Ainul Yaqin",
+              url: "https://www.linkedin.com/in/masnurm",
+              title: "Cloud Solution Architect & Cloud Team Lead @ AGIT",
+              picture: "https://avatars.githubusercontent.com/u/64957624?s=200",
+            },
           },
           metrics: {
             readingTime: true,

@@ -17,7 +17,7 @@ cover:
   image: https://res.cloudinary.com/diunivf9n/image/upload/v1783671470/llm-eks_n0hg9f.png
 ---
 
-Hi there! 👋🏽 Let's continue this series. Previous posts we got a Llama-3.1-8B-Instruct serving on EKS, then I made it autoscale with Ray and Karpenter. This time it's about fine-tuning the model, quantizing it, and pushing it back into the same serving stack, all orchestrated as a repeatable pipeline instead of a one-off script.
+Hi there! 👋🏽 Let's continue this series. In Previous posts, we got a Llama-3.1-8B-Instruct serving on EKS, then I made it autoscale with Ray and Karpenter. This time it's about fine-tuning the model, quantizing it, and pushing it back into the same serving stack, all orchestrated as a repeatable pipeline instead of a one-off script.
 
 ## TL;DR
 
@@ -137,7 +137,7 @@ The earlier posts use hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4 for ser
 
 Initially, we tried Llama-3.1-8B, but the g4dn.xlarge GPU (T4, 14.74 GB VRAM) could handle QLoRA training but not merging the adapter into full-precision weights. Reloading in 4-bit or 8-bit also caused errors during AWQ quantization.
 
-To avoid adding a larger GPU, we switched to Qwen/Qwen2.5-1.5B-Instruct, which fits comfortably on the same GPU for training and merging.
+To avoid adding a larger GPU, we switched to Qwen/Qwen2.5-1.5B-Instruct, which can be trained and merged on the same GPU.
 
 The trade-off is that the output model cannot directly replace the Llama model currently served by vllm_stack.py. Using a matching base model or a larger GPU would be needed to make them compatible.
 
@@ -293,7 +293,6 @@ References:
 - [Kubeflow Pipelines manifests (kustomize/cluster-scoped-resources)](https://github.com/kubeflow/pipelines/tree/2.2.0/manifests/kustomize/cluster-scoped-resources)
 - [AWS Labs Kubeflow manifests (RDS + S3 overlay)](https://github.com/awslabs/kubeflow-manifests/tree/main/awsconfigs/apps/pipeline)
 - [Flaticon: User Icon](https://www.flaticon.com/free-icon/user_6175043)
-
 
 :::tip[Source Code]
 Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)

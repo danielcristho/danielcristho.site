@@ -32,7 +32,6 @@ We also add a small chatbot: an assistant for AWS Community Day Jakarta 2026 tha
 - Model versions are write-once S3 prefixes (`pipeline-output/model-v1`, `pipeline-output/<run-id>`). `modelPrefix` in `manifests/vllm/values.yaml` picks the version to serve.
 - Switching models is a Git commit. Argo CD synced our commit within 25 seconds, KubeRay builds a new RayCluster with the new model, and traffic moves once the new cluster serves. One switch takes 10 to 15 minutes. Rolling back is `git revert`.
 - A switch needs room for two clusters for a few minutes: twice the GPUs, plus a second Ray head on the system nodes.
-- vLLM is reachable from inside the cluster. There is no public load balancer in front of the GPU.
 - A new GPU replica takes about 8 minutes from request to serving. Karpenter takes less than one of those minutes.
 
 ## Architecture
@@ -58,7 +57,7 @@ initContainers:
 
 Why a copy per pod instead of shared storage like EFS or Mountpoint for S3? The model is 1.6 GB and the copy takes about 6 seconds, so shared storage does not save much. A new worker from a scale-out also gets the model the same way, because `MODEL_URI` is part of the worker spec.
 
-The path on disk is `/model-cache/current` for every version, and vLLM serves the model as `qwen-lora` (`served_model_name` in the Serve config). [`serve_vllm.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/hypertuning_llm/vllm/serve_vllm.py) passes that name to the engine and to `/v1/models`. Clients ask for `qwen-lora` no matter which model version runs.
+The path on disk is `/model-cache/current` for every version, and vLLM serves the model as `qwen-lora` (`served_model_name` in the Serve config). [`serve_vllm.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/hypertuning_llm/vllm/serve_vllm.py) passes that name to the engine and to `/v1/models`. Clients ask for `qwen-lora` no matter which model version runs.
 
 ### The IMDS Hop Limit
 
@@ -130,7 +129,7 @@ CDK installs Argo CD on the system nodes and creates one Application, `vllm`, th
 - The Application has Argo CD's resources finalizer. Deleting the Application deletes the RayService too, so a cleanup does not leave GPU nodes behind.
 - We dropped Argo CD's reconciliation timeout from the default 120s (plus up to 60s jitter) to 30s, so a demo does not wait 3 minutes for a sync.
 
-The full stack is in [`argocd_stack.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/hypertuning_llm/argocd/argocd_stack.py).
+The full stack is in [`argocd_stack.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/hypertuning_llm/argocd/argocd_stack.py).
 
 ### Switching in Practice
 
@@ -174,7 +173,7 @@ Our first switch, to `model-v2-demo`, took 38 minutes instead of 10. Two things 
 - **CPU on the system nodes.** The new Ray head runs on the system node group and asks for 1.5 CPU (the head plus its autoscaler sidecar). The three `t3.large` nodes had at most 1.42 CPU free, so the head stayed `Pending` until we scaled the node group from 3 to 4.
 - **The GPU limit.** For a few minutes, the new cluster needs as many GPUs as the old one. Our Karpenter NodePool stops at 4 GPUs, and an empty GPU node counts toward that limit until consolidation removes the node (`consolidateAfter: 5m`). One new worker waited for an old node to go.
 
-So zero downtime has a price: twice the GPUs during the switch, and spare CPU on the system nodes for a second head. Size the quota, the NodePool limit and the system node group for the switch, not for the steady state.
+So zero downtime needs extra capacity: twice the GPUs during the switch, and spare CPU on the system nodes for a second head. Size the quota, the NodePool limit and the system node group for the switch, not for the steady state.
 
 ### Why the Pipeline Does Not Deploy
 
@@ -196,10 +195,10 @@ If vLLM needs to be public one day, we put something with auth in front of vLLM 
 
 A chat UI sends one request at a time, which is not enough load to make vLLM scale. We have two tools for that. Both run inside the cluster, so the port-forward is not the bottleneck:
 
-- `just load <concurrency> <seconds>` runs [`tests/load_test.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/tests/load_test.py) in a throwaway `python:3.11-slim` pod. The script uses the standard library and prints requests, errors, latency and tokens at the end.
+- `just load <concurrency> <seconds>` runs [`tests/load_test.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/tests/load_test.py) in a throwaway `python:3.11-slim` pod. The script uses the standard library and prints requests, errors, latency and tokens at the end.
 - `just locust` runs [Locust](https://github.com/locustio/locust) in a pod (`manifests/locust-pod.yaml`) for a live chart at `localhost:8089`. Stop Locust with `just locust-stop`.
 
-Locust has no column for tokens, so [`tests/locustfile.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/tests/locustfile.py) fires an extra `TOKENS` event per answer. The "Average size" of that row is the number of completion tokens. The extra event also counts in Locust's RPS, so the chart shows about twice the real chat requests.
+Locust has no column for tokens, so [`tests/locustfile.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/tests/locustfile.py) fires an extra `TOKENS` event per answer. The "Average size" of that row is the number of completion tokens. The extra event also counts in Locust's RPS, so the chart shows about twice the real chat requests.
 
 Ray Serve asks for another replica when a replica averages more than 2 requests in flight (`target_ongoing_requests: 2`), and a replica takes at most 5 requests at a time (`max_ongoing_requests: 5`). Results from the same `survive_llm` cluster, with `max_tokens` 256:
 
@@ -213,7 +212,7 @@ With 10 users: median latency 2.1s, p95 3.9s, about 142 completion tokens per an
 
 ![Locust with 12 users: RPS steps up and p95 drops once the third replica serves, with no failures.](https://res.cloudinary.com/diunivf9n/image/upload/v1794237166/llm-eks-locust-scale-out.webp)
 
-One thing tripped us up. We raised `VLLM_MAX_REPLICAS` from 2 to 3 on a running cluster, and nothing scaled. KubeRay updated the RayService but not the `maxReplicas` of the running RayCluster. Unlike a model change, this change does not make KubeRay build a new cluster. We patched the RayCluster by hand:
+One problem: we raised `VLLM_MAX_REPLICAS` from 2 to 3 on a running cluster, and nothing scaled. KubeRay updated the RayService but not the `maxReplicas` of the running RayCluster. Unlike a model change, this change does not make KubeRay build a new cluster. We patched the RayCluster by hand:
 
 ```bash
 $ kubectl patch raycluster <name> -n kuberay --type json \
@@ -240,7 +239,7 @@ The [scaling post](/blog/llm-on-eks-scale-llm/) measured ~9m27s. That run used L
 
 ## Chatbot with Gradio
 
-In the serving post, the chatbot was a small [Streamlit](https://github.com/streamlit/streamlit) app. This time we moved to [Gradio](https://github.com/gradio-app/gradio). The Streamlit version is still in the repo ([`src/chat_streamlit/app.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/chat_streamlit/app.py)), but the one we use is [`src/chat_gradio/app.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/chat_gradio/app.py).
+In the serving post, the chatbot was a small [Streamlit](https://github.com/streamlit/streamlit) app. This time we moved to [Gradio](https://github.com/gradio-app/gradio). The Streamlit version is still in the repo ([`src/chat_streamlit/app.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/chat_streamlit/app.py)), but the one we use is [`src/chat_gradio/app.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/chat_gradio/app.py).
 
 Why we switched:
 
@@ -248,7 +247,7 @@ Why we switched:
 - **Panels that update while the answer streams.** Next to the chat, we show the knowledge base lines behind each answer and a live log with tokens and time to first token. Streamlit reruns the whole script on every interaction, so updating side panels token by token gets awkward.
 - **One Python process serves the web app,** which makes the chatbot easy to put in a pod later.
 
-The chatbot is an assistant for AWS Community Day Jakarta 2026. The whole event knowledge base goes into the system prompt ([`src/prompt.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/prompt.py)). The knowledge base is [`src/knowledge_base.md`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/knowledge_base.md), generated from the event API by [`src/build_kb.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/build_kb.py). With 44 sessions, the knowledge base is around 2k tokens, so the whole file fits in `max_model_len` 4096 without a retrieval index.
+The chatbot is an assistant for AWS Community Day Jakarta 2026. The whole event knowledge base goes into the system prompt ([`src/prompt.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/prompt.py)). The knowledge base is [`src/knowledge_base.md`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/knowledge_base.md), generated from the event API by [`src/build_kb.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/build_kb.py). With 44 sessions, the knowledge base is around 2k tokens, so the whole file fits in `max_model_len` 4096 without a retrieval index.
 
 vLLM is private now, so run the chatbot from your laptop through a port-forward:
 
@@ -257,12 +256,10 @@ $ just vllm-forward              # vLLM at localhost:8000
 $ python src/chat_gradio/app.py  # VLLM_URL=http://localhost:8000 in .env
 ```
 
-{/* TODO: screenshot of the chat with the sources panel and the live log */}
-
 How well does a 1.5B model answer from a 2k-token prompt? Lookups of one line work: where and when the event is, or which room a talk is in when you give the talk title. Questions that need the model to scan many lines do not work: "who speaks from AWS?" or "what's on the Main Stage after lunch?". Two changes helped:
 
 - **A "Speakers by company" section** in the knowledge base. `build_kb.py` groups speakers by company once, so "who's from AWS?" becomes a one-line lookup. The model got that question right 3 times out of 3.
-- **`temperature=0.2`** in [`src/llm.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/llm.py). With sampling, the same list question flipped between the right names and "not listed".
+- **`temperature=0.2`** in [`src/llm.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/llm.py). With sampling, the same list question flipped between the right names and "not listed".
 
 The "after lunch" question still comes out wrong. That is a limit of the model size. The [next post](/blog/llm-on-eks-hyperparametertuning/) asks whether fine-tuning or a retrieval step fixes it.
 
@@ -297,5 +294,5 @@ The pipeline's model is in production now, and getting a model there is a Git co
 This post does not answer whether model B is better than model A. Our demo models have the same weights. In the [next post](/blog/llm-on-eks-hyperparametertuning/), Ray Tune searches the LoRA settings, and we measure whether fine-tuning helps the event chatbot at all.
 
 :::tip[Source Code]
-Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-llm](https://github.com/danielcristho/eks-cdk-llm)
 :::

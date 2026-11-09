@@ -75,7 +75,7 @@
     "*.astro": [
       "prettier --write"
     ],
-    "*.{json,md,css}": [
+    "*.{json,md,mdx,css}": [
       "prettier --write"
     ]
   }
