@@ -1,0 +1,177 @@
+---
+title: "Day 13"
+date: 2026-11-10
+description: "EC2 instance storage: EBS volumes and snapshots, AMIs, instance store, EBS volume types, and EFS."
+trivia:
+  - q: How do you move an EBS volume from us-east-1a to us-east-1b?
+    a: Take a snapshot, then restore the snapshot in the other AZ. A volume is locked to its AZ.
+
+  - q: An instance is terminated. Which EBS volumes are deleted by default?
+    a: The root volume. Other attached volumes are kept. The Delete on Termination attribute controls both.
+
+  - q: Which EBS volume types can be a boot volume?
+    a: The SSD ones, gp2, gp3, io1 and io2 Block Express. The HDD types st1 and sc1 cannot.
+
+  - q: How do you encrypt an unencrypted EBS volume?
+    a: Snapshot it, copy the snapshot with encryption on, create a new volume from the encrypted snapshot, and attach it.
+
+  - q: Many Linux instances across AZs need the same files. EBS or EFS?
+    a: EFS. EBS is one AZ and one instance, except io1 and io2 Multi-Attach in a single AZ.
+
+  - q: You need the highest disk I/O and the data can be lost. What storage?
+    a: EC2 instance store. It is a disk on the host, and the data is gone when the instance stops.
+template: splash
+---
+
+![EBS, EFS and instance store](https://res.cloudinary.com/diunivf9n/image/upload/v1794234255/ec2-storage.webp)
+
+## EBS Volume
+
+EBS is Elastic Block Store. An EBS volume is a network drive you attach to an instance.
+
+- The data stays after the instance is terminated.
+- One volume attaches to one instance at a time. Multi-Attach is the exception, see below.
+- A volume is locked to one AZ. To move it, snapshot it and restore in the other AZ.
+- It talks over the network, so there is a bit of latency. You can detach it and attach it to another instance.
+- You set the size in GB and the IOPS up front, and you pay for all of it. You can grow it later.
+
+### Delete On Termination
+
+| Volume              | Default when the instance is terminated |
+| ------------------- | --------------------------------------- |
+| Root volume         | Deleted                                 |
+| Other attached ones | Kept                                    |
+
+Turn the attribute off on the root volume if you need to keep it.
+
+## EBS Snapshots
+
+A snapshot is a backup of a volume at a point in time.
+
+- You do not have to detach the volume, but it is safer.
+- You can copy a snapshot to another AZ or Region.
+
+| Feature                     | What it does                                                          |
+| --------------------------- | --------------------------------------------------------------------- |
+| Snapshot Archive            | 75% cheaper storage. Restore takes 24 to 72 hours.                    |
+| Recycle Bin                 | Keeps deleted snapshots for 1 day to 1 year, so you can recover them. |
+| Fast Snapshot Restore (FSR) | No latency on first use of a restored volume. Costs extra.            |
+
+## AMI
+
+AMI is Amazon Machine Image. It is a template for an instance: OS, software, config and monitoring, built in. Instances from it boot faster because the software is already there.
+
+- An AMI belongs to one Region. You can copy it to other Regions.
+- Sources: public AMIs from AWS, your own AMIs, and AWS Marketplace AMIs that someone else made and may sell.
+
+To build one:
+
+1. Start an instance and set it up.
+2. Stop it, so the data is consistent.
+3. Create the AMI. This also creates EBS snapshots.
+4. Launch new instances from the AMI.
+
+## EC2 Instance Store
+
+An instance store is a disk on the physical host. It is faster than EBS, with very high IOPS.
+
+- The data is lost when the instance stops. It is ephemeral.
+- The data is lost if the hardware fails.
+- Backup and replication are your job.
+- Good for buffers, caches and scratch data.
+
+## EBS Volume Types
+
+A volume type is defined by size, throughput and IOPS.
+
+| Type                 | Disk | Size           | Max IOPS | Fits                                       |
+| -------------------- | ---- | -------------- | -------- | ------------------------------------------ |
+| gp3                  | SSD  | 1 GiB–64 TiB   | 80,000   | Boot volumes, dev and test, most workloads |
+| gp2                  | SSD  | 1 GiB–16 TiB   | 16,000   | Same as gp3, older                         |
+| io1                  | SSD  | 4 GiB–16 TiB   | 64,000   | Databases that need steady IOPS            |
+| io2 Block Express    | SSD  | 4 GiB–64 TiB   | 256,000  | Critical, low latency databases            |
+| st1 (Throughput HDD) | HDD  | 125 GiB–16 TiB | 500      | Big data, data warehouses, log processing  |
+| sc1 (Cold HDD)       | HDD  | 125 GiB–16 TiB | 250      | Data you rarely read, lowest cost          |
+
+- Only the SSD types can be boot volumes.
+- **gp3**: starts at 3,000 IOPS and 125 MiB/s. You raise IOPS and throughput on their own, up to 2,000 MiB/s, without growing the size.
+- **gp2**: IOPS grow with size, 3 IOPS per GiB. Small volumes burst to 3,000.
+- **io1 and io2**: pick these when you need more IOPS than gp3 gives, or steady IOPS for a database. You set IOPS apart from size.
+
+:::note
+The course slides list gp3 at 16,000 IOPS, 1,000 MiB/s and 16 TiB. AWS raised the limits to 80,000 IOPS, 2,000 MiB/s and 64 TiB. The table uses the new numbers from the [AWS docs](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html).
+:::
+
+## EBS Multi-Attach
+
+io1 and io2 volumes can attach to up to 16 instances in the same AZ.
+
+- Every instance can read and write.
+- The app must handle writes that happen at the same time.
+- Needs a cluster-aware file system. XFS and EXT4 will not work.
+- Fits clustered Linux apps that need higher availability.
+
+## EBS Encryption
+
+An encrypted volume gives you:
+
+- Data at rest encrypted in the volume
+- Data in flight between the instance and the volume encrypted
+- Snapshots encrypted, and volumes made from them encrypted
+
+It uses KMS keys (AES-256). You do not change anything in the app, and the latency cost is small.
+
+To encrypt an unencrypted volume:
+
+1. Snapshot the volume.
+2. Copy the snapshot with encryption on.
+3. Create a new volume from the encrypted snapshot.
+4. Attach the new volume to the instance.
+
+## EFS
+
+EFS is Elastic File System. It is a managed NFS that many instances across AZs can mount at once.
+
+- Uses NFSv4.1. Access is controlled by a security group.
+- Works with Linux, not Windows. POSIX file system.
+- Encryption at rest with KMS.
+- Grows and shrinks on its own. You pay for what you use, with no capacity planning.
+- Costs about 3 times gp2.
+- Fits content management, web serving, shared data, WordPress.
+
+### Performance
+
+| Setting          | Options                                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance mode | General Purpose (default) for low latency, like web servers. Max I/O for high throughput and parallel work, like big data. Set at creation. |
+| Throughput mode  | Bursting: grows with storage size. Provisioned: you set the throughput. Elastic: scales with the load, for unpredictable workloads.         |
+
+EFS scales to thousands of NFS clients, 10 GB/s and more, and petabytes of data.
+
+### Storage Classes
+
+| Tier              | For                                             |
+| ----------------- | ----------------------------------------------- |
+| Standard          | Files you read often                            |
+| Infrequent Access | Cheaper to store, you pay to read               |
+| Archive           | Files you read a few times a year. 50% cheaper. |
+
+A lifecycle policy moves files between tiers, for example to Infrequent Access after 60 days with no access.
+
+| Availability | Fits                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| Standard     | Multi-AZ, for production                                                                    |
+| One Zone     | One AZ, for dev. Backup on by default. Works with IA, as One Zone-IA, for over 90% savings. |
+
+## EBS vs EFS vs Instance Store
+
+|                 | EBS                                     | EFS                       | Instance store            |
+| --------------- | --------------------------------------- | ------------------------- | ------------------------- |
+| Attach to       | One instance (Multi-Attach for io1/io2) | Hundreds of instances     | The instance on that host |
+| Scope           | One AZ                                  | Many AZs                  | One host                  |
+| OS              | Linux and Windows                       | Linux                     | Linux and Windows         |
+| Data after stop | Kept                                    | Kept                      | Lost                      |
+| Move or back up | Snapshot                                | Shared, no move needed    | Your job                  |
+| Price           | Lower                                   | Higher, use tiers to save | Comes with the instance   |
+
+EBS backups use I/O. Do not run them when the app has a lot of traffic.

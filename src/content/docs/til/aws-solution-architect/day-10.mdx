@@ -1,7 +1,7 @@
 ---
 title: "Day 10"
 date: 2026-11-07
-description: "EC2 basics: what you rent, what you configure, and how to read an instance type."
+description: "EC2 basics"
 trivia:
   - q: What does EC2 user data do, and when does it run?
     a: It is a script that runs once, at the first boot of the instance, as root. Use it to install updates or software.
@@ -51,11 +51,11 @@ Use it to:
 
 ## Instance Types
 
-The name tells you what you get. Take `m5.2xlarge`:
+The name tells you what you get. Take `t2.xlarge`:
 
-- `m`: instance class
-- `5`: generation
-- `2xlarge`: size. A bigger size means more CPU and RAM.
+- `T`: instance class
+- `2`: generation
+- `xlarge`: size. A bigger size means more CPU and RAM.
 
 | Family            | Classes | Fits                                                                  |
 | ----------------- | ------- | --------------------------------------------------------------------- |
@@ -65,4 +65,4 @@ The name tells you what you get. Take `m5.2xlarge`:
 | Storage optimized | I, D, H | OLTP databases, data warehouses, high read and write on local storage |
 | Accelerated       | P, G    | Machine learning, graphics                                            |
 
-[instances.vantage.sh](https://instances.vantage.sh) lists every type with its price.
+[Amazon EC2 Pricing](https://aws.amazon.com/ec2/pricing) lists every type with its price.

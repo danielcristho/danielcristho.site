@@ -1,0 +1,101 @@
+---
+title: "Day 12"
+date: 2026-11-09
+description: "EC2 at the associate level: public and private IPs, Elastic IPs, placement groups, ENIs and hibernate."
+trivia:
+  - q: You stop and start an EC2 instance. What happens to its public IP?
+    a: It can change. Use an Elastic IP if you need a fixed public IP, or better, put a load balancer or a DNS name in front.
+
+  - q: A big data job needs the lowest latency between instances. Which placement group?
+    a: Cluster. All instances sit close together in one AZ. If that AZ fails, all of them fail.
+
+  - q: Each instance of a critical app must be on its own hardware. Which placement group, and what is the limit?
+    a: Spread. Up to 7 instances per AZ per group.
+
+  - q: Which placement group fits Kafka, Cassandra or HDFS?
+    a: Partition. Partitions do not share racks, and the instances can read which partition they are in from metadata.
+
+  - q: What does EC2 Hibernate need from the root volume?
+    a: It must be EBS, encrypted, and big enough to hold the RAM. The RAM is written to a file on it.
+template: splash
+---
+
+## Public And Private IP
+
+| Public IP                        | Private IP                                                      |
+| -------------------------------- | --------------------------------------------------------------- |
+| Reachable from the internet      | Reachable inside a private network                              |
+| Unique across the whole internet | Unique inside its network. Two networks can use the same range. |
+| Can be geo-located               | Reaches the internet through a NAT and an internet gateway      |
+
+An EC2 instance gets a private IP for the AWS network and, by default, a public IP. You SSH to the public IP, because your laptop is not in the same network.
+
+When you stop and start the instance, the public IP can change.
+
+## Elastic IP
+
+An Elastic IP is a fixed public IPv4 address. It stays yours until you release it.
+
+- Attach it to one instance at a time.
+- Move it to another instance to hide a failure.
+- Default limit is 5 per Region. You can ask AWS for more.
+
+Try not to use one. A random public IP with a DNS name, or a load balancer with no public IP on the instance, is a better design.
+
+:::note
+Since February 2024, AWS charges for every public IPv4 address, Elastic IP or not. Another reason to put instances behind a load balancer.
+:::
+
+## Placement Groups
+
+A placement group tells AWS how to place your instances on the hardware.
+
+![Placement groups](https://res.cloudinary.com/diunivf9n/image/upload/v1794234251/ec2-placement-groups.webp)
+
+| Strategy  | How                                                     | Good                                          | Bad                                          | Fits                                               |
+| --------- | ------------------------------------------------------- | --------------------------------------------- | -------------------------------------------- | -------------------------------------------------- |
+| Cluster   | All instances close together in one AZ                  | Low latency, high bandwidth between instances | One AZ failure takes down all of them        | Big data jobs that must finish fast, HPC           |
+| Spread    | Each instance on its own hardware, across AZs           | Lowest risk of failing together               | Max 7 instances per AZ per group             | Critical apps where each instance must be isolated |
+| Partition | Instances split into partitions that do not share racks | Scales to hundreds of instances               | One partition failure hits all its instances | HDFS, HBase, Cassandra, Kafka                      |
+
+Partition details:
+
+- Up to 7 partitions per AZ.
+- Can span AZs in the same Region.
+- Instances can read their partition from the instance metadata.
+
+## Elastic Network Interface (ENI)
+
+An ENI is a virtual network card in a VPC. It can have:
+
+- One primary private IPv4, and more secondary ones
+- One Elastic IP per private IPv4
+- One public IPv4
+- One or more security groups
+- A MAC address
+
+You can create an ENI on its own and move it between instances for failover. The private IP moves with it. An ENI is bound to one AZ.
+
+## EC2 Hibernate
+
+| Action    | What happens                                                                                         |
+| --------- | ---------------------------------------------------------------------------------------------------- |
+| Stop      | EBS data is kept. Next start boots the OS from scratch.                                              |
+| Terminate | Root EBS volume set to delete is lost.                                                               |
+| Hibernate | RAM is saved to the root EBS volume. Next start loads it back, so the OS does not boot from scratch. |
+
+A normal start boots the OS, then the app starts and warms its caches. That takes time. Hibernate skips it.
+
+Use it for:
+
+- Long running processes
+- Keeping the RAM state
+- Services that are slow to start
+
+Rules:
+
+- Root volume must be EBS, encrypted, and big enough for the RAM.
+- RAM must be less than 150 GB.
+- Not for bare metal instances.
+- Works with On-Demand, Reserved and Spot.
+- An instance cannot stay hibernated for more than 60 days.

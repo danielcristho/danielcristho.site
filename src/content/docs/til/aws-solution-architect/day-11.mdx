@@ -1,7 +1,7 @@
 ---
 title: "Day 11"
 date: 2026-11-08
-description: "EC2 security groups, the ports to know, and the ways to pay for an instance."
+description: "EC2 security groups. Learn more about EC2 Instances"
 trivia:
   - q: A connection to an EC2 instance times out. Where do you look first?
     a: The security group. A timeout means the traffic is blocked. "Connection refused" means the traffic got through and the app is the problem.
@@ -16,7 +16,7 @@ trivia:
     a: Spot Instances, up to 90% off On-Demand. AWS can take the instance back, so the job must handle interruption.
 
   - q: Which port is RDP?
-    a: 3389.
+    a: "3389"
 template: splash
 ---
 
@@ -33,7 +33,7 @@ A security group is a firewall around EC2 instances. It controls the traffic tha
 - It sits outside the instance. Blocked traffic never reaches the instance.
 - Keep SSH access in its own security group.
 
-![Security groups](/til/aws-solution-architect/ec2-security-groups.svg)
+![Security groups](https://res.cloudinary.com/diunivf9n/image/upload/v1794234202/ec2-security-groups.webp)
 
 The `app-sg` rule uses `web-sg` as the source. Any instance in `web-sg` can reach the app server, with no IP to update when servers change.
 
