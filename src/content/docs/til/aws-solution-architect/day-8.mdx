@@ -1,0 +1,99 @@
+---
+title: "Day 08"
+date: 2026-11-05
+description: "A cheatsheet for the last week before the exam: how it is scored, where the marks are, and the pairs of services it keeps asking you to choose between."
+trivia:
+  - q: How many questions on the SAA-C03 exam actually count, and what score passes?
+    a: 50 of the 65 count, the other 15 are unscored and unmarked. The scale runs 100 to 1,000 and 720 passes. Scoring is compensatory, so a weak domain can be carried by the others.
+
+  - q: Private instances need patches from the internet, and nothing may reach them from outside. What are the two pieces?
+    a: A NAT gateway in a public subnet, and a route in the private subnets' route table that sends 0.0.0.0/0 to it. An internet gateway route would make them reachable, which is the trap.
+
+  - q: EC2 instances must shut down for two weeks and keep what is in memory. What do you use?
+    a: Hibernation. The memory is written to the root EBS volume and reloaded on start. Instance store would lose it, and a snapshot does not capture RAM.
+
+  - q: A burst of votes arrives faster than the database can write. What goes between them?
+    a: An SQS queue, with workers reading from it at the rate the database can take. Nothing is lost, and the write rate stops being the ingestion rate.
+
+  - q: A new Auto Scaling instance is counted before it can serve traffic, and the group overscales. What fixes it?
+    a: A warm-up period on the scaling policy. Until it expires the instance is not counted in the group's metrics, so repeated alarm breaches add capacity once rather than many times.
+
+  - q: Which traffic can CloudFront handle that Global Accelerator cannot, and the other way round?
+    a: CloudFront caches HTTP content at the edge. Global Accelerator takes any TCP or UDP traffic and caches nothing, giving two static anycast IPs in front of ALB, NLB, EC2 or Elastic IPs.
+template: splash
+---
+
+Six days out, so this one is a cheatsheet rather than a lesson. It is built from the [official exam guide](https://d1.awsstatic.com/training-and-certification/docs-sa-assoc/AWS-Certified-Solutions-Architect-Associate_Exam-Guide_C03.pdf), the [sample questions](https://d1.awsstatic.com/training-and-certification/docs-sa-assoc/AWS-Certified-Solutions-Architect-Associate_Sample-Questions.pdf), and a [community cheatsheet](https://dev.to/venkatesh111/aws-solutions-architect-associate-cheat-sheet-4pfj).
+
+## How The Exam Is Scored
+
+| Fact                                   | Number       |
+| -------------------------------------- | ------------ |
+| Questions that count                   | 50           |
+| Unscored questions, not marked as such | 15           |
+| Score range                            | 100 to 1,000 |
+| Pass                                   | 720          |
+| Penalty for guessing                   | None         |
+
+refresh project structure
+Scoring is compensatory, so there is no minimum per domain. A weak area can be carried by the rest, and an unanswered question scores the same as a wrong one. Answer everything.
+
+## Where The Marks Are
+
+| Domain                               | Weight |
+| ------------------------------------ | ------ |
+| Design Secure Architectures          | 30%    |
+| Design Resilient Architectures       | 26%    |
+| Design High-Performing Architectures | 24%    |
+| Design Cost-Optimized Architectures  | 20%    |
+
+Security and resilience are 56% between them. With a week left, that is where hours pay best.
+
+## The Pairs It Keeps Asking About
+
+Most questions give two services that both nearly work. The mark is for knowing which fits and why the other does not.
+
+| Choose between                       | Rule of thumb                                                                                      |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| NAT gateway, NAT instance            | Gateway is managed and AZ scoped, so one per AZ for fault tolerance.                               |
+| ALB, NLB, GWLB                       | Layer 7 routing, layer 4 at millions of requests per second, and inline third party appliances.    |
+| SQS standard, FIFO                   | At-least-once with best-effort order, against exactly-once with strict order and lower throughput. |
+| RDS Multi-AZ, read replica           | Multi-AZ is failover, RPO near zero. A replica is for read traffic and can be promoted.            |
+| KMS, CloudHSM                        | Managed and integrated, against single tenant hardware for a compliance rule.                      |
+| EBS, instance store                  | Durable and detachable, against local, fast and gone when the instance stops.                      |
+| EFS, FSx                             | NFS for Linux and Fargate, against SMB for Windows or Lustre for HPC.                              |
+| CloudFront, Global Accelerator       | Cached HTTP at the edge, against any TCP or UDP with two static IPs.                               |
+| Gateway endpoint, interface endpoint | Free, route table based, S3 and DynamoDB only, against private IPs, on-premises reach, and a cost. |
+| Spot, On-Demand                      | Interruptible work only. A job with a deadline is On-Demand.                                       |
+
+## Numbers Worth Carrying In
+
+- S3 durability is eleven nines. Glacier Flexible Retrieval takes minutes to hours, Deep Archive up to 12 hours standard and 48 bulk, Glacier Instant Retrieval is milliseconds.
+- DynamoDB item limit is 400 KB.
+- Lambda runs for at most 15 minutes.
+- One Site-to-Site VPN tunnel carries about 1.25 Gbps. Scale with Transit Gateway and ECMP across tunnels.
+- Aurora takes up to 15 replicas, replication lag under a second, and Global Database gives roughly a one second RPO.
+- Kinesis Data Streams keeps records 24 hours by default, up to 7 days.
+- An explicit deny always wins, wherever it comes from.
+
+## Traps
+
+- A CNAME cannot sit at the zone apex. An alias record can, and it is the AWS-only answer.
+- A VPC or subnet CIDR cannot be changed after creation. Add a secondary CIDR or rebuild.
+- CloudWatch has no memory or disk metric without the agent.
+- An EC2 auto recovery alarm acts on a failed instance status check, not a system status check.
+- WAF attaches to CloudFront, ALB, API Gateway and AppSync. Not to NLB.
+- S3 Object Lock can only be turned on when the bucket is created, and it forces versioning on for good.
+
+:::note
+One claim in the community cheatsheet is out of date. It says roles cannot be used on servers outside AWS, which stopped being true when IAM Roles Anywhere launched in 2022. Treat third party cheatsheets as a revision aid, and let the AWS docs settle anything that decides an answer.
+:::
+
+## How To Read A Question
+
+The sample questions follow a shape that is worth practising:
+
+1. Read the constraint, not the story. "Cannot be reachable from the internet", "must keep memory", "cannot be interrupted". The constraint eliminates two options straight away.
+2. Watch for "least effort" and "most cost-effective". They separate two answers that both work.
+3. Multiple response questions say how many to pick. Picking fewer scores nothing.
+4. When two answers both work, the more managed one usually wins, unless the question asks for control.
