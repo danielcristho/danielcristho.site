@@ -52,7 +52,7 @@ IAM is Identity and Access Management. It is a global service. Users and roles a
 - Groups contain users. A group cannot contain another group.
 - A user can be in no group, or in more than one group.
 
-![IAM users, groups, policies and roles](/til/aws-solution-architect/iam-overview.svg)
+![IAM users, groups, policies and roles](https://res.cloudinary.com/diunivf9n/image/upload/v1794231857/iam-overview_axuxts.svg)
 
 ## Policies
 
@@ -67,7 +67,7 @@ AWS has managed policies, like `AdministratorAccess` and `ReadOnlyAccess`. You c
 
 ## Policy Structure
 
-![The parts of an IAM policy](/til/aws-solution-architect/iam-policy-structure.svg)
+![The parts of an IAM policy](https://res.cloudinary.com/diunivf9n/image/upload/v1794231857/iam-policy-structure_zzvhok.svg)
 
 A policy has:
 
@@ -139,13 +139,3 @@ Common roles:
 - Give services roles, not access keys.
 - Use access keys for the CLI and SDK, and rotate them.
 - Audit with the credential report and last accessed information.
-
-## Shared Responsibility For IAM
-
-| AWS                                    | You                                            |
-| -------------------------------------- | ---------------------------------------------- |
-| Infrastructure (global network)        | Users, groups, roles, policies, and monitoring |
-| Configuration and vulnerability checks | MFA on all accounts                            |
-| Compliance of the infrastructure       | Rotate keys                                    |
-|                                        | Apply the right permissions                    |
-|                                        | Review access patterns                         |
