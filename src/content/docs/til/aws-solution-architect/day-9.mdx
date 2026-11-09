@@ -1,0 +1,151 @@
+---
+title: "Day 09"
+date: 2026-11-06
+description: "Back to the basics: Learn AWS Infrastructure and IAM"
+trivia:
+  - q: What four things decide which Region to use?
+    a: Compliance, latency, available services, and price.
+
+  - q: Can an IAM group contain another group?
+    a: No. A group holds users, not groups. A user can be in no group, one group, or many groups.
+
+  - q: A user is in two groups and has an inline policy. Which permissions apply?
+    a: All of them. Permissions add up. An explicit deny still beats any allow.
+
+  - q: An EC2 instance needs to write to S3. Where do the credentials come from?
+    a: An IAM role attached to the instance. The role gives temporary credentials, so no access keys sit on the server.
+
+  - q: Which IAM tool is account level and which is user level?
+    a: Credential report is account level. It lists all users and the state of their passwords, keys and MFA. Last accessed information (Access Advisor) is user level. It shows which services a user used and when.
+template: splash
+---
+
+## Regions
+
+A Region is a cluster of data centers in one area. Most AWS services are Region scoped. A bucket or a VPC you create in one Region does not show up in another.
+
+Four things to check before you pick a Region:
+
+| Factor     | What to check                                                          |
+| ---------- | ---------------------------------------------------------------------- |
+| Compliance | Data does not leave a Region unless you move it. Local law may decide. |
+| Latency    | A Region close to the users gives lower latency.                       |
+| Services   | Not every service or feature is in every Region.                       |
+| Price      | Price differs per Region. The pricing page shows it.                   |
+
+## Availability Zones (AZ)
+
+Each Region has 3 to 6 Availability Zones. The name is the Region plus a letter, like `ap-southeast-1a`.
+
+- An AZ is one or more data centers with their own power, network and connectivity.
+- AZs are apart from each other, so one disaster does not hit two AZs.
+- AZs connect with a high bandwidth, low latency network.
+
+This is why "deploy across multiple AZs" is the answer to most high availability questions.
+
+## IAM: Users And Groups
+
+IAM is Identity and Access Management. It is a global service. Users and roles are not tied to a Region.
+
+- The root account comes with the AWS account and can do anything. Do not use it for daily work and do not share it.
+- Users are the people in your organization. One person, one user.
+- Groups contain users. A group cannot contain another group.
+- A user can be in no group, or in more than one group.
+
+![IAM users, groups, policies and roles](/til/aws-solution-architect/iam-overview.svg)
+
+## Policies
+
+A policy is a JSON document that says what is allowed or denied. Users and groups get permissions from policies.
+
+- A policy on a group applies to every user in that group.
+- A policy on one user is an inline policy, like `tango` in the diagram.
+- A user in two groups gets the policies of both groups, plus any inline policy.
+- Least privilege: give the permissions the job needs, nothing more.
+
+AWS has managed policies, like `AdministratorAccess` and `ReadOnlyAccess`. You can also write your own.
+
+## Policy Structure
+
+![The parts of an IAM policy](/til/aws-solution-architect/iam-policy-structure.svg)
+
+A policy has:
+
+- `Version`: the policy language version. Use `"2012-10-17"`.
+- `Id`: a name for the policy. Optional.
+- `Statement`: one or more statements. Required.
+
+A statement has:
+
+- `Sid`: a name for the statement. Optional.
+- `Effect`: `Allow` or `Deny`.
+- `Principal`: the account, user or role this statement is for. Used in resource based policies like a bucket policy. An identity policy has no `Principal`, because it applies to whoever it is attached to.
+- `Action`: the API calls to allow or deny, like `s3:GetObject`.
+- `Resource`: the ARNs the actions apply to.
+- `Condition`: when the statement applies. Optional.
+
+## Password Policy And MFA
+
+A password policy sets rules for IAM user passwords:
+
+- Minimum length
+- Required character types: uppercase, lowercase, numbers, symbols
+- Users can change their own password or not
+- Password expiry
+- Block reuse of old passwords
+
+MFA is a password plus a device you own. If the password leaks, the attacker still needs the device. Turn on MFA for the root account and for every user.
+
+| MFA device          | Example                                                |
+| ------------------- | ------------------------------------------------------ |
+| Virtual MFA app     | Google Authenticator, Authy. Many tokens on one phone. |
+| FIDO security key   | YubiKey. One key for root and many IAM users.          |
+| Hardware TOTP token | A key fob that shows a 6 digit code.                   |
+
+## How To Access AWS
+
+| Access  | Protected by                        |
+| ------- | ----------------------------------- |
+| Console | Password and MFA                    |
+| CLI     | Access key ID and secret access key |
+| SDK     | Access key ID and secret access key |
+
+Users create their own access keys in the console. The secret key is like a password. Do not share it and do not commit it to git. `aws configure` saves the keys for the CLI.
+
+AWS CloudShell is a terminal in the browser. The CLI in it is signed in as you, so you need no keys on your laptop.
+
+## Roles For Services
+
+Some AWS services need to call other services for you. An EC2 instance reads from S3, or a Lambda function writes to DynamoDB. These services do not get a user. They get an IAM role, and the role gives them temporary credentials.
+
+Common roles:
+
+- EC2 instance role (instance profile)
+- Lambda function role
+- CloudFormation role
+
+## IAM Security Tools
+
+- **Credential report**: account level. A CSV of all users and the state of their password, access keys and MFA.
+- **Last accessed information** (Access Advisor): user level, also for groups and roles. It shows the services a user has permission for and when each one was last used. Remove what is not used.
+
+## Best Practices
+
+- Do not use the root account, except to set up the AWS account.
+- One person, one IAM user. Do not share logins.
+- Put users in groups. Attach policies to groups.
+- Set a strong password policy.
+- Use MFA.
+- Give services roles, not access keys.
+- Use access keys for the CLI and SDK, and rotate them.
+- Audit with the credential report and last accessed information.
+
+## Shared Responsibility For IAM
+
+| AWS                                    | You                                            |
+| -------------------------------------- | ---------------------------------------------- |
+| Infrastructure (global network)        | Users, groups, roles, policies, and monitoring |
+| Configuration and vulnerability checks | MFA on all accounts                            |
+| Compliance of the infrastructure       | Rotate keys                                    |
+|                                        | Apply the right permissions                    |
+|                                        | Review access patterns                         |
