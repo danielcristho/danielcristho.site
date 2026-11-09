@@ -1,0 +1,96 @@
+---
+title: "cargo run in an Aya Project"
+date: 2026-11-06
+description: What happens when you run the Hello XDP userspace program, from build to detach.
+template: splash
+---
+
+Second part of [Hello XDP](https://aya-rs.dev/book/start/hello-xdp.html): the userspace side and what happens when it runs.
+
+```sh
+RUST_LOG=info cargo run -- --iface wlp2s0
+```
+
+## Two Builds
+
+The output ends with two "Finished" lines:
+
+```
+Finished `release` profile [optimized] target(s) in 38.02s
+Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+```
+
+The eBPF crate builds in release, the userspace crate in dev. The userspace `build.rs` does this:
+
+```rust
+aya_build::build_ebpf([ebpf_package], Toolchain::default())
+```
+
+It builds the `xdp-hello-ebpf` package first. So `cargo run` on the userspace crate also rebuilds the eBPF crate.
+
+## core Is Compiled From Source
+
+The same output has:
+
+```
+Compiling compiler_builtins v0.1.160 (/home/.../rustlib/src/rust/library/compiler-builtins)
+Compiling core v0.0.0 (/home/.../rustlib/src/rust/library/core)
+```
+
+These are standard library crates. The BPF target has no prebuilt `core`, so cargo compiles it. This is why nightly needs `rust-src`.
+
+## sudo
+
+The run line shows `sudo`:
+
+```
+Running `sudo -E /mnt/.../target/debug/xdp-hello --iface wlp2s0`
+```
+
+It comes from `.cargo/config.toml`:
+
+```toml
+[target."cfg(all())"]
+runner = "sudo -E"
+```
+
+Loading a program into the kernel needs root. `-E` keeps the environment, so `RUST_LOG=info` reaches the program.
+
+## Userspace Steps
+
+1. `include_bytes_aligned!` embeds the compiled eBPF object in the binary at build time.
+2. `Ebpf::load()` reads the bytes, creates the maps, and applies BTF relocations.
+3. `program_mut("xdp_hello")` gets the program by name. `load()` sends it to the kernel.
+4. `attach()` attaches it to the interface.
+
+The name in step 3 must match the function name in the eBPF crate. This is checked at run time, not at build time.
+
+## Program Lifetime
+
+```
+Waiting for Ctrl-C...
+[INFO  xdp_hello] received a packet
+[INFO  xdp_hello] received a packet
+```
+
+While it runs, the kernel lists it:
+
+```sh
+sudo bpftool prog list
+```
+
+```
+958: xdp  name xdp_hello  tag 0137ce4fce70b467  gpl
+    loaded_at 2022-06-23T13:55:28-0400  uid 0
+    xlated 2016B  jited 1138B  memlock 4096B  map_ids 275,274,273
+    pids xdp-hello(131677)
+```
+
+On Ctrl-C, aya detaches the program. Run `bpftool prog list` again and it is not there.
+
+Two things in the listing to look at later:
+
+- `jited 1138B` is the machine code the CPU runs. It is smaller than the 2016B of bytecode.
+- There are three maps, but the program defines none. They belong to the logger.
+
+The walkthrough and the `bpftool` output are from the [aya book](https://aya-rs.dev/book/start/hello-xdp.html). I have not checked the output on my machine yet.

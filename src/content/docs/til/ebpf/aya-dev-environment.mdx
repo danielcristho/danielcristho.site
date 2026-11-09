@@ -1,0 +1,53 @@
+---
+title: "Aya Setup"
+date: 2026-11-05
+description: The tools to install before writing eBPF in Rust with aya.
+template: splash
+---
+
+To write eBPF in Rust with [aya](https://aya-rs.dev), install these first.
+
+## Toolchains
+
+```sh
+rustup install stable
+rustup toolchain install nightly --component rust-src
+```
+
+You need both. The userspace crate builds on stable. The eBPF crate needs nightly with `rust-src`, because the BPF target has no prebuilt standard library. It is built from source.
+
+## Other Tools
+
+| Tool             | Use                                                       |
+| ---------------- | --------------------------------------------------------- |
+| `bpf-linker`     | Links the eBPF object. A normal linker cannot output BPF. |
+| `cargo-generate` | Creates a project from the aya template.                  |
+| `bpftool`        | Generates Rust bindings for kernel data structures.       |
+
+`bpf-linker` needs a matching LLVM version, and the steps differ per platform. Follow its README. A wrong LLVM version is a common cause of a failed first build.
+
+:::caution
+On Ubuntu 20.04, the `bpftool` from the distribution has a bug with the default kernel. Install a newer one:
+
+```sh
+sudo apt install linux-tools-5.8.0-63-generic
+export PATH=/usr/lib/linux-tools/5.8.0-63-generic:$PATH
+```
+
+:::
+
+## New Project
+
+```sh
+cargo generate https://github.com/aya-rs/aya-template
+```
+
+It asks for a project name and a program type, then for options of that type. For a network classifier, it asks for the attach direction.
+
+Without the prompts:
+
+```sh
+cargo generate --name myapp -d program_type=xdp https://github.com/aya-rs/aya-template
+```
+
+All options are in `cargo-generate.toml` in the template repository.
