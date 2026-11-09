@@ -1,0 +1,301 @@
+---
+title: "LLM on EKS: Switching Models with Argo CD"
+date: 2026-10-31
+description: Serve a fine-tuned Large Language Model from Amazon S3 with vLLM on Elastic Kubernetes Service, version every model, and roll out new ones with zero downtime using Argo CD and KubeRay.
+excerpt: The pipeline put a model in S3, but nothing served the model yet. This time vLLM loads the model from S3, and switching to a new model is one Git commit.
+tags:
+  - AWS
+  - Kubernetes
+  - LLM
+  - Generative AI
+  - GitOps
+  - ArgoCD
+  - Series
+authors:
+  - danielcristho
+  - masnurrm
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1783671470/llm-eks_n0hg9f.png
+---
+
+Hi there! 👋🏽 In the [previous post](/blog/llm-on-eks-pipeline-kubeflow/), a Kubeflow pipeline fine-tuned `Qwen2.5-1.5B-Instruct` with LoRA, quantized the model with AWQ, and pushed the result to S3. But our serving stack did not use that model. vLLM was still serving a Llama model from Hugging Face.
+
+So in this post, we will close that gap. vLLM loads the pipeline's model from S3, every model version gets its own S3 prefix, and switching versions is a Git commit. Argo CD picks up the commit, and KubeRay brings up the new model next to the old one before moving traffic over.
+
+We also add a small chatbot: an assistant for AWS Community Day Jakarta 2026 that answers questions about the agenda. The chatbot reads a knowledge base from its prompt. We use the chatbot to try the model, and later to load test vLLM.
+
+## TL;DR
+
+- Each GPU worker pulls the model from S3 in an init container before vLLM starts. 1.6 GB synced in about 6 seconds through the S3 Gateway Endpoint.
+- vLLM serves the model under a fixed name, `qwen-lora`, so clients do not change when the model behind the name changes.
+- Model versions are write-once S3 prefixes (`pipeline-output/model-v1`, `pipeline-output/<run-id>`). `modelPrefix` in `manifests/vllm/values.yaml` picks the version to serve.
+- Switching models is a Git commit. Argo CD synced our commit within 25 seconds, KubeRay builds a new RayCluster with the new model, and traffic moves once the new cluster serves. One switch takes 10 to 15 minutes. Rolling back is `git revert`.
+- A switch needs room for two clusters for a few minutes: twice the GPUs, plus a second Ray head on the system nodes.
+- vLLM is reachable from inside the cluster. There is no public load balancer in front of the GPU.
+- A new GPU replica takes about 8 minutes from request to serving. Karpenter takes less than one of those minutes.
+
+## Architecture
+
+Here is the full picture. A developer deploys the infrastructure with CDK and runs the Kubeflow pipeline. The pipeline writes each model to its own S3 prefix. A commit to `manifests/vllm/values.yaml` tells Argo CD which model to serve, and KubeRay rolls the model out to the GPU workers that Karpenter brings up. Users talk to the event chatbot, and the chatbot calls vLLM inside the cluster.
+
+![LLM on EKS, from pipeline to GitOps rollout.](https://res.cloudinary.com/diunivf9n/image/upload/v1794235102/llm-eks-architecture.webp)
+
+> Click the image to zoom in.
+
+## Serving the Model from S3
+
+In the [serving post](/blog/llm-on-eks-serve-vllm/), vLLM downloaded the model from Hugging Face on first boot. Now the model comes from our own S3 bucket. Each GPU worker in the RayService has an init container that copies the model before the Ray worker starts:
+
+```yaml
+initContainers:
+  - name: model-cache-sync
+    image: amazon/aws-cli:2.17.62
+    command: ["sh", "-c", 'aws s3 sync "$MODEL_URI" /model-cache/current']
+```
+
+`MODEL_URI` is `s3://<bucket>/<modelPrefix>`. The files land in an `emptyDir` volume mounted at `/model-cache`. The Ray worker mounts the same volume, and vLLM loads the model from `/model-cache/current`.
+
+Why a copy per pod instead of shared storage like EFS or Mountpoint for S3? The model is 1.6 GB and the copy takes about 6 seconds, so shared storage does not save much. A new worker from a scale-out also gets the model the same way, because `MODEL_URI` is part of the worker spec.
+
+The path on disk is `/model-cache/current` for every version, and vLLM serves the model as `qwen-lora` (`served_model_name` in the Serve config). [`serve_vllm.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/hypertuning_llm/vllm/serve_vllm.py) passes that name to the engine and to `/v1/models`. Clients ask for `qwen-lora` no matter which model version runs.
+
+### The IMDS Hop Limit
+
+The first time the init container ran, `aws s3 sync` could not find credentials. The pod gets AWS access from the node's IAM role, through the instance metadata service (IMDS). Karpenter launches nodes with IMDSv2 and a hop limit of 1. A pod sits one network hop behind the node, so the IMDS token response does not reach the pod.
+
+The fix is one line in the GPU `EC2NodeClass`:
+
+```python
+# Karpenter's default hop limit of 1 blocks pods from IMDS, so they can't use the node role for S3
+"metadataOptions": {"httpTokens": "required", "httpPutResponseHopLimit": 2},
+```
+
+After that, the sync pulled 9 files (1.6 GB) in 6 seconds. A role per service account (IRSA or EKS Pod Identity) is the stricter option. For a bucket that the GPU nodes read anyway, the node role is enough.
+
+## Versioning the Model
+
+Every model gets its own S3 prefix, and we write each prefix once. The problem in the previous post was `pipeline-output/latest`. Every `pipeline_llm` run overwrites that prefix, so the name stays the same while the model changes. I copied that model to `pipeline-output/model-v1`. From the next post on, every pipeline run writes to its own `pipeline-output/<run-id>`, and a run ID is unique.
+
+The version to serve lives in Git, in the vLLM chart's `manifests/vllm/values.yaml`:
+
+```yaml
+modelPrefix: pipeline-output/model-v1
+```
+
+So to know which model is running, look at Git. To change the model, commit.
+
+With `latest`, Git would show the same value the whole time while the files in S3 change with every run. You could not tell which model served yesterday, and `git revert` would have nothing to go back to.
+
+The other chart values (bucket, region, Ray and vLLM versions, `max_model_len`) depend on the account or the setup, so these values come from `.env`. CDK passes these values to Argo CD as Helm parameters, and the chart refuses to render if one is missing. Git holds the model version, `.env` holds the rest.
+
+One more guard: `just deploy` refuses to run with uncommitted changes in the folder. CDK deploys what is on your disk, and Argo CD deploys what is on GitHub. When the two differ, you end up debugging a cluster that matches neither.
+
+## Rolling Out Model B
+
+Model A is the model serving now: `pipeline-output/model-v1`. Model B is any newer version.
+
+Switching from A to B starts with a commit. Argo CD checks Git every 30 seconds, picks up the commit, and updates the RayService. KubeRay builds new Ray pods next to the old pods, and each new worker pulls model B from S3. The old pods keep serving until the new pods are ready. Then traffic moves over and the old pods go away.
+
+To roll back, `git revert` the commit. And if someone edits the RayService by hand, Argo CD puts the RayService back to what Git says.
+
+![Switching models with one commit.](https://res.cloudinary.com/diunivf9n/image/upload/v1794235108/llm-eks-gitops.webp)
+
+> Click the image to zoom in.
+
+### Why the Model Lives in `rayClusterConfig`
+
+A RayService has two parts, and the part that holds the model path decides how KubeRay rolls out a change:
+
+- A change in `serveConfigV2` (the Ray Serve app) restarts the app on the same cluster. While vLLM reloads, no replica answers.
+- A change in `rayClusterConfig` (the pods) makes KubeRay build a new RayCluster next to the old one, and move traffic when the new cluster serves.
+
+`MODEL_URI` is an env var of the worker pods, so the value sits in `rayClusterConfig`, and a new model takes the second path. KubeRay's Service `vllm-serve-svc` points at the active cluster, so clients do not see the switch. And `min_replicas: 1` makes the new cluster load a replica right away instead of waiting for traffic.
+
+### The Argo CD Application
+
+CDK installs Argo CD on the system nodes and creates one Application, `vllm`, that watches the chart folder:
+
+```python
+"source": {
+    "repoURL": repo_url,             # GITOPS_REPO_URL
+    "targetRevision": revision,      # GITOPS_REVISION
+    "path": "hypertuning_llm/manifests/vllm",
+    "helm": {"parameters": [...]},   # bucket, region, versions from .env
+},
+"syncPolicy": {"automated": {"prune": True, "selfHeal": True}},
+```
+
+- `selfHeal` reverts any change in the cluster that does not match Git.
+- The Application has Argo CD's resources finalizer. Deleting the Application deletes the RayService too, so a cleanup does not leave GPU nodes behind.
+- We dropped Argo CD's reconciliation timeout from the default 120s (plus up to 60s jitter) to 30s, so a demo does not wait 3 minutes for a sync.
+
+The full stack is in [`argocd_stack.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/hypertuning_llm/argocd/argocd_stack.py).
+
+### Switching in Practice
+
+```bash
+$ sed -i 's|^modelPrefix:.*|modelPrefix: pipeline-output/model-v3-demo|' manifests/vllm/values.yaml
+$ git add manifests/vllm/values.yaml
+$ git commit -m "feat(new model): serve model-v3"
+$ git push
+```
+
+We tested this on the cluster from our AWS Community Day talk (`survive_llm`). The cluster uses the same chart, with one warm replica per AZ, so 2 GPU workers. `model-v2-demo` and `model-v3-demo` are copies of `model-v1` under new prefixes. The weights are the same and the path is the one change, which is enough to watch the rollout.
+
+Switching from `model-v2-demo` to `model-v3-demo`:
+
+| Stage                                     | Time (UTC)  | Since commit |
+| ----------------------------------------- | ----------- | ------------ |
+| Commit                                    | 18:37:56    |              |
+| Argo CD synced                            | 18:38:21    | 25s          |
+| New Ray head running                      | by 18:40:43 | < 3 min      |
+| New GPU workers created (`model-v3-demo`) | 18:42:51    | ~5 min       |
+| New workers running                       | 18:46:23    | ~8.5 min     |
+
+During the switch, both `model-v2-demo` workers stayed ready and served. vLLM on the new workers needs about 4 more minutes to load before traffic moves (see the replica timeline below), so count on 10 to 15 minutes per switch.
+
+![Argo CD synced to the model-v3 commit, with the new RayCluster next to the old one.](https://res.cloudinary.com/diunivf9n/image/upload/v1794237156/llm-eks-gitops-argocd.webp)
+
+![Two workers on model-v3-demo and two on model-v2-demo, each pulling its own model from S3.](https://res.cloudinary.com/diunivf9n/image/upload/v1794237161/llm-eks-gitops-workers.webp)
+
+To check which model each worker has, read `MODEL_URI` from the pods and the log of the init container:
+
+```bash
+$ kubectl get pods -n kuberay -l ray.io/node-type=worker \
+  -o custom-columns='POD:.metadata.name,NODE:.spec.nodeName,MODEL:.spec.initContainers[0].env[?(@.name=="MODEL_URI")].value'
+$ kubectl logs -n kuberay <worker-pod> -c model-cache-sync
+```
+
+### A Switch Needs Room for Two Clusters
+
+Our first switch, to `model-v2-demo`, took 38 minutes instead of 10. Two things were in the way:
+
+- **CPU on the system nodes.** The new Ray head runs on the system node group and asks for 1.5 CPU (the head plus its autoscaler sidecar). The three `t3.large` nodes had at most 1.42 CPU free, so the head stayed `Pending` until we scaled the node group from 3 to 4.
+- **The GPU limit.** For a few minutes, the new cluster needs as many GPUs as the old one. Our Karpenter NodePool stops at 4 GPUs, and an empty GPU node counts toward that limit until consolidation removes the node (`consolidateAfter: 5m`). One new worker waited for an old node to go.
+
+So zero downtime has a price: twice the GPUs during the switch, and spare CPU on the system nodes for a second head. Size the quota, the NodePool limit and the system node group for the switch, not for the steady state.
+
+### Why the Pipeline Does Not Deploy
+
+My first version had a last pipeline step, `deploy_model`, that patched the RayService with the Kubernetes API. With `selfHeal` on, Argo CD undoes that patch on the next sync. So we dropped the step, and the pipeline no longer needs cluster access. The pipeline ends at S3 (`pipeline-output/<run-id>`), and shipping that model is a commit to `values.yaml`. Every switch shows up in the Git history: who, when, and which model.
+
+## Keeping vLLM Private
+
+The serving post put an internet-facing NLB in front of vLLM. That NLB was an open GPU endpoint with no auth: anyone with the URL could spend our GPU hours. So the NLB is gone.
+
+vLLM now sits behind `vllm-serve-svc`, the ClusterIP Service that KubeRay creates. Apps in the cluster call `http://vllm-serve-svc.kuberay.svc.cluster.local:8000`, and from a laptop we port-forward:
+
+```bash
+$ just vllm-forward   # vLLM at localhost:8000
+```
+
+If vLLM needs to be public one day, we put something with auth in front of vLLM first.
+
+## Load Testing
+
+A chat UI sends one request at a time, which is not enough load to make vLLM scale. We have two tools for that. Both run inside the cluster, so the port-forward is not the bottleneck:
+
+- `just load <concurrency> <seconds>` runs [`tests/load_test.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/tests/load_test.py) in a throwaway `python:3.11-slim` pod. The script uses the standard library and prints requests, errors, latency and tokens at the end.
+- `just locust` runs [Locust](https://github.com/locustio/locust) in a pod (`manifests/locust-pod.yaml`) for a live chart at `localhost:8089`. Stop Locust with `just locust-stop`.
+
+Locust has no column for tokens, so [`tests/locustfile.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/tests/locustfile.py) fires an extra `TOKENS` event per answer. The "Average size" of that row is the number of completion tokens. The extra event also counts in Locust's RPS, so the chart shows about twice the real chat requests.
+
+Ray Serve asks for another replica when a replica averages more than 2 requests in flight (`target_ongoing_requests: 2`), and a replica takes at most 5 requests at a time (`max_ongoing_requests: 5`). Results from the same `survive_llm` cluster, with `max_tokens` 256:
+
+| Users | Replicas | Chat requests/s | Failures |
+| ----- | -------- | --------------- | -------- |
+| 10    | 2        | ~3.9            | 0        |
+| 12    | 2        | ~4.4            | 0        |
+| 12    | 3        | ~6.6            | 0        |
+
+With 10 users: median latency 2.1s, p95 3.9s, about 142 completion tokens per answer, and both T4s at 86 to 88% utilization. At 12 users, Ray asked for a third replica, Karpenter added a GPU node, and the third replica served 7m37s later. Throughput went up by half.
+
+![Locust with 12 users: RPS steps up and p95 drops once the third replica serves, with no failures.](https://res.cloudinary.com/diunivf9n/image/upload/v1794237166/llm-eks-locust-scale-out.webp)
+
+One thing tripped us up. We raised `VLLM_MAX_REPLICAS` from 2 to 3 on a running cluster, and nothing scaled. KubeRay updated the RayService but not the `maxReplicas` of the running RayCluster. Unlike a model change, this change does not make KubeRay build a new cluster. We patched the RayCluster by hand:
+
+```bash
+$ kubectl patch raycluster <name> -n kuberay --type json \
+  -p '[{"op": "replace", "path": "/spec/workerGroupSpecs/0/maxReplicas", "value": 3}]'
+```
+
+A new cluster, from a fresh deploy or the next model switch, picks up the new value.
+
+### How Long a New Replica Takes
+
+Measured on 2026-10-27, one run, polling every ~20s:
+
+| Stage                                                | Time (UTC) | Elapsed    |
+| ---------------------------------------------------- | ---------- | ---------- |
+| Worker pod created                                   | 01:56:16   |            |
+| Karpenter's GPU node (`g4dn.xlarge`) ready           | 01:56:55   | 39s        |
+| Worker container running (image pull, S3 sync, init) | 01:59:55   | ~3m        |
+| vLLM loaded, Ray Serve app `RUNNING`                 | 02:04:04   | ~4m        |
+| **Total**                                            |            | **~7m48s** |
+
+Karpenter is not the bottleneck here. Most of the time goes to pulling the Ray GPU image, installing vLLM at startup, and loading the model onto the GPU.
+
+The [scaling post](/blog/llm-on-eks-scale-llm/) measured ~9m27s. That run used Llama-3.1-8B from Hugging Face and a second replica during a scale-out, so the two numbers do not compare one to one. Both runs agree on where the time goes, though. The next step is an image with vLLM installed, so a new worker skips the `pip install` at startup.
+
+## Chatbot with Gradio
+
+In the serving post, the chatbot was a small [Streamlit](https://github.com/streamlit/streamlit) app. This time we moved to [Gradio](https://github.com/gradio-app/gradio). The Streamlit version is still in the repo ([`src/chat_streamlit/app.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/chat_streamlit/app.py)), but the one we use is [`src/chat_gradio/app.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/chat_gradio/app.py).
+
+Why we switched:
+
+- **The chat UI is built in.** `gr.ChatInterface` gives us history, streaming and example questions. In Streamlit, we kept the chat history in `st.session_state` ourselves.
+- **Panels that update while the answer streams.** Next to the chat, we show the knowledge base lines behind each answer and a live log with tokens and time to first token. Streamlit reruns the whole script on every interaction, so updating side panels token by token gets awkward.
+- **One Python process serves the web app,** which makes the chatbot easy to put in a pod later.
+
+The chatbot is an assistant for AWS Community Day Jakarta 2026. The whole event knowledge base goes into the system prompt ([`src/prompt.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/prompt.py)). The knowledge base is [`src/knowledge_base.md`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/knowledge_base.md), generated from the event API by [`src/build_kb.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/build_kb.py). With 44 sessions, the knowledge base is around 2k tokens, so the whole file fits in `max_model_len` 4096 without a retrieval index.
+
+vLLM is private now, so run the chatbot from your laptop through a port-forward:
+
+```bash
+$ just vllm-forward              # vLLM at localhost:8000
+$ python src/chat_gradio/app.py  # VLLM_URL=http://localhost:8000 in .env
+```
+
+{/* TODO: screenshot of the chat with the sources panel and the live log */}
+
+How well does a 1.5B model answer from a 2k-token prompt? Lookups of one line work: where and when the event is, or which room a talk is in when you give the talk title. Questions that need the model to scan many lines do not work: "who speaks from AWS?" or "what's on the Main Stage after lunch?". Two changes helped:
+
+- **A "Speakers by company" section** in the knowledge base. `build_kb.py` groups speakers by company once, so "who's from AWS?" becomes a one-line lookup. The model got that question right 3 times out of 3.
+- **`temperature=0.2`** in [`src/llm.py`](https://github.com/danielcristho/eks-cdk-mlops/blob/main/hypertuning_llm/src/llm.py). With sampling, the same list question flipped between the right names and "not listed".
+
+The "after lunch" question still comes out wrong. That is a limit of the model size. The [next post](/blog/llm-on-eks-hyperparametertuning/) asks whether fine-tuning or a retrieval step fixes it.
+
+## Deploy
+
+```bash
+$ cd hypertuning_llm
+$ cp .env.example .env    # account, region, admin user, bucket, GITOPS_REPO_URL, GITOPS_REVISION
+$ just deploy             # refuses to run with uncommitted changes in the folder
+$ just kubeconfig
+$ just argocd-ui          # Argo CD at localhost:8081, user admin, password from `just argocd-password`
+$ just vllm-forward       # vLLM at localhost:8000
+```
+
+`GITOPS_REPO_URL` and `GITOPS_REVISION` are the repo and branch that Argo CD watches. Point both at your fork, otherwise your commits to `values.yaml` go nowhere.
+
+Clean up in this order, so Karpenter can remove its GPU nodes before Karpenter itself goes away:
+
+```bash
+$ kubectl delete applications.argoproj.io vllm -n argocd   # the finalizer deletes the RayService
+$ kubectl get nodes -l workload=gpu -w                     # wait for the GPU nodes to go
+$ kubectl delete ec2nodeclass gpu
+$ just destroy
+```
+
+If `eks-stack` ends in `DELETE_FAILED`, the cause is often something created outside CloudFormation: a VPC CNI network interface (`aws-K8S-*`) left in a subnet, or the instance profile Karpenter created for its node role. Delete those and retry. Also watch `cdk destroy` until the command finishes. Ours hung once on the kubectl custom resource, and the EKS control plane plus two NAT gateways kept running for 22 hours.
+
+## Conclusion
+
+The pipeline's model is in production now, and getting a model there is a Git commit instead of a script with cluster access. Argo CD syncs the commit, KubeRay builds a new cluster next to the old one, and the old model serves until the new one is ready. The cost is twice the GPUs for a few minutes, and 10 to 15 minutes per switch, most of that time spent waiting for vLLM to start.
+
+This post does not answer whether model B is better than model A. Our demo models have the same weights. In the [next post](/blog/llm-on-eks-hyperparametertuning/), Ray Tune searches the LoRA settings, and we measure whether fine-tuning helps the event chatbot at all.
+
+:::tip[Source Code]
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-mlops](https://github.com/danielcristho/eks-cdk-mlops)
+:::
