@@ -1,0 +1,36 @@
+---
+title: "Helm Empty Map Does Not Clear a Default"
+date: 2026-11-09
+description: Setting a chart value to {} merges with the default instead of replacing it. Use null to delete a key.
+trivia:
+  q: "You pass `affinity: {}` to a Helm chart that has a default `nodeAffinity`. What happens?"
+  a: "Nothing. Helm merges maps, so the default stays. Setting the key to `null` deletes it."
+template: splash
+---
+
+The `nvidia-device-plugin` chart has a default `nodeAffinity`. It needs node labels like `nvidia.com/gpu.present`, which NFD or the GPU Operator set. Without them, the plugin pod does not schedule, and GPU pods stay `Pending`:
+
+```
+0/3 nodes are available: Insufficient nvidia.com/gpu
+```
+
+Passing an empty map does not remove the default:
+
+```yaml
+affinity: {}
+```
+
+Helm merges user values into chart defaults key by key. An empty map adds no keys, so the default `nodeAffinity` stays.
+
+To delete a default key, set it to `null`:
+
+```yaml
+affinity:
+  nodeAffinity: null
+```
+
+The fix I used in the cluster was different: I added the labels the chart expects, `nvidia.com/gpu.present` and `nvidia.com/mps.capable`, to the Karpenter `NodePool` node template. Then the default affinity matches.
+
+`helm template` shows the rendered pod spec, so you can check that the affinity is gone before you install.
+
+Seen in [Scaling with Ray & Karpenter](/blog/llm-on-eks-scale-llm/).

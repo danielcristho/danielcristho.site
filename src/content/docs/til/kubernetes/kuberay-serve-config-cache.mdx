@@ -1,0 +1,29 @@
+---
+title: "KubeRay Caches serveConfigV2 by Text"
+date: 2026-11-09
+description: A RayService redeploys when the serveConfigV2 string changes, not when a mounted script changes.
+trivia:
+  q: "You edit the Ray Serve script in a ConfigMap, but the RayService does not update. Why?"
+  a: "KubeRay compares the `serveConfigV2` text with its cached copy. The text did not change, so it does not resubmit. Put a hash of the script in the config."
+template: splash
+---
+
+A `RayService` holds the Ray Serve config as a YAML string in `serveConfigV2`. The script itself was in a ConfigMap, mounted into the pods.
+
+After an edit to the script, nothing changed. The operator logs said why on every reconcile:
+
+```
+"shouldUpdate": false, reason: "Current V2 Serve config matches cached Serve config."
+```
+
+KubeRay compares the `serveConfigV2` text with its cache. It does not look at the files the config points to.
+
+The fix: put a hash of the script into `args:` in the config, as an argument the app does not use. Any script change then changes the text, and KubeRay resubmits.
+
+The pods looked healthy the whole time. `kubectl get pods` did not show the problem. The app status was in the Ray dashboard API:
+
+```sh
+curl -s http://<raycluster>-head-svc:8265/api/serve/applications/ | jq '.applications'
+```
+
+Seen in [Scaling with Ray & Karpenter](/blog/llm-on-eks-scale-llm/).
