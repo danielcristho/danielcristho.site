@@ -1,0 +1,94 @@
+---
+title: "Day 11"
+date: 2026-11-08
+description: "EC2 security groups, the ports to know, and the ways to pay for an instance."
+trivia:
+  - q: A connection to an EC2 instance times out. Where do you look first?
+    a: The security group. A timeout means the traffic is blocked. "Connection refused" means the traffic got through and the app is the problem.
+
+  - q: Can a security group rule deny traffic?
+    a: No. Security groups have allow rules only. Anything not allowed is blocked.
+
+  - q: An app server must accept traffic from the web servers and nothing else. How do you write the rule?
+    a: Set the source of the inbound rule to the web servers' security group, not to their IPs.
+
+  - q: A batch job can stop and restart at any time. Which purchase option is cheapest?
+    a: Spot Instances, up to 90% off On-Demand. AWS can take the instance back, so the job must handle interruption.
+
+  - q: Which port is RDP?
+    a: 3389.
+template: splash
+---
+
+## Security Groups
+
+A security group is a firewall around EC2 instances. It controls the traffic that goes in and out.
+
+- Rules allow traffic. There are no deny rules.
+- A rule source can be an IP range or another security group.
+- By default, all inbound traffic is blocked and all outbound traffic is allowed.
+- Security groups are stateful. If a request is allowed in, the reply is allowed out.
+- One instance can have many security groups. One security group can attach to many instances.
+- A security group is locked to a Region and a VPC.
+- It sits outside the instance. Blocked traffic never reaches the instance.
+- Keep SSH access in its own security group.
+
+![Security groups](/til/aws-solution-architect/ec2-security-groups.svg)
+
+The `app-sg` rule uses `web-sg` as the source. Any instance in `web-sg` can reach the app server, with no IP to update when servers change.
+
+:::tip
+Timeout means the security group blocks the traffic. "Connection refused" means the traffic got in and the app is down or not listening.
+:::
+
+## Ports To Know
+
+| Port | Protocol | Use                          |
+| ---- | -------- | ---------------------------- |
+| 22   | SSH      | Log in to a Linux instance   |
+| 22   | SFTP     | Upload files over SSH        |
+| 21   | FTP      | Upload files                 |
+| 80   | HTTP     | Websites                     |
+| 443  | HTTPS    | Websites over TLS            |
+| 3389 | RDP      | Log in to a Windows instance |
+
+**EC2 Instance Connect** opens an SSH session in the browser. AWS pushes a temporary key to the instance, so you do not need your key file. Port 22 must still be open in the security group.
+
+## Purchase Options
+
+| Option                | Discount  | Fits                                                                           |
+| --------------------- | --------- | ------------------------------------------------------------------------------ |
+| On-Demand             | None      | Short work, unknown usage. Pay per second.                                     |
+| Reserved Instances    | Up to 72% | Steady usage like a database. 1 or 3 year term.                                |
+| Savings Plans         | Up to 72% | Commit to an amount of usage per hour for 1 or 3 years.                        |
+| Spot Instances        | Up to 90% | Work that can stop: batch jobs, data analysis. AWS can take the instance back. |
+| Dedicated Hosts       | None      | A whole physical server. For server bound licenses and compliance.             |
+| Dedicated Instances   | None      | Hardware no other customer uses.                                               |
+| Capacity Reservations | None      | Reserve capacity in one AZ. You pay even if you do not use it.                 |
+
+Spot is not the answer for a critical job or a database.
+
+### Details Worth Knowing
+
+- **On-Demand**: Linux and Windows bill per second after the first minute. Other OS bill per hour. Highest price, no commitment.
+- **Reserved Instances**: you reserve the instance type, Region, tenancy and OS. More upfront payment and a 3 year term give a bigger discount. Scope is Regional, or Zonal to also reserve capacity in one AZ. Unused RIs can be sold on the Reserved Instance Marketplace.
+- **Convertible Reserved Instances**: you can change instance type, family, OS, scope and tenancy. Up to 66% off.
+- **Savings Plans**: commit to a spend per hour, like $10/hour. Locked to an instance family and Region, like M5 in `us-east-1`. Flexible on size, OS and tenancy. Usage above the commitment bills at On-Demand price.
+- **Dedicated Hosts**: the most expensive option. Fits bring your own license (BYOL) and strict compliance.
+- **Dedicated Instances**: the hardware is yours, but you have no control over placement.
+- **Capacity Reservations**: no discount and no time commitment. Combine with Regional RIs or Savings Plans to get a discount.
+
+## Spot Instances
+
+- You set a max price. You keep the instance while the spot price stays below it.
+- When the spot price goes above your max price, you get a 2 minute warning. You choose to stop or terminate the instance.
+- To end Spot Instances: cancel the Spot Request first, then terminate the instances. Cancelling the request does not terminate them.
+
+A **Spot Fleet** is a set of Spot Instances, plus On-Demand Instances if you want. It launches from a list of pools (instance type, OS, AZ) until it reaches the target capacity or the max cost.
+
+| Strategy                 | Picks                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `lowestPrice`            | The cheapest pool. Fits short work.                                           |
+| `diversified`            | Spread across all pools. Fits long work and availability.                     |
+| `capacityOptimized`      | The pool with the most capacity for the number of instances.                  |
+| `priceCapacityOptimized` | Pools with the most capacity, then the cheapest of those. The default choice. |

@@ -1,0 +1,68 @@
+---
+title: "Day 10"
+date: 2026-11-07
+description: "EC2 basics: what you rent, what you configure, and how to read an instance type."
+trivia:
+  - q: What does EC2 user data do, and when does it run?
+    a: It is a script that runs once, at the first boot of the instance, as root. Use it to install updates or software.
+
+  - q: What do the parts of m5.2xlarge mean?
+    a: m is the instance class, 5 is the generation, 2xlarge is the size.
+
+  - q: Which instance family fits an in-memory database?
+    a: Memory optimized, like the R family.
+
+  - q: Which instance family fits batch jobs or HPC that need fast CPUs?
+    a: Compute optimized, the C family.
+template: splash
+---
+
+## EC2
+
+EC2 is Elastic Compute Cloud. It is IaaS: AWS gives you the server, you manage what runs on it.
+
+EC2 is more than virtual machines. It covers:
+
+- Renting virtual machines (EC2)
+- Storing data on virtual drives (EBS)
+- Spreading load across machines (ELB)
+- Scaling with an Auto Scaling Group (ASG)
+
+## What You Configure
+
+| Option      | Choices                                                         |
+| ----------- | --------------------------------------------------------------- |
+| OS          | Linux, Windows, macOS                                           |
+| CPU and RAM | Picked by the instance type                                     |
+| Storage     | Network storage (EBS, EFS) or hardware storage (instance store) |
+| Network     | Network card speed, public IP                                   |
+| Firewall    | Security group                                                  |
+| Bootstrap   | User data                                                       |
+
+## User Data
+
+User data is a script that runs at the first boot of the instance. It runs once, as root.
+
+Use it to:
+
+- Install updates
+- Install software
+- Download files from the internet
+
+## Instance Types
+
+The name tells you what you get. Take `m5.2xlarge`:
+
+- `m`: instance class
+- `5`: generation
+- `2xlarge`: size. A bigger size means more CPU and RAM.
+
+| Family            | Classes | Fits                                                                  |
+| ----------------- | ------- | --------------------------------------------------------------------- |
+| General purpose   | T, M    | Web servers, code repositories. A balance of CPU, RAM, network.       |
+| Compute optimized | C       | Batch jobs, media encoding, HPC, game servers                         |
+| Memory optimized  | R, X    | In-memory databases, real time big data                               |
+| Storage optimized | I, D, H | OLTP databases, data warehouses, high read and write on local storage |
+| Accelerated       | P, G    | Machine learning, graphics                                            |
+
+[instances.vantage.sh](https://instances.vantage.sh) lists every type with its price.
