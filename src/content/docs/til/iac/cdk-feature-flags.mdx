@@ -1,0 +1,61 @@
+---
+title: "CDK Feature Flags"
+date: 2026-11-08
+description: CDK keeps behavior changes behind flags in cdk.json, so an upgrade does not change your templates.
+trivia:
+  q: "You upgrade `aws-cdk-lib`, and `cdk diff` shows no change. Why does the new behavior not apply?"
+  a: "New behaviors sit behind feature flags, and a flag is off unless `cdk.json` turns it on. `cdk init` turns on the flags that exist at that version. Flags added later stay off."
+template: splash
+---
+
+Some CDK releases change what a construct generates, like a new default for S3 encryption or IAM policies. CDK puts each change behind a feature flag, so an upgrade does not change the CloudFormation templates of an existing app.
+
+The flags are context values in `cdk.json`:
+
+```json
+{
+  "context": {
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/aws-ec2:restrictDefaultSecurityGroup": true,
+    "@aws-cdk/aws-eks:useNativeOidcProvider": true
+  }
+}
+```
+
+- `cdk init` adds every flag that exists in that CDK version, set to the new behavior. My EKS project has 81.
+- A flag that is not in `cdk.json` is off. So flags from later releases stay off after an upgrade.
+- `cdk context --reset` and `cdk context --clear` do not remove flags.
+
+To see which flags differ from the recommended values:
+
+```sh
+$ cdk flags --unstable=flags
+```
+
+To turn on the flags you have not set, and keep the ones you set yourself:
+
+```sh
+$ cdk flags --unstable=flags --set --recommended --unconfigured
+```
+
+The command shows the template diff and asks before it changes `cdk.json`. `cdk flags` is still marked unstable, so it needs `--unstable=flags`.
+
+The full list is in [FEATURE_FLAGS.md](https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk-lib/cx-api/FEATURE_FLAGS.md), and each release's CHANGELOG lists the new flags.
+
+## Your Own Flags
+
+The same context mechanism works for flags in your own app:
+
+```py
+enable_gpu = self.node.try_get_context("enableGpu") == "true"
+if enable_gpu:
+    cluster.add_nodegroup_capacity("Gpu", ...)
+```
+
+```sh
+$ cdk deploy -c enableGpu=true
+```
+
+A value from `-c` is a string, so compare with `"true"`. Put the default in `cdk.json` under `context`.
+
+Source: [AWS CDK feature flags](https://docs.aws.amazon.com/cdk/v2/guide/featureflags.html) and [`cdk flags`](https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-flags.html).
