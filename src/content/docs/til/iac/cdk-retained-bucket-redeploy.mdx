@@ -1,0 +1,38 @@
+---
+title: "Retained S3 Bucket Blocks a Redeploy"
+date: 2026-11-09
+description: A bucket with RemovalPolicy.RETAIN survives cdk destroy, and the next deploy fails because the name already exists.
+trivia:
+  q: "`cdk deploy` fails with `AWS::S3::Bucket ... already exists` after a `cdk destroy`. Why, and what is the fix?"
+  a: "The bucket had `RemovalPolicy.RETAIN`, so destroy kept it. Reference it with `s3.Bucket.from_bucket_name()` instead of creating it again."
+template: splash
+---
+
+`RemovalPolicy.RETAIN` keeps a bucket and its data when the stack is destroyed:
+
+```py
+s3.Bucket(
+    self,
+    "ModelBucket",
+    bucket_name=bucket_name,
+    removal_policy=RemovalPolicy.RETAIN,
+)
+```
+
+The next deploy tries to create a bucket with the same name, and CloudFormation rejects the change set:
+
+```
+Early validation failed for change set cdk-deploy-change-set:
+eks-stack/ModelBucket/Resource  (AWS::S3::Bucket ModelBucketB33D855B)
+  Resource of type 'AWS::S3::Bucket' with identifier 'eks-llm-pipeline-model-bucket' already exists.
+```
+
+Reference the bucket instead of creating it:
+
+```py
+s3.Bucket.from_bucket_name(self, "ModelBucket", bucket_name)
+```
+
+The other option is `cdk import`, which brings the existing bucket back under the stack.
+
+Seen in [Training Pipelines with Kubeflow](/blog/llm-on-eks-pipeline-kubeflow/).

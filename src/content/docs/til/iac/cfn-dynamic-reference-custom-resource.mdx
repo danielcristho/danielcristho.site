@@ -1,0 +1,26 @@
+---
+title: "No Secrets Manager References in Custom Resources"
+date: 2026-11-09
+description: CloudFormation does not resolve {{resolve:secretsmanager:...}} inside Custom Resource properties, and an EKS manifest from CDK is one.
+trivia:
+  q: "Why does `secret.secret_value_from_json('password')` reach a Kubernetes Secret as a literal `{{resolve:...}}` string?"
+  a: "`eks.KubernetesManifest` is a Custom Resource, and CloudFormation does not resolve Secrets Manager dynamic references in Custom Resource properties."
+template: splash
+---
+
+In CDK, `secret_value_from_json()` does not return the secret. It returns a CloudFormation dynamic reference:
+
+```
+{{resolve:secretsmanager:arn:...:SecretString:password::}}
+```
+
+CloudFormation replaces it with the value at deploy time, for most resource types. Custom Resources are the exception. The string reaches the handler as is.
+
+`cluster.add_manifest()` creates an `eks.KubernetesManifest`, which is a Custom Resource. So a Kubernetes Secret built from `secret_value_from_json()` gets the reference text, not the password.
+
+Ways around it:
+
+- A small Lambda that reads Secrets Manager and writes the value.
+- External Secrets Operator or the Secrets Store CSI driver, so the cluster reads Secrets Manager itself.
+
+Seen in [Training Pipelines with Kubeflow](/blog/llm-on-eks-pipeline-kubeflow/), for the RDS password.

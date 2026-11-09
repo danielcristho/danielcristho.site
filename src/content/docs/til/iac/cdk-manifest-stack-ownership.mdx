@@ -1,0 +1,30 @@
+---
+title: "CDK Manifests Belong to the Cluster Stack"
+date: 2026-11-09
+description: add_manifest() and add_helm_chart() deploy with the stack that owns the EKS cluster, not the stack that calls them.
+trivia:
+  q: "A workload stack calls `cluster.add_manifest()`. Which CloudFormation stack deploys that manifest?"
+  a: "The stack that owns the `Cluster` construct. CDK picks the stack by walking up the construct tree, not by which stack class wrote the call."
+template: splash
+---
+
+In CDK, a stack can take an EKS cluster from another stack and add Kubernetes resources to it:
+
+```py
+class WorkloadStack(Stack):
+    def __init__(self, scope, id, cluster: eks.Cluster, **kwargs):
+        super().__init__(scope, id, **kwargs)
+        cluster.add_manifest("AppConfig", {...})
+        cluster.add_helm_chart("Karpenter", {...})
+```
+
+The manifest and the chart are children of `cluster`, so they deploy with the stack that owns the cluster. CDK decides the stack by the construct tree, not by the file or class the call is in.
+
+Two things follow:
+
+- `cdk deploy WorkloadStack` after a manifest change applies nothing. The change sits in the cluster stack.
+- `cdk deploy EksStack` deploys every manifest and chart from every stack. The other stacks report no changes.
+
+Use `cdk deploy --all`, or deploy the cluster stack.
+
+Seen in [Running Your First Workload](/blog/cdk-running-first-workload/) and [Training Pipelines with Kubeflow](/blog/llm-on-eks-pipeline-kubeflow/).
