@@ -39,7 +39,7 @@
     "hastscript": "^9.0.1",
     "markdown-it": "^14.0.0",
     "rehype-autolink-headings": "^7.1.0",
-    "sanitize-html": "^2.11.0",
+    "sanitize-html": "^2.18.1",
     "sharp": "0.33.0",
     "starlight-blog": "^0.26.1",
     "starlight-cooler-credit": "^0.6.0",
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/markdown-it": "^13.0.7",
-    "@types/sanitize-html": "^2.9.5",
+    "@types/sanitize-html": "^2.16.2",
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
     "autoprefixer": "^10.4.19",
