@@ -1,0 +1,97 @@
+---
+title: "Day 10"
+date: 2026-11-07
+description: Domain 1 flashcards. S3 and EBS protection, STS, IAM roles, SCPs, NACLs vs security groups, VPC endpoints, Secrets Manager, ACM, Directory Service and WAF.
+trivia:
+  - q: How do you stop S3 objects from being deleted or overwritten by mistake?
+    a: "Turn on versioning, and add MFA delete. A delete then needs an MFA code, and an overwrite keeps the old version."
+
+  - q: A new IAM user, group or role is created. What can the new identity do?
+    a: "Nothing. A new identity has no permissions until a policy allows an action."
+
+  - q: Which two policies does an IAM role have?
+    a: "A trust policy, which says who can assume the role, and a permission policy, which says what the role can do."
+
+  - q: A private subnet has no NAT gateway, and its instances need S3. Which endpoint do you add?
+    a: "A gateway endpoint, with an entry in the route table. Gateway endpoints exist for S3 and DynamoDB only. Other services need an interface endpoint."
+
+  - q: One IP address sends too many requests to your app. What do you add in AWS WAF?
+    a: "A rate-based rule with a request limit. WAF blocks the IP while the IP stays over the limit."
+
+  - q: One ALB must serve HTTPS for several domains on the same IP address. What makes this work?
+    a: "ACM certificates on the ALB listener with SNI. The client sends the domain name, and the ALB picks the matching certificate."
+template: splash
+---
+
+:::note[Source]
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 1 flashcards, rewritten in my words.
+:::
+
+## Protecting Data
+
+| Data                     | How to protect it                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| S3 objects               | Versioning keeps old versions. MFA delete asks for an MFA code before a version is deleted.               |
+| EBS volumes              | EBS encryption with a KMS key. It covers the volume, the data between instance and volume, and snapshots. |
+| DB credentials, API keys | Secrets Manager stores the secret encrypted and can rotate it.                                            |
+
+## IAM
+
+- A new user, group or role starts with no permissions. Everything must be allowed by a policy.
+- STS gives temporary credentials. A role uses STS when an identity assumes the role.
+- A role has two policies:
+
+| Policy            | Answers                  |
+| ----------------- | ------------------------ |
+| Trust policy      | Who can assume the role? |
+| Permission policy | What can the role do?    |
+
+## Service Control Policies
+
+SCPs set the maximum permissions for accounts in AWS Organizations. Two ways to use SCPs:
+
+| Strategy   | How it works                                                 |
+| ---------- | ------------------------------------------------------------ |
+| Allow list | Block everything by default. Allow only the listed services. |
+| Deny list  | Allow everything by default. Block the listed services.      |
+
+An SCP does not grant permissions. The IAM policies in the account still have to allow the action.
+
+## NACLs vs Security Groups
+
+| Network ACL                                  | Security group                                    |
+| -------------------------------------------- | ------------------------------------------------- |
+| Attached to a subnet                         | Attached to an ENI of an instance or resource     |
+| Stateless: return traffic needs its own rule | Stateful: return traffic is allowed               |
+| Allow and deny rules                         | Allow rules only. Anything not allowed is denied. |
+| Rules run in order, lowest number first      | All rules are checked together                    |
+
+Use a NACL when you must deny a specific IP or range. Use security groups for the rest, since security groups need fewer rules.
+
+## VPC Endpoints
+
+Endpoints let a private subnet reach AWS services without the internet or a NAT gateway.
+
+| Gateway endpoint                                | Interface endpoint                                                             |
+| ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| S3 and DynamoDB only                            | Most other AWS services                                                        |
+| An entry in the route table, with a prefix list | An ENI with a private IP in your subnet                                        |
+| Access controlled by an endpoint policy         | Access controlled by security groups, and an endpoint policy for most services |
+| No charge                                       | Charged per hour and per GB                                                    |
+
+## Certificates and Directories
+
+- **ACM** gives SSL/TLS certificates and renews them. With SNI, one ALB or CloudFront distribution serves several domains on the same IP address.
+- **AWS Managed Microsoft AD** is a real Active Directory in AWS. With a trust to the on-premises AD, users sign in with their on-premises credentials to resources in AWS and on premises.
+- **AD Connector** is only a proxy to the on-premises AD. It stores no users in AWS.
+
+## AWS WAF
+
+- A **rate-based rule** limits the requests from one IP address over a time window.
+- A firewall can read only the data at its own OSI layer and below. WAF runs at layer 7, so WAF can read HTTP headers, paths and bodies, and catch SQL injection and XSS.
+- A higher layer firewall needs more compute, so the firewall costs more.
+
+| Layer | Example                                 | Reads                 |
+| ----- | --------------------------------------- | --------------------- |
+| 3/4   | Security groups, NACLs, Shield Standard | IPs, ports, protocols |
+| 7     | AWS WAF                                 | HTTP requests         |

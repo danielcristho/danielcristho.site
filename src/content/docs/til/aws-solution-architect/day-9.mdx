@@ -1,0 +1,88 @@
+---
+title: "Day 09"
+date: 2026-11-06
+description: Domain 1 practice. Recovering S3 objects, certificates for HTTPS, tiered security groups, tracing network traffic and spreading instances across AZs.
+trivia:
+  - q: A nightly script overwrote a report in S3 with an empty file. What lets you get the old report back?
+    a: "Versioning on the bucket. An overwrite stores a new version, and the old version stays. Without versioning, the old content is gone."
+
+  - q: A bucket holds audit logs that nobody may delete for 7 years, not even the root user. What do you use?
+    a: "S3 Object Lock in compliance mode with a 7-year retention period. Versioning alone does not stop a delete of a version."
+
+  - q: An internal app runs on a private ALB, and only company laptops connect to it. Which ACM certificate fits?
+    a: "A private certificate from AWS Private CA. The laptops trust the company CA. For a public site, use a public ACM certificate, since browsers do not trust a private CA."
+
+  - q: A Lambda function in a VPC must reach an RDS database, and nothing else may reach the database. How do you write the database security group rule?
+    a: "Allow the database port with the Lambda function security group as the source. A security group as the source follows the function, even when its IP addresses change."
+
+  - q: Someone deleted a security group rule last night. Where do you find who did it?
+    a: "CloudTrail. The AuthorizeSecurityGroupIngress and RevokeSecurityGroupIngress API calls show the user or role. VPC Flow Logs show traffic, not who changed what."
+
+  - q: A batch job needs the lowest latency between its instances and accepts the risk of one failure taking down all of them. Where do you place the instances?
+    a: "A cluster placement group in one AZ. For fault tolerance, spread the instances across AZs instead, and accept the slightly higher latency."
+template: splash
+---
+
+:::note[Source]
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the topics in its Domain 1 practice set. The questions here are my own scenarios, not the questions from the course.
+:::
+
+Domain 1 is Design Secure Architectures.
+
+## Protecting S3 Objects
+
+| Feature                  | What it does                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| Versioning               | Keeps every version. A delete adds a delete marker, an overwrite adds a version.      |
+| MFA delete               | Asks for an MFA code before a version is deleted or versioning is turned off.         |
+| Object Lock              | Blocks delete and overwrite until a retention date. Needs versioning.                 |
+| Cross-Region Replication | Copies objects to a bucket in another Region. Needs versioning. For DR, not for undo. |
+
+Undo a mistake: versioning. Keep data for a fixed time by law: Object Lock. Survive a Region outage: replication.
+
+S3 takes any file format, and one object can be up to 5 TB. DynamoDB items stop at 400 KB, and RDS stores rows, not files.
+
+## Certificates for HTTPS
+
+| Need                                | Answer                                           |
+| ----------------------------------- | ------------------------------------------------ |
+| Public site on an ALB or CloudFront | Public ACM certificate. Free, and ACM renews it. |
+| Internal app, company devices only  | Private certificate from AWS Private CA.         |
+| Certificate from another CA         | Import into ACM. You renew it yourself.          |
+| Region that has no ACM              | Upload to IAM. You renew it yourself.            |
+
+"Encrypt all data in transit" means every hop. If CloudFront sits in front of an ALB, the CloudFront to ALB connection must also use HTTPS.
+
+## Security Groups by Tier
+
+A security group can use another security group as the source. The rule then follows the resources, not their IP addresses.
+
+| Tier     | Subnet  | Inbound                  |
+| -------- | ------- | ------------------------ |
+| Web      | Public  | 443 from `0.0.0.0/0`     |
+| App      | Private | App port from the web SG |
+| Database | Private | DB port from the app SG  |
+
+The public subnets need a route to an internet gateway. A virtual private gateway is for a VPN to your own network, not for internet users.
+
+## Which Log to Check
+
+| Question                                        | Service              |
+| ----------------------------------------------- | -------------------- |
+| Where does this traffic go, and is it accepted? | VPC Flow Logs        |
+| Who called this API, and when?                  | CloudTrail           |
+| What is the CPU or error rate?                  | CloudWatch           |
+| Is an AWS service having problems in my Region? | AWS Health Dashboard |
+| Is this traffic or API call a known threat?     | GuardDuty            |
+
+A flow log record has the source and destination IP, the ports, the protocol and ACCEPT or REJECT. A flow log record has no packet content.
+
+## Where to Place Instances
+
+| Placement               | Failure it survives         | Latency between instances |
+| ----------------------- | --------------------------- | ------------------------- |
+| Cluster placement group | None, one rack can take all | Lowest                    |
+| Different AZs           | One AZ down                 | Low                       |
+| Different Regions       | One Region down             | High                      |
+
+A subnet sits in one AZ, but two subnets can share an AZ. A VPC covers all AZs in a Region. Only the AZ choice decides physical separation.
