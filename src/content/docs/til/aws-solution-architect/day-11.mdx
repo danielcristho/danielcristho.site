@@ -1,0 +1,179 @@
+---
+title: "Day 11"
+date: 2026-11-08
+description: Domain 2 overview. Scaling, decoupling, high availability, fault tolerance and disaster recovery.
+trivia:
+  - q: Orders arrive faster than the backend can process them, and no order may be lost. What do you put between the web tier and the workers?
+    a: "An SQS queue. The web tier writes to the queue and returns. The workers read at their own speed, and an Auto Scaling group scales the workers on the queue depth."
+
+  - q: A database must fail over with no change to the connection string, and reports must not slow down the main app. Which two RDS features do you combine?
+    a: "Multi-AZ for failover, and a read replica for the reports. The Multi-AZ standby takes no reads, and a read replica does not fail over on its own."
+
+  - q: Hundreds of Lambda functions open and close connections to RDS and use up the database memory. What do you add?
+    a: "RDS Proxy. RDS Proxy keeps a pool of connections and shares the pool between the functions. RDS Proxy also cuts failover time and can read the credentials from Secrets Manager."
+
+  - q: The business accepts 4 hours of downtime and 24 hours of data loss, and wants the lowest cost. Which DR strategy fits?
+    a: "Backup and restore. Copy backups to another Region, and rebuild the environment with CloudFormation when a disaster happens."
+
+  - q: A legacy app writes session files to local disk, so the app cannot scale out. What lets several instances share the files?
+    a: "Amazon EFS. All instances mount the same file system. For Windows apps, use FSx for Windows File Server."
+
+  - q: Users must stay on the same instance because the app keeps the session in memory. What do you turn on at the ALB?
+    a: "Sticky sessions. The ALB sets a cookie and sends the user to the same target. A better fix is to move the session to ElastiCache or DynamoDB, so any instance can serve the user."
+template: splash
+---
+
+:::note[Source]
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 2 topics, rewritten in my words. The questions are my own scenarios.
+:::
+
+Domain 2 is Design Resilient Architectures. A resilient workload recovers from load, attacks, bugs and the failure of any component. Domain 2 has two task statements:
+
+1. Design scalable and loosely coupled architectures.
+2. Design highly available and/or fault-tolerant architectures.
+
+## Scaling
+
+| Type       | How                                   | Limit                                     |
+| ---------- | ------------------------------------- | ----------------------------------------- |
+| Vertical   | A bigger instance                     | The largest instance size, and a restart  |
+| Horizontal | More instances behind a load balancer | The app must be stateless, or share state |
+
+**Elasticity** is horizontal scaling plus automation, so capacity follows demand up and down. You stop guessing capacity, and you pay for what runs.
+
+| Service          | Scales                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| EC2 Auto Scaling | EC2 instances in an Auto Scaling group                                                                      |
+| AWS Auto Scaling | Several resource types in one plan: EC2 groups, ECS services, DynamoDB tables, Aurora replicas, Spot Fleets |
+
+EC2 Auto Scaling policies:
+
+| Policy          | Use it when                                           |
+| --------------- | ----------------------------------------------------- |
+| Target tracking | You want to keep a metric at a value, like CPU at 50% |
+| Step            | Different alarm levels need different steps           |
+| Simple          | One alarm, one action, then a cooldown                |
+| Scheduled       | The load follows a known time, like 9 AM on weekdays  |
+| Predictive      | The load repeats daily or weekly                      |
+
+New Auto Scaling groups use a launch template. Launch configurations are the old way.
+
+## Picking Compute and Data Stores
+
+| Workload                             | Service                                                   |
+| ------------------------------------ | --------------------------------------------------------- |
+| Full control of the OS               | EC2                                                       |
+| Containers, no servers to manage     | ECS or EKS on Fargate                                     |
+| Short event-driven code              | Lambda                                                    |
+| HPC, low latency between nodes       | EC2 in a cluster placement group with enhanced networking |
+| Relational                           | RDS or Aurora                                             |
+| Key-value at any scale, low latency  | DynamoDB                                                  |
+| Analytics and data warehouse         | Redshift                                                  |
+| SFTP or FTPS without running servers | AWS Transfer Family                                       |
+
+## Read Replicas and Multi-AZ
+
+| RDS feature      | Reads from it? | Failover                        | Purpose                                |
+| ---------------- | -------------- | ------------------------------- | -------------------------------------- |
+| Multi-AZ standby | No             | Automatic, about 1 to 2 minutes | Availability                           |
+| Read replica     | Yes            | Manual promote                  | Read scaling, and DR in another Region |
+
+A read replica is not a cache. Every query still opens a connection, authenticates and parses SQL.
+
+| Cache                      | In front of                    |
+| -------------------------- | ------------------------------ |
+| CloudFront                 | Static and dynamic web content |
+| ElastiCache                | Any database or API            |
+| DynamoDB Accelerator (DAX) | DynamoDB                       |
+
+**RDS Proxy** pools database connections. RDS Proxy helps when many Lambda functions connect, cuts failover time for RDS and Aurora by up to 66%, and takes credentials from Secrets Manager or IAM.
+
+## Edge Services
+
+| Service            | What it adds                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| CloudFront         | Caches content at edge locations, and serves HTTPS                                      |
+| Route 53           | DNS with health checks and routing policies                                             |
+| Global Accelerator | Two static anycast IPs, traffic on the AWS network, failover between Regions in seconds |
+
+Route 53 policies to know: simple, weighted, latency, failover, geolocation, geoproximity and multivalue.
+
+## Decoupling
+
+Decoupled components do not need to know about each other, and one component can fail or slow down without stopping the others.
+
+| Integration  | How it works                              | Example                           |
+| ------------ | ----------------------------------------- | --------------------------------- |
+| Synchronous  | The caller waits. Both sides must be up.  | ALB to EC2, API Gateway to Lambda |
+| Asynchronous | The caller leaves a message and moves on. | SQS, SNS, EventBridge             |
+
+| Service     | Use it for                                                       |
+| ----------- | ---------------------------------------------------------------- |
+| SQS         | A queue between a fast producer and a slow consumer              |
+| SNS         | One message to many subscribers                                  |
+| EventBridge | Route events by rules, from AWS services, SaaS apps or your code |
+| Kinesis     | A stream of records that several consumers read in order         |
+| API Gateway | A managed front door for REST, HTTP and WebSocket APIs           |
+
+Serverless in AWS means no servers to manage, scaling by usage, pay for use, and availability built in. Lambda scales by **concurrency**. The default limit is 1,000 concurrent executions per Region. Reserved concurrency sets a cap for one function. Provisioned concurrency keeps functions warm.
+
+## High Availability, Fault Tolerance and DR
+
+| Term              | Meaning                                                   | Example with one app                                   |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| High availability | Recover fast after a failure. Short downtime is possible. | Active server and a standby                            |
+| Fault tolerance   | Keep running through a failure. No downtime.              | Two active servers                                     |
+| Disaster recovery | A plan and backups to recover after a disaster.           | Backups in another Region and CloudFormation templates |
+
+Fault tolerance costs more than high availability.
+
+To find single points of failure, take each component and ask what happens when that component fails: one web server, one app server, the database, one AZ, one Region.
+
+| Failure          | Fix                                                        |
+| ---------------- | ---------------------------------------------------------- |
+| One EC2 instance | ELB plus an Auto Scaling group                             |
+| One AZ           | The same, with subnets in at least two AZs                 |
+| One Region       | Route 53 failover or Global Accelerator to a second Region |
+
+## RPO and RTO
+
+- **RPO**: how much data you can lose, measured in time since the last recovery point. Sets how often to back up.
+- **RTO**: how long the app can be down before service is back.
+
+| Strategy           | Type           | What runs in the DR Region            | RPO and RTO     | Cost    |
+| ------------------ | -------------- | ------------------------------------- | --------------- | ------- |
+| Backup and restore | Active/passive | Only backups                          | Hours           | Lowest  |
+| Pilot light        | Active/passive | Data replicated, servers off          | Tens of minutes | Low     |
+| Warm standby       | Active/passive | A smaller copy of production, running | Minutes         | Medium  |
+| Multi-site         | Active/active  | Full production, taking traffic       | Near zero       | Highest |
+
+## Recovery Features by Service
+
+| Service                    | Feature                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| S3                         | Cross-Region Replication, versioning                                                       |
+| EFS, FSx                   | Multi-AZ file systems, AWS Backup, replication                                             |
+| RDS                        | Multi-AZ, automated backups, cross-Region read replicas                                    |
+| Aurora                     | Global database: one primary Region, up to 5 secondary Regions, failover in about 1 minute |
+| DynamoDB                   | Global tables: active/active in several Regions, point-in-time recovery                    |
+| EC2                        | AMIs copied to another Region, EC2 Image Builder to build the AMIs                         |
+| Legacy and on-prem servers | AWS Elastic Disaster Recovery replicates servers to AWS                                    |
+
+## Stateful Apps
+
+A stateless app scales out with no change. A stateful app needs the state moved out of the instance:
+
+| State lives in | Option                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| Local disk     | EFS (Linux) or FSx for Windows File Server, shared by all instances. ECS tasks can mount EFS too. |
+| Memory         | Sticky sessions on the ALB, or move the session to ElastiCache or DynamoDB                        |
+
+Sticky sessions keep a user on one instance. If that instance fails, the session is gone.
+
+## Networking and Operations
+
+- **Networking:** route tables, VPC peering, Transit Gateway, Site-to-Site VPN, Direct Connect, Direct Connect gateway and Route 53 Resolver.
+- **Deploy:** CloudFormation, Elastic Beanstalk, ECS and EKS.
+- **Find vulnerabilities:** Amazon Inspector for workloads, CodeGuru for code.
+- **Monitor:** CloudWatch for metrics, logs and alarms. X-Ray to trace one request across services. EventBridge to act on changes in near real time.
+- **AI services:** Comprehend classifies text, like sorting IT tickets to the right team. Polly turns text into speech.

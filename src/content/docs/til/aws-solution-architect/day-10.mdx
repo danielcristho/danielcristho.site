@@ -1,7 +1,7 @@
 ---
 title: "Day 10"
 date: 2026-11-07
-description: Domain 1 flashcards. S3 and EBS protection, STS, IAM roles, SCPs, NACLs vs security groups, VPC endpoints, Secrets Manager, ACM, Directory Service and WAF.
+description: Domain 1 review. S3 and EBS protection, STS, IAM roles, SCPs, NACLs and security groups, VPC endpoints, Secrets Manager, ACM, Directory Service and WAF.
 trivia:
   - q: How do you stop S3 objects from being deleted or overwritten by mistake?
     a: "Turn on versioning, and add MFA delete. A delete then needs an MFA code, and an overwrite keeps the old version."
@@ -24,7 +24,7 @@ template: splash
 ---
 
 :::note[Source]
-I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 1 flashcards, rewritten in my words.
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 1 topics, rewritten in my words.
 :::
 
 ## Protecting Data
@@ -57,7 +57,7 @@ SCPs set the maximum permissions for accounts in AWS Organizations. Two ways to 
 
 An SCP does not grant permissions. The IAM policies in the account still have to allow the action.
 
-## NACLs vs Security Groups
+## NACLs and Security Groups
 
 | Network ACL                                  | Security group                                    |
 | -------------------------------------------- | ------------------------------------------------- |
