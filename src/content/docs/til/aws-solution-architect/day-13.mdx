@@ -1,0 +1,152 @@
+---
+title: "Day 13"
+date: 2026-11-10
+description: Domain 4 overview. Cost-optimized storage, compute, databases and networks, plus the tools to track the bill.
+trivia:
+  - q: App logs in S3 are read often for 30 days, almost never after that, and can be archived after 90 days. Which S3 feature fits?
+    a: "A lifecycle rule: move to S3 Standard-IA after 30 days and to S3 Glacier Flexible Retrieval after 90 days. The pattern is known, so you do not need Intelligent-Tiering."
+
+  - q: Nobody can say how often the objects in a bucket will be read. Which storage class keeps the cost low?
+    a: "S3 Intelligent-Tiering. S3 moves each object between access tiers based on the object's own access, for a small monitoring fee per object."
+
+  - q: Video rendering jobs can stop and restart from a checkpoint. Which EC2 pricing option costs the least?
+    a: "Spot Instances, up to 90% below On-Demand. AWS can take a Spot Instance back with a 2-minute notice, so the job must handle stops."
+
+  - q: A company runs steady load on EC2 today and plans to move parts to Fargate and Lambda. Which commitment keeps the discount after the move?
+    a: "A Compute Savings Plan. Compute Savings Plans apply to EC2 in any family and Region, Fargate and Lambda. A Reserved Instance stays tied to one instance type."
+
+  - q: Private instances in a dev VPC send a lot of data to S3 through a NAT gateway. How do you cut the cost?
+    a: "Add an S3 gateway endpoint to the route tables. A gateway endpoint has no charge, and the S3 traffic no longer pays NAT gateway processing fees."
+
+  - q: A Direct Connect link needs a backup path at the lowest cost. What do you add?
+    a: "A Site-to-Site VPN. A VPN is cheaper and faster to set up than a second Direct Connect connection, at the cost of lower and less steady bandwidth."
+
+  - q: A partner downloads large datasets from your bucket, and you do not want to pay for the downloads. What do you turn on?
+    a: "Requester Pays on the bucket. The requester pays for the requests and the data transfer, and you pay for the storage."
+template: splash
+---
+
+:::note[Source]
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 4 topics, rewritten in my words. The questions are my own scenarios.
+:::
+
+Domain 4 is Design Cost-Optimized Architectures. Cost optimization means you deliver what the business needs at the lowest price. Domain 4 has four task statements: storage, compute, databases and networks.
+
+First find designs that meet the requirements. Then compare the designs on cost.
+
+## Tracking the Bill
+
+| Tool                  | Use it for                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| Cost Explorer         | Charts of cost and usage, filter by service, account or tag                                      |
+| Cost and Usage Report | The most detail: cost by hour, resource and tag, as files in S3                                  |
+| AWS Budgets           | Alerts on a cost or usage threshold, and actions like applying an SCP or stopping instances      |
+| Billing alarms        | A CloudWatch alarm on the estimated charges                                                      |
+| Trusted Advisor       | Finds idle resources, such as unattached EBS volumes and idle load balancers                     |
+| Compute Optimizer     | Right-size suggestions for EC2, EBS, Lambda and ECS on Fargate                                   |
+| Organizations         | Consolidated billing: one bill, volume discounts and shared Reserved Instances and Savings Plans |
+
+Tags only show up in Cost Explorer after you turn the tags on as **cost allocation tags**. Set a tagging policy early, like `team`, `env` and `project`.
+
+## Storage
+
+| Storage        | Cost                                                                  |
+| -------------- | --------------------------------------------------------------------- |
+| Instance store | Included in the EC2 hourly price. Lost when the instance stops.       |
+| EBS            | Paid per GB, plus provisioned IOPS and throughput on io1, io2 and gp3 |
+| S3             | Paid per GB, per request and per GB transferred out                   |
+
+**EBS:**
+
+- Right-size the volume. Compare the IOPS you use with the IOPS you pay for.
+- gp3 costs less than gp2 and io2 for most workloads, and lets you set IOPS apart from size.
+- Delete unattached volumes after you snapshot the data you need.
+- Amazon Data Lifecycle Manager and AWS Backup delete old snapshots and backups on a schedule.
+
+**S3:**
+
+| Feature             | Use it when                                                                     |
+| ------------------- | ------------------------------------------------------------------------------- |
+| Lifecycle rules     | The access pattern is known. Move or delete objects after a set number of days. |
+| Intelligent-Tiering | The access pattern is unknown or changes. S3 moves each object.                 |
+| Requester Pays      | Other people download the data and should pay for the downloads.                |
+| CloudFront in front | Many reads of the same files. Fewer S3 requests and lower transfer cost.        |
+
+Moving large data in: Snowball Edge for tens or hundreds of TB when the network is slow. DataSync for online copies. Storage Gateway for apps that stay on premises.
+
+## Compute
+
+| Pricing option        | Use it for                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| On-Demand             | Short or unknown workloads, no commitment                                          |
+| Savings Plans         | 1 or 3 years of steady spend. Compute Savings Plans cover EC2, Fargate and Lambda. |
+| Reserved Instances    | 1 or 3 years on one instance type. Standard or Convertible.                        |
+| Spot Instances        | Jobs that can stop: batch, CI, stateless web, HPC, big data                        |
+| Dedicated Hosts       | Licenses tied to physical cores or sockets                                         |
+| Dedicated Instances   | Hardware not shared with other customers                                           |
+| Capacity Reservations | Capacity in one AZ when you need the capacity, with no discount on their own       |
+
+The order to work in:
+
+1. **Right-size.** Pick the cheapest instance family and size that meets the need: compute optimized for batch, memory optimized for large in-memory data.
+2. **Scale with demand.** More small instances instead of a few large ones. Auto Scaling scales in at night. AWS Instance Scheduler stops tagged instances outside work hours.
+3. **Pick the pricing model.** Savings Plans for the steady part, Spot for the part that can stop, On-Demand for the rest.
+4. **Match storage to the use.**
+5. **Measure and repeat.** Monitor CPU, memory and storage, and adjust.
+
+More ways to save on compute:
+
+- Managed services cost less than running your own servers.
+- Aurora and RDS with open source engines remove commercial database licenses.
+- Lambda is billed by requests and by memory times duration. Smaller and faster functions cost less.
+- Smaller container images, and the right choice of EC2 or Fargate for the cluster.
+- EC2 hibernation saves the memory to EBS, so a stopped instance starts with its state back.
+- On Outposts, managed services are billed by usage, and the bill does not count the underlying EC2 and EBS twice.
+
+Load balancing for cost: an ALB `RequestCountPerTarget` metric drives the Auto Scaling group, and ELB health checks replace bad instances.
+
+## Databases
+
+- Do not put all data in a relational database. Look at the access pattern, the growth and how often the data is read.
+- Move large objects (images, files) out of the database into S3, and keep a key in the database.
+- Move key-value data to DynamoDB, so there are no servers, patches or clusters to manage.
+- Pick the cheaper service for the load: Aurora Serverless v2 for uneven load, provisioned Aurora for steady load.
+- RDS storage auto scaling, so you do not pay for empty disk up front.
+- Heavy reads: add a read replica or a cache before you buy a bigger instance.
+- Back up as often as the RPO needs, and no more. Set a retention period so old snapshots get deleted.
+
+## Networks
+
+### Data Transfer
+
+| Traffic                                         | Charge                           |
+| ----------------------------------------------- | -------------------------------- |
+| Into AWS from the internet                      | Free                             |
+| Inside one AZ, using private IPs                | Free                             |
+| Between AZs                                     | Charged in both directions       |
+| Between Regions                                 | Charged                          |
+| To S3 or DynamoDB through a gateway endpoint    | Free                             |
+| From an AWS origin (S3, EC2, ELB) to CloudFront | Free                             |
+| Out to the internet                             | Charged, less through CloudFront |
+
+Keep chatty components in the same AZ and Region when the design allows it.
+
+### Picking Connections
+
+| Choice                    | Cheaper option                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| On premises to AWS        | Site-to-Site VPN, unless you need the bandwidth or steady speed of Direct Connect |
+| Backup for Direct Connect | Site-to-Site VPN                                                                  |
+| A few VPCs                | VPC peering: no hourly charge                                                     |
+| Many VPCs                 | Transit Gateway: simpler, but charged per attachment and per GB                   |
+| NAT in dev                | One shared NAT gateway                                                            |
+| NAT in prod               | One NAT gateway per AZ, for availability                                          |
+| Log in to an instance     | Session Manager or EC2 Instance Connect: no bastion host and no open SSH port     |
+
+**API Gateway usage plans** with API keys set a rate limit and a daily, weekly or monthly quota per customer.
+
+### Monitoring the Network
+
+CloudWatch, VPC Reachability Analyzer, Transit Gateway Network Manager (Route Analyzer) and AWS Config help find the cause of network problems and wasted spend.
+
+Other ways to save: Regions have different prices, and many services have a free tier.
