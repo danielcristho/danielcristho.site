@@ -1,0 +1,218 @@
+---
+title: "Day 12"
+date: 2026-11-09
+description: Domain 3 overview. Storage, compute, databases, networking and data ingestion for high-performing architectures.
+trivia:
+  - q: A file share on EBS grows every week, and the team wants no work to add capacity. Which service fits?
+    a: "Amazon EFS. EFS grows and shrinks as files are added and removed. An EBS volume can be resized while in use, but someone has to do the resize."
+
+  - q: Uploads of 20 GB video files to S3 from other continents are slow. Which two features help?
+    a: "Multipart upload, which sends parts in parallel, and S3 Transfer Acceleration, which sends the data to the nearest edge location and then over the AWS network."
+
+  - q: An Auto Scaling group must scale on memory use, but the metric is not in CloudWatch. Why, and what do you do?
+    a: "EC2 does not send memory metrics, because memory sits inside the OS. Install the CloudWatch agent to publish memory as a custom metric, then scale on the custom metric."
+
+  - q: A reporting app runs a few times a day and sits idle the rest of the time. Which relational database costs the least?
+    a: "Aurora Serverless v2. Aurora Serverless v2 scales between a minimum and maximum ACU, and can scale to 0 ACUs and pause, so you pay only for storage while idle."
+
+  - q: A new app uses DynamoDB, and nobody knows the traffic yet. Which capacity mode do you start with?
+    a: "On-demand. On-demand needs no capacity planning. Move to provisioned capacity with auto scaling once the traffic is known and steady."
+
+  - q: An app in one VPC must offer a service to 50 VPCs in other accounts, without peering and without the internet. What do you use?
+    a: "AWS PrivateLink. Put the service behind an NLB, create an endpoint service, and each consumer VPC creates an interface endpoint."
+
+  - q: Clickstream data must land in S3 with no code to manage. Which service fits?
+    a: "Amazon Data Firehose, formerly Kinesis Data Firehose. Firehose buffers the records and writes the records to S3, Redshift or OpenSearch. Use Kinesis Data Streams when you need your own consumers and replay."
+template: splash
+---
+
+:::note[Source]
+I prepare for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** on AWS Skill Builder. These notes are my own summary of the Domain 3 topics, rewritten in my words. The questions are my own scenarios.
+:::
+
+Domain 3 is Design High-Performing Architectures. It has five task statements:
+
+1. High-performing and scalable storage.
+2. High-performing and elastic compute.
+3. High-performing databases.
+4. High-performing and scalable networks.
+5. High-performing data ingestion and transformation.
+
+Pick services with data from benchmarks and load tests, not from habit.
+
+## Storage
+
+| Type   | Service                     | Key words in a question                                 |
+| ------ | --------------------------- | ------------------------------------------------------- |
+| Object | S3                          | Any file, unlimited size, backup, data lake, static web |
+| Block  | EBS, instance store         | Persistent disk for one EC2 instance, low latency, IOPS |
+| File   | EFS                         | NFS, Linux, shared by many instances                    |
+| File   | FSx for Windows File Server | SMB, NTFS, Active Directory                             |
+| File   | FSx for Lustre              | HPC and ML on Linux, fast access to S3 data             |
+| Hybrid | Storage Gateway             | On-premises apps that use AWS storage                   |
+
+| Need          | S3                                                  | EBS                                             | EFS                                       |
+| ------------- | --------------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| More capacity | Grows on its own                                    | Change size, type or IOPS by hand, while in use | Grows on its own                          |
+| Resilience    | Region, survives an AZ loss                         | One AZ. Snapshots go to S3.                     | Region (standard class)                   |
+| Speed up      | Multipart upload, Transfer Acceleration, CloudFront | Pick the volume type (gp3, io2)                 | Throughput mode, lifecycle to IA for cost |
+
+Instance store is local to the host and is lost when the instance stops. EBS stays.
+
+Plan for growth. An app that needs 3 TB today and 100 TB in five years needs a service with room for 100 TB.
+
+## Compute
+
+| Form       | Service   | Notes                                                                      |
+| ---------- | --------- | -------------------------------------------------------------------------- |
+| Instances  | EC2       | Pick the family from the app needs: compute, memory, storage, GPU, network |
+| Containers | ECS, EKS  | Run on EC2 when you need control of the hosts, or on Fargate with no hosts |
+| Functions  | Lambda    | Runs on events, billed by duration, 15-minute limit                        |
+| Batch jobs | AWS Batch | Queues and runs batch jobs on EC2 or Fargate                               |
+| Big data   | EMR       | Spark and Hadoop clusters                                                  |
+
+- A job longer than 15 minutes, or with many steps: Step Functions.
+- Code at CloudFront edge locations: Lambda@Edge or CloudFront Functions.
+- An ALB maps traffic to the dynamic ports of ECS tasks.
+
+### Metrics for Scaling
+
+- CloudWatch alarms fire when a metric crosses a threshold for a set time. Auto Scaling acts on the alarm.
+- EC2 sends CPU, network and disk metrics. Memory and disk space need the CloudWatch agent.
+- ELB metrics such as `HealthyHostCount` and `RequestCountPerTarget` also work for scaling.
+- Lambda scales by itself. EC2 scales only with an Auto Scaling group.
+
+Smaller instances let the group scale in smaller steps.
+
+## Databases
+
+| Type        | Service               |
+| ----------- | --------------------- |
+| Relational  | RDS, Aurora           |
+| Key-value   | DynamoDB              |
+| Document    | DocumentDB            |
+| In-memory   | ElastiCache, MemoryDB |
+| Graph       | Neptune               |
+| Time series | Timestream            |
+| Warehouse   | Redshift              |
+
+### RDS and Aurora
+
+| Feature        | RDS                        | Aurora                                                     |
+| -------------- | -------------------------- | ---------------------------------------------------------- |
+| Storage        | EBS volume per instance    | Shared cluster volume, 6 copies across 3 AZs               |
+| Replicas       | Up to 15 read replicas     | Up to 15 replicas, which also act as failover targets      |
+| Failover       | Multi-AZ standby, no reads | Promote a replica                                          |
+| Across Regions | Cross-Region read replica  | Global database                                            |
+| Scaling        | Storage auto scaling       | Storage grows on its own, Aurora Serverless v2 for compute |
+
+RDS storage auto scaling does not run if the next increase would reach or pass the maximum storage threshold.
+
+**Aurora Serverless v2** scales between a minimum and maximum number of ACUs (Aurora Capacity Units). It can scale to 0 ACUs and pause after a quiet period. While paused, you pay for storage only. Good for rare, uneven or unknown load.
+
+### DynamoDB
+
+- Single-digit millisecond response at any scale, on SSD, replicated across AZs.
+- Point-in-time recovery, encryption at rest, and DynamoDB Streams to act on changes.
+- Capacity: **on-demand** for unknown or spiky traffic, **provisioned** with auto scaling for steady traffic.
+
+### Caching
+
+| Cache       | Notes                                                                   |
+| ----------- | ----------------------------------------------------------------------- |
+| ElastiCache | Redis (Valkey) or Memcached, in front of any database                   |
+| DAX         | Only for DynamoDB. Item cache and query cache.                          |
+| RDS Proxy   | Not a cache. A connection pool for many short connections, like Lambda. |
+
+| Strategy      | How it works                                                     | Downside                              |
+| ------------- | ---------------------------------------------------------------- | ------------------------------------- |
+| Lazy loading  | Read the cache. On a miss, read the database and fill the cache. | Data can be stale, first read is slow |
+| Write-through | Write to the cache every time you write to the database.         | Cache holds data nobody reads         |
+
+Mostly reads on RDS: read replicas when the queries vary, ElastiCache when the same queries repeat.
+
+## Networking
+
+Build order for a VPC: VPC, subnets, route tables, internet gateway, NACLs, security groups. Then NAT gateway, peering and endpoints as needed. A custom VPC is private until you add routes to the internet. A VPC lives in one Region.
+
+| Connect                              | Option                                                   |
+| ------------------------------------ | -------------------------------------------------------- |
+| On premises to AWS, fast to set up   | Site-to-Site VPN, over the internet, encrypted           |
+| On premises to AWS, steady speed     | Direct Connect, a private line, up to 100 Gbps           |
+| Many VPCs and sites                  | Transit Gateway as a hub                                 |
+| Many sites over VPN                  | VPN CloudHub, hub and spoke on a virtual private gateway |
+| Two VPCs                             | VPC peering, no transitive routing                       |
+| One service to many VPCs             | PrivateLink with an endpoint service                     |
+| S3 or DynamoDB from a private subnet | Gateway endpoint                                         |
+
+For more speed: enhanced networking, EBS-optimized instances, placement groups, S3 Transfer Acceleration, CloudFront and Global Accelerator.
+
+### Load Balancers
+
+| Load balancer | OSI layer | Use it for                                |
+| ------------- | --------- | ----------------------------------------- |
+| ALB           | 7         | HTTP and HTTPS, paths and host names      |
+| NLB           | 4         | TCP and UDP, static IP, very high traffic |
+| GWLB          | 3         | Third-party firewalls and appliances      |
+
+An Auto Scaling group has a minimum, maximum and desired capacity. Use the ELB health check so the group replaces instances the load balancer marks unhealthy.
+
+### Route 53 Routing
+
+| Policy       | Sends users to                                            |
+| ------------ | --------------------------------------------------------- |
+| Latency      | The Region with the lowest latency for the user           |
+| Geolocation  | A Region chosen by the user's country or continent        |
+| Geoproximity | The nearest Region, with a bias to grow or shrink an area |
+| Failover     | The secondary when the primary health check fails         |
+| Weighted     | Several targets by percentage                             |
+
+For a global serverless site: S3 for static files, CloudFront in front, Route 53 latency and failover routing, DynamoDB global tables. S3 Multi-Region Access Points route requests to buckets in several Regions.
+
+### Moving Data to AWS
+
+| Service         | Use it for                                                   |
+| --------------- | ------------------------------------------------------------ |
+| DataSync        | Online copy from NFS, SMB or another cloud to S3, EFS or FSx |
+| Snow Family     | Many TB offline, when the network is too slow                |
+| Transfer Family | SFTP, FTPS, FTP and AS2 into S3 or EFS                       |
+| Storage Gateway | On-premises apps that keep using AWS storage                 |
+| DMS             | Database migration and ongoing replication                   |
+
+## Data Ingestion and Transformation
+
+- **Homogeneous** ingestion keeps the same format as the source. Focus on transfer speed and data integrity.
+- **Heterogeneous** ingestion changes the format on the way in, like CSV to Parquet.
+
+| Service                          | Use it for                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Kinesis Data Streams             | Real-time stream, your own consumers, replay                                                   |
+| Amazon Data Firehose             | Load streams into S3, Redshift or OpenSearch, with no code. Can transform records with Lambda. |
+| Managed Service for Apache Flink | SQL or Flink on a stream. The old name is Kinesis Data Analytics.                              |
+| Kinesis Video Streams            | Video from cameras                                                                             |
+| Amazon MSK                       | Managed Apache Kafka                                                                           |
+| Glue                             | Serverless ETL and the Data Catalog                                                            |
+| EMR                              | Spark and Hadoop on large data                                                                 |
+| Lake Formation                   | Build a data lake on S3 and manage access to the data                                          |
+| Athena                           | SQL on files in S3, no servers                                                                 |
+| QuickSight                       | Dashboards and charts                                                                          |
+
+A data lake on S3 keeps structured and unstructured data in one place. Parquet files make Athena and EMR queries faster and cheaper.
+
+Security for a data lake:
+
+- Bucket policies for other accounts, IAM policies for users and roles.
+- Encryption with SSE-S3 or SSE-KMS. CloudHSM when compliance asks for your own HSM.
+- Versioning, Object Lock and Cross-Region Replication to protect the data.
+
+## Serverless Pieces
+
+| Service         | Notes                                                                                          |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| API Gateway     | Throttling and usage quotas protect the backend                                                |
+| Step Functions  | Workflows with steps, retries and long waits                                                   |
+| EventBridge     | Routes events by rules                                                                         |
+| AppSync         | Managed GraphQL API over DynamoDB, Lambda and HTTP sources                                     |
+| SQS with Lambda | Failed messages go back to the queue after the visibility timeout, then to a dead-letter queue |
+
+Lambda quotas to know: 15 minutes per run, 10 GB memory, 1,000 concurrent executions per Region by default (a soft limit).
