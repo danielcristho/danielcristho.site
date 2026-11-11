@@ -6,7 +6,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.29.3",
   "engines": {
-    "node": ">=18"
+    "node": "26.x"
   },
   "scripts": {
     "dev": "astro dev",
