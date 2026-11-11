@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 const labels: Record<string, string> = {
   iac: "IaC",
   ebpf: "eBPF",
+  aws: "AWS",
   "aws-solution-architect": "AWS Solutions Architect",
   cicd: "CI/CD",
 };
