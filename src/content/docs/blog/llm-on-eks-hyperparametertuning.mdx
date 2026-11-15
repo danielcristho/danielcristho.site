@@ -51,6 +51,25 @@ Questions about one line worked: where and when the event is, or which room a ta
 
 So for this post, we picked a task where fine-tuning has a job: **Text-to-SQL**. The model gets a `CREATE TABLE` and a question, and replies with one SQL query. A base model can write SQL, but not in the exact form a dataset expects. That form is a behavior, and behavior is what LoRA teaches. The task also has a fixed answer per question, so we can score the model with code.
 
+## What We Want to Find Out
+
+Three questions, in order:
+
+1. **Does fine-tuning help at all?** LoRA with the old settings has to beat the base model on the test set.
+2. **Does tuning help on top of that?** The best config from Ray Tune has to beat the old settings, on the same test set.
+3. **Does the gain survive serving?** The model that vLLM serves is the AWQ version, so we score the served model again after the rollout.
+
+The first two questions need two pipeline runs with the same data, the same test set and the same number of epochs. The one difference is the number of trials:
+
+![Two runs: the old settings as one trial, and six trials with the old settings as one of them.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756963/llm-eks-sql-two-runs.webp)
+
+> Click the image to zoom in.
+
+- **`sql-baseline`** (`num_trials=1`): Ray Tune runs the old settings alone, and the pipeline fine-tunes with the old settings. The score answers question 1.
+- **`sql-tuned`** (`num_trials=6`): Ray Tune runs the old settings plus 5 configs from the search space, and ASHA can stop weak trials early. The pipeline fine-tunes with the best config. Comparing this score with `sql-baseline` answers question 2.
+
+Both runs upload to S3 when the model beats the base model. Then we roll out the model from `sql-tuned` with a Git commit and score the served model for question 3. If the served model looks worse, `git revert` brings model A back.
+
 ## The Text-to-SQL Task
 
 The dataset is [`b-mc2/sql-create-context`](https://huggingface.co/datasets/b-mc2/sql-create-context): about 78k rows of a table definition, a question and the SQL answer. `prepare_dataset` shuffles the rows with `seed=42`, keeps the first 200 as the test set and the next 1,000 as the training set, and turns each row into chat messages:
@@ -218,10 +237,7 @@ Hit **Create run**, pick an experiment, and set `bucket_name`. The other paramet
 | `tune_max_epochs` | 3                            |
 | `s3_prefix`       | `pipeline-output`            |
 
-We started two runs:
-
-- `sql-baseline` with `num_trials=1`: the old settings alone, the full pipeline.
-- `sql-tuned` with `num_trials=6`: the old settings plus 5 configs from the search space.
+We started the two runs from [What We Want to Find Out](#what-we-want-to-find-out): `sql-baseline` with `num_trials=1` and `sql-tuned` with `num_trials=6`.
 
 ![Both runs done: sql-baseline in 42 minutes, sql-tuned in 1 hour 9 minutes.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755337/llm-eks-sql-runs-done.webp)
 
@@ -231,7 +247,7 @@ One thing to watch in the form: our first `sql-tuned` run started with `num_tria
 
 ### The Trials
 
-The `trials_report` of `sql-tuned`, sorted by eval loss:
+The `trials_report` of `sql-tuned`, sorted by eval loss. Learning rates are in scientific notation, the same as in the code: `3.06e-4` is 3.06 × 10⁻⁴, or 0.000306, and `5e-5` is 0.00005.
 
 | `lora_r` | `lora_alpha` | `learning_rate` | Epochs run | `eval_loss` | Note     |
 | -------- | ------------ | --------------- | ---------- | ----------- | -------- |

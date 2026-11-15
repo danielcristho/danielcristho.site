@@ -1,0 +1,273 @@
+---
+title: "LLM on EKS: Surviving an AZ Failure with ARC Zonal Shift"
+date: 2026-11-15
+description: Test Amazon Application Recovery Controller zonal shift on a vLLM stack on EKS, with one warm GPU replica per Availability Zone, and see what the shift moves and what it leaves to us.
+excerpt: A new GPU replica takes about 8 minutes to serve. So what happens when one Availability Zone breaks? This time we shift traffic out of an AZ under load and watch every piece.
+tags:
+  - AWS
+  - Kubernetes
+  - LLM
+  - Generative AI
+  - Karpenter
+  - Series
+authors:
+  - danielcristho
+  - masnurrm
+cover:
+  alt: Cover image
+  image: https://res.cloudinary.com/diunivf9n/image/upload/v1783671470/llm-eks_n0hg9f.png
+---
+
+Hi there! 👋🏽 In the previous posts, the stack serves, scales and fine-tunes `Qwen2.5-1.5B-Instruct` on EKS. Before production, a teammate asked: "what if one Availability Zone breaks, when a new GPU replica takes about 8 minutes to serve traffic?"
+
+So in this post, we will test Amazon Application Recovery Controller (ARC) zonal shift on this stack. We will also look at the cost of keeping GPUs warm in every AZ, against scaling GPUs to zero.
+
+## TL;DR
+
+- With one warm vLLM replica per AZ, a zonal shift moved traffic out of `us-east-1a` with **0 failed requests**. Locust at 8 users showed no change.
+- EKS applied the shift in 30 to 60 seconds, and gave the AZ back about a minute after the cancel.
+- Killing the replica in `us-east-1a` **without** a shift failed 2 requests, the ones the replica was serving. The replica in `us-east-1b` took the rest.
+- Killing the replica **after** a shift failed no requests, but the replacement stayed `Pending` for as long as the shift lasted. Our zone spread rule wanted the replacement in the AZ that the shift had cordoned.
+- Two warm `g4dn.xlarge` cost about $1.05 per hour, around $770 per month, before anyone sends a request.
+
+## What Changed from the Previous Post
+
+The code is in the [`survive_llm`](https://github.com/danielcristho/eks-cdk-llm/tree/main/survive_llm) folder. Four changes:
+
+- **EKS zonal shift on.** `eks.Cluster` has no prop for zonal shift, so an `AwsCustomResource` calls `UpdateClusterConfig` after the cluster exists:
+
+```python
+cr.AwsCustomResource(
+    self,
+    "ClusterZonalShift",
+    on_create=cr.AwsSdkCall(
+        service="EKS",
+        action="updateClusterConfig",
+        parameters={"name": self.cluster.cluster_name, "zonalShiftConfig": {"enabled": True}},
+        physical_resource_id=cr.PhysicalResourceId.of(f"{cluster_name}-zonal-shift"),
+    ),
+    ...
+)
+```
+
+- **One NAT gateway per AZ.** With one NAT gateway, losing its AZ cuts egress (S3 sync, pip installs) for the AZ we shift traffic to.
+- **One warm vLLM replica per AZ.** `min_replicas: 2` in the Serve config, plus a zone spread rule on the GPU workers, so the healthy AZ already serves when the shift starts. Karpenter reads the rule and launches each GPU node in the zone the pod needs.
+- **The chat UI runs in the cluster.** `chat-stack` deploys the Gradio app and calls vLLM through `vllm-serve-svc`. A `kubectl port-forward` to vLLM from a laptop pins one pod and skips the Service, and the Service is what zonal shift steers. Open the UI with `kubectl port-forward -n kuberay svc/chat-ui 7860:80` on `localhost:7860`.
+
+During a shift away from `us-east-1a`, the Service sends requests to the replica in `us-east-1b`. The Ray head and the replica in `us-east-1a` keep running outside the Service, and each AZ has its own NAT gateway:
+
+![Two AZs during a zonal shift away from us-east-1a.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756613/llm-eks-arc-two-az.webp)
+
+> Click the image to zoom in.
+
+## Static Stability and Scale to Zero
+
+In the [scaling post](/blog/llm-on-eks-scale-llm/), GPU nodes went to zero when nobody was chatting. That costs nothing while idle, but the first request after a quiet hour waits about 8 minutes for Karpenter to launch a node and vLLM to load the model.
+
+Static stability works the other way. The capacity to survive an AZ loss runs before the failure, so recovery does not depend on launching anything during the outage, when the EC2 API in that Region may be busy or impaired. For us, that means one warm `g4dn.xlarge` per AZ, all day:
+
+| Setup                 | GPU cost (us-east-1, On-Demand) | When an AZ breaks                                                  |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------ |
+| Scale to zero         | $0 when idle                    | About 8 min with no service, if the new node lands in a healthy AZ |
+| 1 warm replica        | ~$0.53/h, ~$385/month           | About 8 min with no service, if the replica sat in the broken AZ   |
+| 1 warm replica per AZ | ~$1.05/h, ~$770/month           | The other AZ serves, at half the capacity                          |
+
+This post tests the last row. Whether $770 a month is worth it depends on who waits on the other side of the chat box.
+
+## What Zonal Shift Moves and What It Leaves
+
+Here is what EKS did during the shift, read from `kubectl` and the API:
+
+- **EndpointSlices.** The endpoints in the shifted AZ left `vllm-serve-svc`, and the slice got the label `eks-arc-zonal-shift/impaired-zone: us-east-1a`. kube-proxy stops sending Service traffic there.
+- **Nodes.** Every node in the AZ got the taint `eks-arc-zonal-shift/impaired-zone=us-east-1a:NoSchedule` and was cordoned. Nothing new schedules there.
+- **Pods.** Nothing gets evicted. The Ray head and the GPU worker in `us-east-1a` kept running the whole time, outside the Service.
+
+What the shift leaves to us:
+
+- **Karpenter.** During the shift, Karpenter launched a GPU node in `us-east-1a` for a pod that needed that zone, and EKS tainted the node a few seconds later. More on that in the results.
+- **The Ray head.** There is one head pod, and in this run the head sat in `us-east-1a`. The shift hid the head's endpoint, but if the AZ went down for real, the head would go with the AZ, and the whole RayCluster with the head. Surviving that needs GCS fault tolerance with an external Redis, which this stack does not have.
+- **Ray's own routing.** The shift steers the Kubernetes Service. Once a request reaches a Ray Serve proxy, Ray picks the replica, and Ray does not know about the shift.
+- **Stateful pieces.** The KFP database is a single-AZ RDS instance. Pipelines stop if that AZ goes. Serving does not.
+
+## The Three Tests
+
+Each test starts with one GPU worker in `us-east-1a` and one in `us-east-1b`, under steady load from Locust. Each test answers one question.
+
+**Test 1: shift with everything healthy.** Does a shift move traffic without failed requests? The replica in `us-east-1a` keeps running, but the Service stops sending requests to the replica.
+
+![Test 1: the shift takes us-east-1a out of the Service.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756916/llm-eks-arc-test1.webp)
+
+**Test 2A: the replica in `us-east-1a` dies, no shift.** What do users see when a replica dies while the replica serves traffic?
+
+![Test 2A: the replica in us-east-1a dies while the Service still sends requests to the replica.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756920/llm-eks-arc-test2a.webp)
+
+**Test 2B: shift first, then the replica in `us-east-1a` dies.** Does a shift before the failure protect the requests, and where does the replacement go?
+
+![Test 2B: the shift is on, the replica in us-east-1a dies, and a replacement has to be placed.](https://res.cloudinary.com/diunivf9n/image/upload/v1794757120/llm-eks-arc-test2b.webp)
+
+## Running the Test
+
+First, find the AZ to shift away from:
+
+```bash
+$ aws ec2 describe-availability-zones --query 'AvailabilityZones[].[ZoneName,ZoneId]' --output text
+$ kubectl get nodes -L topology.kubernetes.io/zone,role,workload
+```
+
+Zonal shift takes an AZ ID (`use1-az1`), not an AZ name (`us-east-1a`). AWS maps names to physical zones per account, so `us-east-1a` in two accounts can be two different data centers, while the ID is the same everywhere. The first command prints the name to ID mapping. The second lists the nodes with their zone label, so we can pick an AZ that holds a GPU worker.
+
+Then put steady load on the Service that zonal shift steers:
+
+```bash
+$ kubectl create configmap locustfile -n kuberay \
+  --from-file=tests/locustfile.py --from-file=tests/load_test.py \
+  --dry-run=client -o yaml | kubectl apply -f -
+$ kubectl apply -f manifests/locust-pod.yaml
+$ kubectl wait -n kuberay --for=condition=Ready pod/locust --timeout=180s
+$ kubectl port-forward -n kuberay pod/locust 8089:8089
+```
+
+- The ConfigMap carries the Locust script into the cluster. `--dry-run=client -o yaml | kubectl apply` makes the command safe to run twice.
+- The pod runs the script, and `kubectl wait` blocks until the pod is up.
+- The port-forward opens the Locust UI on `localhost:8089`.
+
+Locust sends requests to `vllm-serve-svc` from inside the cluster, the same way the chat UI does.
+
+Start the shift:
+
+```bash
+$ CLUSTER_ARN=$(aws eks describe-cluster --name $CLUSTER_NAME --query cluster.arn --output text)
+$ aws arc-zonal-shift start-zonal-shift --away-from use1-az1 --expires-in 30m \
+  --resource-identifier $CLUSTER_ARN --comment "survive_llm test"
+```
+
+`--resource-identifier` is the EKS cluster ARN, which the first line looks up. ARC can shift the cluster because `eks-stack` turned zonal shift on. `--expires-in` ends the shift on its own, so a forgotten test does not keep an AZ out for days. The response has a `zonalShiftId`.
+
+![The zonal shift away from use1-az1 in the ARC console.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756015/llm-eks-arc-zonal-shift.webp)
+
+Watch the shift, and end the shift early when the test is done:
+
+```bash
+$ aws arc-zonal-shift get-managed-resource --resource-identifier $CLUSTER_ARN
+$ aws arc-zonal-shift cancel-zonal-shift --zonal-shift-id <zonal-shift-id>
+```
+
+`get-managed-resource` lists the active shifts and `appliedWeights`, the share of traffic each AZ gets. During the shift, the shifted AZ shows `0`:
+
+```json
+"appliedWeights": {
+    "use1-az1": 0.0,
+    "use1-az2": 1.0,
+    ...
+},
+"zonalShifts": [{ "appliedStatus": "APPLIED", "awayFrom": "use1-az1", ... }]
+```
+
+`cancel-zonal-shift` brings the weights back without waiting for `--expires-in`.
+
+To see the Kubernetes side, watch which pod IPs `vllm-serve-svc` sends traffic to, and in which zone:
+
+```bash
+$ kubectl get endpointslice -n kuberay -l kubernetes.io/service-name=vllm-serve-svc \
+  -o jsonpath='{range .items[*].endpoints[*]}{.zone} {.addresses[0]} {.conditions.ready}{"\n"}{end}'
+```
+
+## Results
+
+Before each test, the cluster had one GPU worker in `us-east-1a` and one in `us-east-1b`, plus the Ray head in `us-east-1a`. Times are UTC+7.
+
+### Test 1: Shift with Everything Healthy
+
+Locust at 8 users: about 7 to 8 requests per second, p50 about 1 s, p95 about 3.2 s.
+
+| Time      | What happened                                                        |
+| --------- | -------------------------------------------------------------------- |
+| 21:02:15  | Shift away from `use1-az1` starts, its `appliedWeights` goes to `0`  |
+| ~21:02:40 | The head and worker endpoints in `us-east-1a` leave `vllm-serve-svc` |
+| 21:04:45  | Shift cancelled                                                      |
+| ~21:05:51 | The `us-east-1a` endpoints come back                                 |
+
+![Locust across the shift and the cancel: no failures, and no step in RPS or latency.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756018/llm-eks-arc-locust-shift.webp)
+
+0 failures, and the charts show no step at the shift or at the cancel. During the test, Ray Serve scaled to a third replica because of the 8 users, and the third replica landed in `us-east-1b`. So `us-east-1b` held 2 replicas for part of the shift. For the next tests, we dropped Locust to 4 users and waited for Serve to scale back to one replica per AZ.
+
+### Test 2A: The Replica in us-east-1a Dies, No Shift
+
+```bash
+$ kubectl delete pod -n kuberay <worker-in-us-east-1a> --grace-period=0 --force
+```
+
+`--grace-period=0 --force` kills the pod at once, with no graceful shutdown. That is the closest a `kubectl` command gets to a node going away.
+
+| Time      | What happened                                              |
+| --------- | ---------------------------------------------------------- |
+| ~21:27:08 | Worker in `us-east-1a` killed                              |
+| 21:27:09  | Locust: 2 failures, `HTTP 500`                             |
+| 21:27:16  | KubeRay creates a replacement worker, on the same GPU node |
+| 21:30:18  | Replacement pod ready                                      |
+| by 21:33  | Serve back to 2 running replicas                           |
+
+![Locust failures: the 2 requests in flight on the killed replica.](https://res.cloudinary.com/diunivf9n/image/upload/v1794756021/llm-eks-arc-locust-failures.webp)
+
+The 2 failed requests were the ones that replica was working on when the replica died. After that, the replica in `us-east-1b` served everything with 0 failures. The replacement came back in 3 to 6 minutes, because the GPU node survived and the pod only had to load the model. In a real AZ loss, the node is gone too, and recovery takes about 8 minutes on half the capacity.
+
+### Test 2B: Shift First, Then the Replica in us-east-1a Dies
+
+| Time      | What happened                                     |
+| --------- | ------------------------------------------------- |
+| 21:33:54  | Shift away from `use1-az1` starts                 |
+| 21:34:43  | EKS taints and cordons the nodes in `us-east-1a`  |
+| 21:34:55  | The `us-east-1a` endpoints leave `vllm-serve-svc` |
+| ~21:35:30 | Worker in `us-east-1a` killed                     |
+| After     | The replacement stays `Pending`                   |
+
+0 new failures in Locust, against 2 in test 2A. This was one run with 4 users, so take the result as an observation, not a promise.
+
+The `Pending` pod comes from the spread rule on the GPU workers:
+
+```yaml
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels: { role: ray-worker }
+    matchLabelKeys: [ray.io/cluster]
+```
+
+`us-east-1b` held 1 worker and `us-east-1a` held 0, so a replacement in `us-east-1b` would make the skew 2. The scheduler wanted `us-east-1a`, and every node there had the zonal shift taint.
+
+Karpenter launched a new `g4dn.xlarge` in `us-east-1a` for the pod. EKS tainted the new node within seconds, and then Karpenter reported `no instance type has the required offering ... topology.kubernetes.io/zone In [us-east-1a]`. A GPU node we paid for sat empty, and the node counted against the G and VT vCPU quota.
+
+So the rule that keeps one replica per AZ in normal times blocks the replacement during a shift. The cordoned AZ still counts as a zone with 0 workers. Two options, neither tested yet:
+
+- `nodeTaintsPolicy: Honor` on the constraint. Nodes with a taint the pod does not tolerate (the zonal shift taint) leave the skew math, the shifted AZ drops out, and the replacement can go to the healthy AZ.
+- `whenUnsatisfiable: ScheduleAnyway`, which turns the rule into a preference. Simpler, but two replicas can end up in one AZ in normal times.
+
+## Deploy
+
+:::caution[G-Instance Quota]
+Check the "Running On-Demand G and VT instances" quota in Service Quotas first. New accounts start at 0 vCPUs. This stack runs 2 warm `g4dn.xlarge`, plus 2 more during a blue/green model switch: 16 vCPUs. The Karpenter node from test 2B shows that 16 can also run out during a shift.
+:::
+
+```bash
+$ cd survive_llm
+$ cp .env.example .env       # account, region, admin user, bucket, GITOPS_REPO_URL, GITOPS_REVISION
+$ git status --short -- .    # commit first, Argo CD deploys the vLLM chart from Git
+$ cdk deploy --all
+$ aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION
+```
+
+`cdk deploy --all` deploys the stacks in the order `app.py` sets. Argo CD pulls the vLLM chart from the Git commit, so uncommitted changes in the folder do not reach the cluster. `update-kubeconfig` adds the cluster to `~/.kube/config`, so `kubectl` talks to the new cluster.
+
+Clean up with `cdk destroy --all`. After that, check EC2 for leftover GPU instances, network interfaces named `aws-K8S-*` and the `eks-cluster-sg-*` security group. These can block the VPC delete.
+
+## Conclusion
+
+Within a minute of the shift, Service traffic left the AZ, and with a warm replica on the other side, users saw no errors. The gaps are in our own setup: Ray Serve picks the replicas, the Ray head is one pod in one AZ, and a spread rule for normal times blocked recovery once the AZ was cordoned. Starting a shift is one command. Surviving an AZ loss means checking every piece that assumes all AZs are there.
+
+Next: try `nodeTaintsPolicy: Honor` with Karpenter, and measure what GCS fault tolerance costs for the Ray head.
+
+:::tip[Source Code]
+Wanna see the full code? See the repo here: [danielcristho/eks-cdk-llm](https://github.com/danielcristho/eks-cdk-llm)
+:::

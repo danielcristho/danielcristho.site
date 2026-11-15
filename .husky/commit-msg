@@ -4,7 +4,7 @@ case "$msg" in
 Merge*| Revert* | fixup!* | squash!*) exit 0 ;;
 esac
 
-types='feat|fix|docs|style|refactor|perf|test|build|ci|chore'
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|deps|revert|release|wip'
 
 if ! printf '%s\n' "$msg" | grep -qE "^($types)(\([a-z0-9._/-]+\))?!?: .+"; then
   printf '\n  The Commit does not follow the convention:\n\n'
