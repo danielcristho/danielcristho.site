@@ -1,0 +1,265 @@
+---
+title: "Domain 1: Secure Architectures"
+date: 2026-10-19
+description: "Domain 1 notes. IAM identities and policies, multi-account control, VPC network controls, private connectivity, encryption, certificates, edge protection and logs."
+trivia:
+  - q: What permissions does a new IAM user, group or role start with?
+    a: "None. A new identity can do nothing until a policy allows an action."
+
+  - q: Why is working as the account root user a risk?
+    a: "The root user's permissions cannot be changed or reduced, so a compromise of the root user is a compromise of the whole account. Protect it with MFA and work as a limited user."
+
+  - q: Which two policies does an IAM role have?
+    a: "A trust policy, which says who can assume the role, and a permission policy, which says what the role can do."
+
+  - q: A security team in its own account must read settings in the production account during audits. What is the design?
+    a: "An IAM role in the production account with read permissions, and a trust policy that names the security team account. The team assumes the role. No IAM users and no access keys cross accounts."
+
+  - q: What makes a subnet public?
+    a: "A route to an internet gateway in the subnet's route table. Nothing else about the subnet changes."
+
+  - q: A Lambda function in a VPC must reach an RDS database, and nothing else may reach the database. How do you write the database security group rule?
+    a: "Allow the database port with the Lambda function security group as the source. A security group as the source follows the function, even when its IP addresses change."
+
+  - q: A private subnet has no NAT gateway, and its instances need S3. Which endpoint do you add?
+    a: "A gateway endpoint, with an entry in the route table. Gateway endpoints exist for S3 and DynamoDB only. Other services need an interface endpoint."
+
+  - q: A bucket holds audit logs that nobody may delete for 7 years, not even the root user. What do you use?
+    a: "S3 Object Lock in compliance mode with a 7-year retention period. Versioning alone does not stop a delete of a version."
+
+  - q: An EC2 origin sits behind a load balancer behind CloudFront. Which service blocks SQL injection?
+    a: "AWS WAF. WAF reads HTTP requests at layer 7. Shield protects against DDoS at layers 3 and 4 and does not inspect for SQL injection or XSS."
+
+  - q: Someone deleted a security group rule last night. Where do you find who did it?
+    a: "CloudTrail. The API call shows the user or role. VPC Flow Logs show traffic, not who changed what."
+template: splash
+---
+
+:::note[Source]
+I prepared for the exam with the **Exam Prep Plan: AWS Certified Solutions Architect - Associate (SAA-C03)** and the **[Official Practice Question Set](https://skillbuilder.aws/learn/6NV91XYP1P/official-practice-question-set-aws-certified-solutions-architect--associate-saac03--english/N1HSPV1K17)** on AWS Skill Builder. These notes are my own summary of the Domain 1 topics, rewritten in my words. The questions are my own scenarios.
+:::
+
+Domain 1 is Design Secure Architectures, 30% of the scored content. It has three task statements:
+
+1. Design secure access to AWS resources.
+2. Design secure workloads and applications.
+3. Determine appropriate data security controls.
+
+Security is the first decision in an architecture, not a step at the end. When two answers both work, the more secure one is the better answer.
+
+![How an AWS request is allowed](https://res.cloudinary.com/diunivf9n/image/upload/v1792684389/aws-request-flow_zmmeqs.svg)
+
+## IAM Identities
+
+IAM is a global service. An identity is not tied to one Region.
+
+| Identity              | Starts with                                         |
+| --------------------- | --------------------------------------------------- |
+| Account root user     | Full permissions that cannot be changed or reduced  |
+| IAM user, group, role | No permissions. Every action must be allowed later. |
+
+Add MFA to the root user, then stop using the root user. Least privilege limits what a stolen credential can do.
+
+| Method              | Use it for                                                              |
+| ------------------- | ----------------------------------------------------------------------- |
+| Assume a role       | Short-lived credentials instead of long-lived keys                      |
+| Role for a service  | An AWS service, like EC2 or Lambda, calls other services with no secret |
+| AWS STS             | Issues the temporary credentials, in one account or across accounts     |
+| Federation          | Users from a corporate directory or an identity provider map to a role  |
+| IAM Identity Center | Workforce sign-in across many accounts                                  |
+| Amazon Cognito      | Sign-in for the users of your app: user pools and identity pools        |
+
+Hard-coded credentials in an application: never. Give the application a role.
+
+A role is the answer when the caller can get credentials at run time: a workload, a service, a federated user, or someone from another account. An IAM user is for a long-lived identity with its own credentials.
+
+### Cross-Account Access
+
+| Piece             | Lives in           | Says                              |
+| ----------------- | ------------------ | --------------------------------- |
+| Permission policy | The target account | What the role can do              |
+| Trust policy      | The target account | Which account may assume the role |
+
+The other account assumes the role. No IAM users in the target account, and no access keys passed between teams.
+
+### Directories
+
+- **AWS Managed Microsoft AD** is a real Active Directory in AWS. With a trust to the on-premises AD, users sign in with their on-premises credentials.
+- **AD Connector** is a proxy to the on-premises AD. AD Connector stores no users in AWS.
+
+### Database Logins
+
+IAM does not always reach the database session. In DocumentDB, IAM controls cluster actions like create and modify, and a database username and password controls the connection.
+
+## Policies
+
+| Policy               | Attached to                                     | Answers                                   |
+| -------------------- | ----------------------------------------------- | ----------------------------------------- |
+| Identity-based       | A user, group or role                           | What can this identity do?                |
+| Resource-based       | S3 buckets, SQS queues, VPC endpoints, KMS keys | Who can act on this resource?             |
+| Permissions boundary | A user or role                                  | The most an identity policy can grant     |
+| SCP                  | An account or OU in AWS Organizations           | The most any identity in the account gets |
+
+A resource policy has a `Principal` element. An identity policy does not need one, because the policy is already attached to an identity.
+
+An explicit deny always wins. Without an allow, the action is denied.
+
+The exam asks you to read policies, not write long ones: the parts of a statement, and how IAM evaluates several policies on one request.
+
+## Many Accounts
+
+| Service           | Does                                                       |
+| ----------------- | ---------------------------------------------------------- |
+| AWS Organizations | Groups accounts into OUs, consolidated billing, SCPs       |
+| SCPs              | Set the maximum permissions for an account. Grant nothing. |
+| AWS Control Tower | Sets up and governs a multi-account environment            |
+| Service Catalog   | Publishes approved products that teams can launch          |
+
+Two ways to write SCPs:
+
+| Strategy   | How it works                                                 |
+| ---------- | ------------------------------------------------------------ |
+| Allow list | Block everything by default. Allow only the listed services. |
+| Deny list  | Allow everything by default. Block the listed services.      |
+
+## VPC and Network Controls
+
+![Where each network control sits in a VPC](https://res.cloudinary.com/diunivf9n/image/upload/v1792684434/vpc-controls_b4jxgd.svg)
+
+A VPC lives in one Region and one account. A subnet sits in one AZ. A subnet is public when its route table has a route to an internet gateway.
+
+| Control        | Level         | Rules                                                    |
+| -------------- | ------------- | -------------------------------------------------------- |
+| Security group | ENI, instance | Stateful. Allow rules only. All rules checked together   |
+| Network ACL    | Subnet        | Stateless. Allow and deny. Rules run lowest number first |
+| Route table    | Subnet        | Where traffic leaving the subnet goes                    |
+| NAT gateway    | Public subnet | Private instances reach out, and nothing reaches in      |
+
+Use a NACL when you must deny one IP or range. Use security groups for the rest.
+
+A security group can use another security group as the source. The rule then follows the resources, not their IP addresses:
+
+| Tier     | Subnet  | Inbound                  |
+| -------- | ------- | ------------------------ |
+| Web      | Public  | 443 from `0.0.0.0/0`     |
+| App      | Private | App port from the web SG |
+| Database | Private | DB port from the app SG  |
+
+A private subnet keeps the database off the internet. The security group decides who may reach the database port. You need both.
+
+## Private Connectivity
+
+| Option             | Use it for                                                                  |
+| ------------------ | --------------------------------------------------------------------------- |
+| Gateway endpoint   | S3 and DynamoDB from a private subnet. A route table entry. No charge.      |
+| Interface endpoint | Most other services. An ENI with a private IP. Charged per hour and per GB. |
+| AWS PrivateLink    | Offer one of your services to many VPCs and accounts, with no peering       |
+| VPC peering        | Two VPCs. Exposes the rest of each VPC, no transitive routing               |
+| Transit Gateway    | A hub for many VPCs and on-premises networks                                |
+| Site-to-Site VPN   | An encrypted tunnel from a data center over the internet                    |
+| AWS Client VPN     | The same, for single users                                                  |
+| Direct Connect     | A private line. Not encrypted on its own, add a VPN for encryption.         |
+
+## Edge Protection
+
+| Service          | Protects against                                         | Attaches to                                                |
+| ---------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
+| Shield Standard  | Common DDoS at layers 3 and 4. On by default, free.      | All AWS accounts                                           |
+| Shield Advanced  | Larger DDoS, the Shield Response Team, cost protection   | CloudFront, Route 53, ELB, Global Accelerator, Elastic IPs |
+| AWS WAF          | SQL injection, XSS, bad IPs, rate limits at layer 7      | CloudFront, ALB, API Gateway, AppSync                      |
+| Firewall Manager | One place to manage WAF, Shield and security group rules | Accounts in AWS Organizations                              |
+| Network Firewall | Deep packet inspection between VPCs and to the internet  | A VPC                                                      |
+
+A **rate-based rule** in WAF blocks an IP while the IP sends more requests than the limit. WAF does not attach to an NLB.
+
+A firewall reads only its own OSI layer and below. A layer 7 firewall reads more, needs more compute, and costs more.
+
+## Encryption and Keys
+
+| Term       | Meaning                                 |
+| ---------- | --------------------------------------- |
+| Plaintext  | Unencrypted data of any kind            |
+| Algorithm  | Code that takes the plaintext and a key |
+| Key        | The secret the algorithm uses           |
+| Ciphertext | The encrypted result                    |
+
+At rest protects stored data, and one party is involved. In transit protects data on the move between two or more parties.
+
+| Service                 | Use it for                                                         |
+| ----------------------- | ------------------------------------------------------------------ |
+| AWS KMS                 | Managed keys, key policies and rotation. The default answer.       |
+| AWS CloudHSM            | Single-tenant hardware when compliance asks for full key control   |
+| Secrets Manager         | Secrets such as DB passwords and API keys, with scheduled rotation |
+| SSM Parameter Store     | Configuration values. No rotation of its own.                      |
+| AWS Certificate Manager | TLS certificates, renewed by ACM                                   |
+
+### S3 Encryption
+
+![The four ways S3 encrypts an object at rest](https://res.cloudinary.com/diunivf9n/image/upload/v1792684463/s3-encryption_xbrgpa.svg)
+
+| Option      | Who encrypts                                           |
+| ----------- | ------------------------------------------------------ |
+| Client side | You, before the object leaves the source               |
+| SSE-C       | S3, with a key you send in each request                |
+| SSE-S3      | S3, with keys S3 manages. The default for new objects. |
+| SSE-KMS     | S3, with a KMS key. Key use shows in CloudTrail.       |
+
+EBS encryption with a KMS key covers the volume, the data between the instance and the volume, and the snapshots.
+
+### Certificates
+
+| Need                                | Answer                                           |
+| ----------------------------------- | ------------------------------------------------ |
+| Public site on an ALB or CloudFront | Public ACM certificate. Free, and ACM renews it. |
+| Internal app, company devices only  | Private certificate from AWS Private CA          |
+| Certificate from another CA         | Import into ACM. You renew it.                   |
+
+With SNI, one ALB or CloudFront distribution serves HTTPS for several domains on the same IP address.
+
+"Encrypt all data in transit" means every hop. If CloudFront sits in front of an ALB, the CloudFront to ALB connection must use HTTPS too.
+
+## Protecting S3 Objects
+
+| Feature                  | What it does                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| Versioning               | Keeps every version. A delete adds a delete marker, an overwrite adds a version. |
+| MFA delete               | Asks for an MFA code before a version is deleted or versioning is turned off     |
+| Object Lock              | Blocks delete and overwrite until a retention date. Needs versioning.            |
+| Cross-Region Replication | Copies objects to another Region. Needs versioning. For DR, not for undo.        |
+
+Undo a mistake: versioning. Keep data for a fixed time by law: Object Lock in compliance mode. Survive a Region outage: replication.
+
+## Finding Sensitive Data and Threats
+
+| Service          | Does                                                     |
+| ---------------- | -------------------------------------------------------- |
+| Amazon Macie     | Finds and classifies PII in S3                           |
+| Amazon GuardDuty | Detects threats from logs, like calls from known bad IPs |
+| Amazon Inspector | Scans EC2, containers and Lambda for vulnerabilities     |
+| AWS Security Hub | Collects findings from the other services in one place   |
+| AWS Config       | Records resource configuration and flags rules that fail |
+| AWS Artifact     | AWS compliance reports and agreements                    |
+
+PII is data that identifies a person: name, address, email, ID numbers, date of birth, bank and card details.
+
+## Which Log to Check
+
+| Question                                        | Service              |
+| ----------------------------------------------- | -------------------- |
+| Where does this traffic go, and is it accepted? | VPC Flow Logs        |
+| Who called this API, and when?                  | CloudTrail           |
+| What is the CPU or error rate?                  | CloudWatch           |
+| Is an AWS service having problems in my Region? | AWS Health Dashboard |
+| Is this traffic or API call a known threat?     | GuardDuty            |
+
+A flow log record has the source and destination IP, the ports, the protocol and ACCEPT or REJECT. A flow log record has no packet content.
+
+## Backup
+
+Backup frequency sets the RPO you can reach. Domain 2 covers the DR strategies.
+
+| Service                                          | Backup                                                                     |
+| ------------------------------------------------ | -------------------------------------------------------------------------- |
+| EBS, RDS, Aurora, Redshift, DocumentDB, DynamoDB | Snapshots and point-in-time recovery                                       |
+| S3                                               | Versioning and Cross-Region Replication                                    |
+| AWS Backup                                       | One place to schedule and monitor backups, and copy them to another Region |

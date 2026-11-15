@@ -16,6 +16,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 - Comments via Giscus
 - Analytics with Umami self hosted
 - Share buttons for posts
+- Series box at the top of posts that belong to a series
 - Basic SEO stuff
 
 ## Built with
@@ -54,6 +55,7 @@ pnpm create astro@latest -- --template danielcristho/danielcristho.site
 │   │   ├── Header.astro            # Nav bar
 │   │   ├── Logo.astro              # Inlines public/logo/favicon.svg, animates it
 │   │   ├── PageViews.astro         # Page view counter
+│   │   ├── SeriesToc.astro         # Series box for posts with a series field
 │   │   ├── ShareButtons.astro      # Social share buttons
 │   │   ├── SocialIcons.astro       # Social media icons
 │   │   ├── SubscribeLinks.astro    # Feed and newsletter links
@@ -167,6 +169,29 @@ tags: ["kubernetes", "docker"]
 authors: ["danielcristho"]
 ---
 ```
+
+### Writing a series
+
+Give every post in the series the same `series` value:
+
+```yaml
+---
+title: "LLM on EKS: Serving with vLLM"
+date: 2026-05-01
+series: "LLM on EKS"
+---
+```
+
+`SeriesToc.astro` then shows a box at the top of each of those posts:
+
+- The box shows the series name on top, the list of parts, and "Part 2 of 6" at the bottom.
+- The parts are sorted by `date`, so the oldest post is part 1.
+- The current post is highlighted, and the other parts are links.
+- The box shows only when at least 2 published posts share the name. Drafts do not count.
+
+To add a new part, write the post with the same `series` value and a later `date`. The older posts update on the next build. The name must match exactly, including case. Do not write the series list by hand in the post body.
+
+Restart the dev server after you add `series` to a post for the first time (`rm -rf .astro && pnpm dev`).
 
 ## Common issues
 
