@@ -1,8 +1,8 @@
 ---
 title: "LLM on EKS: Hyperparameter Tuning with Ray Tune"
 date: 2026-11-09
-description: Tune LoRA hyperparameters with Ray Tune inside a Kubeflow pipeline on EKS, keep the old settings as a baseline, and roll out a new model when the best config is better.
-excerpt: The LoRA settings from the pipeline post were a guess. This time we measure the settings with Ray Tune, and check if our event chatbot needs fine-tuning at all.
+description: Tune LoRA hyperparameters with Ray Tune inside a Kubeflow pipeline on EKS, score the result on a Text-to-SQL test set, and roll out the new model with a Git commit.
+excerpt: The LoRA settings from the pipeline post were a guess. This time Ray Tune measures the settings, a test set decides if the new model ships, and Argo CD rolls the model out.
 tags:
   - AWS
   - Kubernetes
@@ -20,76 +20,80 @@ cover:
 
 Hi there! 👋🏽 A quick recap before we start. In the [Kubeflow pipeline post](/blog/llm-on-eks-pipeline-kubeflow/), we fine-tuned `Qwen2.5-1.5B-Instruct` with LoRA, quantized the model with AWQ, and pushed the result to S3. In the [previous post](/blog/llm-on-eks-gitops/), vLLM started serving that model from S3 as `qwen-lora`, and switching to a new model became a Git commit that Argo CD rolls out with no downtime. Let's call the model that serves now model A.
 
-The chatbot from the previous post is an assistant for AWS Community Day Jakarta 2026, where this series became a talk. The chatbot answers questions about the agenda, rooms and speakers from a small knowledge base built from the event page.
-
-But the LoRA settings behind model A were a guess. So in this post, we will set up a way to measure those settings. The pipeline searches for better settings with Ray Tune, and when a config is better than the old one, we roll out the new model (model B). The full architecture is in the [previous post](/blog/llm-on-eks-gitops/#architecture).
+But the LoRA settings behind model A were a guess. So in this post, we will measure those settings. The pipeline searches for better settings with Ray Tune, scores the new model on a test set, and when the new model is better than the base model, we roll the new model out (model B). The full architecture is in the [previous post](/blog/llm-on-eks-gitops/#architecture).
 
 ## TL;DR
 
-- Before tuning anything, we check if the event chatbot needs fine-tuning at all.
-- A new `tune_hyperparams` step runs Ray Tune inside a single GPU pod. The step searches LoRA `r`, `lora_alpha` and `learning_rate` on a held-out eval split.
-- ASHA stops weak trials after one epoch, so 6 trials cost a lot less than 6 full trainings.
-- The hand-picked settings from the pipeline post run as one of the trials (the baseline), so we can see where that guess ranks.
-- If the best config does not beat the baseline, the pipeline stops and the served model stays as it is.
-- Each run writes its model to its own S3 prefix. Rolling the model out is the same Git commit as in the previous post.
-- The pipeline has not run yet. What we measured so far: model A scores 6/15 with the whole knowledge base in the prompt, and 11/15 when the prompt gets the matching lines instead.
+- We dropped the event chatbot as the fine-tuning task. A knowledge base in the prompt answers event questions, and retrieval helped more than weights could. The pipeline now trains Text-to-SQL on `b-mc2/sql-create-context`.
+- A `tune_hyperparams` step runs Ray Tune inside one GPU pod. The step searches LoRA `r`, `lora_alpha` and `learning_rate`, and the old settings run as one of the trials.
+- ASHA stops weak trials after one epoch. In our run, ASHA stopped 1 of 6 trials.
+- The best config (`r=16`, `alpha=16`, `lr=3.06e-4`) has eval loss 0.0624. The old settings have 0.0759 and rank 5 of 6. Learning rate made the difference, not rank.
+- On 200 test questions (exact match): base Qwen 48.0%, LoRA with the old settings 64.5%, LoRA with the tuned settings 70.0%.
+- Through vLLM with AWQ: model A 39.5%, model B 63.5%. AWQ and the switch to vLLM cost about 6.5 points.
+- The switch to model B took 25 minutes. `git revert` brought model A back, and the score went back to 39.5%.
 
 ## Why Tune at All?
 
 In the pipeline post, I picked the LoRA settings (`r=16`, `alpha=32`, `lr=5e-5`) because those are common defaults, not because I measured them. The pipeline trained on all 200 examples with no held-out set. The one signal we had was training loss, and the loss was going down when the epoch ended. That tells us the model was learning. It does not tell us the settings were good. Also, `5e-5` is on the low side for LoRA. Most setups use something between `1e-4` and `2e-4`.
 
-So the problem is not that the first model is bad. We did not measure the first model. In this post, we hold out 20% of the data, try several LoRA configs under the same conditions, and keep the config with the lowest eval loss. The old defaults run as one of the trials. If the old defaults have the lowest loss, that is also a result: we know the settings are good.
+So the problem is not that the first model is bad. We did not measure the first model. In this post, we hold out data, try several LoRA configs under the same conditions, and keep the config with the lowest eval loss. The old defaults run as one of the trials, so we can see where that guess ranks.
 
-## Does the Chatbot Need Fine-Tuning at All?
+## Why Not the Event Chatbot?
 
-Tuning answers "which LoRA config is best?". But there is a question before that one: "does LoRA beat the base model at all?". If LoRA does not, we are tuning something we do not need.
+The chatbot from the previous post was an assistant for AWS Community Day Jakarta 2026. The chatbot read a small knowledge base about the agenda, rooms and speakers from its prompt. Before we tuned anything for that chatbot, we measured model A with `just eval` on 15 questions:
 
-For our event chatbot, my guess is no. People ask about facts: times, rooms, speakers. Facts go in the prompt, not in the weights. The whole event knowledge base (`src/knowledge_base.md`, generated from the event API by `src/build_kb.py`) is around 2k tokens. That fits in `max_model_len` 4096, so `Qwen2.5-1.5B-Instruct` can read the knowledge base from the system prompt without a retrieval index.
+| Setup                                                           | Score |
+| --------------------------------------------------------------- | ----- |
+| Model A, whole knowledge base in the prompt                     | 6/15  |
+| Model A, keyword retrieval (the prompt gets the matching lines) | 11/15 |
 
-Fine-tuning changes how the model answers, not what the model knows. And an agenda baked into the weights goes stale once the schedule changes.
+Questions about one line worked: where and when the event is, or which room a talk is in. Questions where the model has to scan many lines failed, like "who speaks from AWS?". Sending fewer, better lines gained 5 questions. No LoRA setting is likely to gain that much, because the answers are facts, and facts go in the prompt, not in the weights. An agenda trained into the weights also goes stale once the schedule changes.
 
-Eval loss is not chatbot quality either. A lower loss does not mean the model gets "what time is the LLM talk?" right.
+So for this post, we picked a task where fine-tuning has a job: **Text-to-SQL**. The model gets a `CREATE TABLE` and a question, and replies with one SQL query. A base model can write SQL, but not in the exact form a dataset expects. That form is a behavior, and behavior is what LoRA teaches. The task also has a fixed answer per question, so we can score the model with code.
 
-### What Fine-Tuning Could Teach
+## The Text-to-SQL Task
 
-The knowledge base goes into every request, so the training data has to look the same: context in the prompt, answer taken from the context. The goal is not to memorize the agenda. The goal is to teach the behavior around the agenda: find the answer in the context, and say "I don't know" when the answer is not there. A 1.5B model often gets the second part wrong and makes up a time or a speaker.
+The dataset is [`b-mc2/sql-create-context`](https://huggingface.co/datasets/b-mc2/sql-create-context): about 78k rows of a table definition, a question and the SQL answer. `prepare_dataset` shuffles the rows with `seed=42`, keeps the first 200 as the test set and the next 1,000 as the training set, and turns each row into chat messages:
 
-**The dataset, generated from `src/knowledge_base.md` with templates (no LLM in the loop):**
+```python
+system = "Write a SQLite query that answers the question, using the tables above it. Reply with the SQL only."
 
-- Each session gives a few questions, in Indonesian and English: when is X, which room is X in, who presents X.
-- The context of each example is a mini knowledge base: the line with the answer plus ~8 random lines around it. That keeps each example around 300 tokens instead of 2k, which matters on a T4.
-- Unanswerable examples: the same question with the answer line removed from the context. The target reply is "not in the event info, check jakarta.awscommunity.id/comday". Plus questions the event page does not cover, like parking, wifi and dress code.
-- The split is by session, not by row. Sessions in the test set do not show up in training, so the test score measures lookup, not memory.
+def to_messages(row):
+    return {"messages": [
+        {"role": "system", "content": system},
+        {"role": "user", "content": f"{row['context']}\n\n{row['question']}"},
+        {"role": "assistant", "content": row["answer"]},
+    ]}
+```
 
-**Scoring, automatic:**
+The same system prompt is in the chat app ([`src/prompt.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/prompt.py)) and the eval script, so training, scoring and serving see the same input.
 
-- Answerable: correct if the reply contains the right time, room or name.
-- Unanswerable: correct if the reply says it does not know and contains no invented time or name.
+Two more changes in the training code:
 
-**Three models, one test set:**
+- **Qwen's chat template.** The old dataset, `mlabonne/guanaco-llama2-1k`, used the Llama-2 `[INST]` format. Now `tokenizer.apply_chat_template` builds the prompt.
+- **Loss masking.** The old code set `labels = input_ids`, so the loss also covered the prompt. Now the prompt tokens get the label `-100`, and the loss counts the SQL answer and nothing else:
 
-| Model                                              | Question it answers              |
-| -------------------------------------------------- | -------------------------------- |
-| Base Qwen + knowledge base                         | The no-training baseline         |
-| LoRA, old settings (`r=16`, `alpha=32`, `lr=5e-5`) | Does fine-tuning help?           |
-| LoRA, Ray Tune's best config                       | Does tuning help on top of that? |
+```python
+ids, labels = (p + a)[:max_len], ([-100] * len(p) + a)[:max_len]
+```
 
-Ray Tune ranks trials with `eval_loss`, because eval loss is cheap per trial. The rollout decision uses test accuracy. And we run Ray Tune when the old-settings LoRA beats the base model. If the old-settings LoRA does not, that is the finding: for a chatbot about facts, a knowledge base in the prompt is enough, and fine-tuning or tuning adds nothing.
+### Scoring with Exact Match
 
-My guess: the base model can handle simple lookups like "what time is X?". If there is a gap, the gap shows up in "I don't know" answers and in multi-step questions like "what's on the Main Stage after lunch?".
+`evaluate_sql` generates SQL for the 200 test questions with the base model and with the fine-tuned model, then compares each answer to the expected SQL after a small normalization: drop the ` ```sql ` fences, the trailing `;` and extra spaces, lowercase, and treat `"` and `'` the same.
 
-**What has to change before this runs:**
+````python
+def normalize(sql):
+    sql = re.sub(r"```(?:sql)?", "", sql)
+    return re.sub(r"\s+", " ", sql).strip().rstrip(";").strip().lower().replace('"', "'")
+````
 
-- The dataset. `mlabonne/guanaco-llama2-1k` uses the Llama-2 `[INST]` template. The new dataset is built with Qwen's chat template.
-- Loss masking. `finetune_lora` and `tune_hyperparams` set `labels = input_ids`, so the loss covers the prompt too. With a long context in the prompt, most of that loss is about copying the knowledge base. Prompt tokens need the label `-100`, so the loss counts the answer and nothing else.
+Exact match is strict. `SELECT MIN(game) AS min_game ...` gives the same result as `SELECT MIN(game) ...`, but it counts as a miss. So the score measures two things at once: correct SQL, and SQL written in the style of the dataset. Execution accuracy (run both queries on a database and compare the rows) is fairer, but it needs a database per question. For comparing models on the same test set, exact match is enough.
 
 ## What Changed in the Pipeline
 
-The pipeline grabs 200 examples, then Ray Tune tries 6 LoRA configs. One of the 6 is the old config from the pipeline post. The best config has to beat that old config. If the best config does not, the pipeline stops and model A stays. If the best config is better, we train with that config, shrink the model with AWQ, and push the result to S3.
+The pipeline now runs five steps: prepare the dataset, search LoRA configs with Ray Tune, fine-tune with the best config, score the result, and when the fine-tuned model beats the base model, quantize with AWQ and upload to S3.
 
-The diagram shows the trials side by side, but on our single T4 the trials run one at a time. The last box, "Serve with vLLM", is the Git commit from the previous post. The pipeline itself stops at S3.
-
-![The pipeline, with Ray Tune and a baseline gate.](https://res.cloudinary.com/diunivf9n/image/upload/v1794235113/llm-eks-kfp-pipeline.webp)
+![The pipeline design. In the runs below, the gate compares the fine-tuned model with the base model on the test set.](https://res.cloudinary.com/diunivf9n/image/upload/v1794235113/llm-eks-kfp-pipeline.webp)
 
 > Click the image to zoom in.
 
@@ -113,14 +117,14 @@ param_space={
 },
 ```
 
-Each trial is a short LoRA training on 80% of the data, evaluated on the other 20% at the end of every epoch. The trial reports `eval_loss` to Ray Tune after each epoch, and ASHA works with that number. ASHA (`grace_period=1`, `reduction_factor=2`) compares trials after the first epoch and stops the weak ones, so weak trials do not use GPU time on epochs 2 and 3. A config that stays in the top half runs up to `max_t`, 3 epochs.
+Each trial trains LoRA on 80% of the 1,000 training rows and evaluates on the other 20% at the end of every epoch. The trial reports `eval_loss` to Ray Tune after each epoch, and ASHA works with that number. ASHA (`grace_period=1`, `reduction_factor=2`) compares trials after the first epoch and stops the weak ones, so weak trials do not use GPU time on epochs 2 and 3. A config that stays in the top half runs up to `max_t`, 3 epochs.
 
 Two settings are there because of the single T4:
 
 - `max_concurrent_trials=1`: one GPU, one trial at a time.
-- `reuse_actors=False`: every trial gets a fresh worker process, so the GPU memory of the last trial is freed when the trial ends. We hit memory left behind in one process before, when merging Llama in the pipeline post.
+- `reuse_actors=False`: every trial gets a fresh worker process, so the GPU memory of the last trial is freed when the trial ends.
 
-### The Baseline Gate
+### The Baseline in the Trials
 
 The old settings (`r=16`, `alpha=32`, `lr=5e-5`) go in as the first trial:
 
@@ -128,34 +132,40 @@ The old settings (`r=16`, `alpha=32`, `lr=5e-5`) go in as the first trial:
 search_alg=BasicVariantGenerator(points_to_evaluate=[baseline]),
 ```
 
-So the baseline runs under the same conditions as the other trials, and the trials table shows where the baseline ranks. The step returns the best config plus `beats_baseline`. The flag is false when the baseline itself has the lowest eval loss.
+So the baseline runs under the same conditions as the other trials, and the `trials_report` table marks the baseline row. With `num_trials=1`, the pipeline runs the baseline alone, which gives us the old settings as a full run to compare against.
 
-The pipeline uses that flag to decide whether to train at all:
+### The Gate: Beat the Base Model
+
+Eval loss ranks the trials, but eval loss is not the score we care about. The decision to ship uses the test set. `evaluate_sql` returns `beats_base`, and the AWQ and upload steps run only when the flag is true:
 
 ```python
-with dsl.If(search.outputs["beats_baseline"] == True):
-    train = finetune_lora(..., lora_r=search.outputs["lora_r"], ...)
-    quant = quantize_and_upload(model_in=train.outputs["model_out"], ...)
+with dsl.If(scores.outputs["beats_base"] == True):
+    quant = quantize_and_upload(
+        model_in=train.outputs["model_out"], bucket_name=bucket_name, s3_prefix=s3_prefix,
+        run_id=dsl.PIPELINE_JOB_ID_PLACEHOLDER,
+    )
 ```
 
-If the baseline has the lowest loss, model A was trained with the best config we found, and training again changes nothing. The pipeline skips the full training and AWQ, the two longest GPU steps, and model A stays.
-
-## Rolling Out the New Model
-
-When a config is better than the baseline, `quantize_and_upload` writes model B to `pipeline-output/<run-id>`. The pipeline stops there and has no access to the cluster. Rolling out model B is the commit from the [previous post](/blog/llm-on-eks-gitops/#rolling-out-model-b):
-
-```bash
-$ sed -i 's|^modelPrefix:.*|modelPrefix: pipeline-output/<run-id>|' manifests/vllm/values.yaml
-$ git add manifests/vllm/values.yaml
-$ git commit -m "feat(new model): serve <run-id>"
-$ git push
-```
-
-Argo CD syncs the commit, KubeRay builds a new cluster with model B, and model A serves until model B is ready.
+If the fine-tuned model does not beat the base model, the pipeline skips AWQ and S3, and model A keeps serving.
 
 ## Deploy
 
 The stack is the same as in the previous post. If the cluster from the previous post still runs, skip this part.
+
+:::caution[G-Instance Quota]
+Check the "Running On-Demand G and VT instances" quota in Service Quotas before deploying. New accounts start at 0 vCPUs. This stack can run up to 4 `g4dn.xlarge` at once (the Karpenter NodePool limit): the serving replicas, the new cluster during a rollout, and the pipeline's GPU steps. That is 16 vCPUs.
+
+The request I sent looked like this:
+
+```
+Service:         EC2 Instances
+Region:          US East (Northern Virginia)
+Instance type:   All G and VT instances
+Limit name:      Instance Limit
+New limit value: 16
+```
+
+:::
 
 ```bash
 $ cd hypertuning_llm
@@ -189,7 +199,15 @@ $ just kfp-ui
 
 `kubectl port-forward` opens a tunnel from `localhost:8080` on the laptop to port 80 of the `ml-pipeline-ui` Service in the cluster, through the Kubernetes API. The tunnel lives as long as the command runs.
 
-Upload `finetune_pipeline.yaml`, hit **Create run**, and set `bucket_name`. The other parameters have defaults:
+Upload `finetune_pipeline.yaml`. KFP draws the graph from the spec before anything runs:
+
+![The pipeline graph in the KFP UI.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755333/llm-eks-sql-kfp-graph.webp)
+
+Every box with a list icon is a step, and every folder is an artifact one step hands to the next. `prepare-dataset` writes the training set (`dataset_out`) and the held-out test set (`test_out`). `evaluate-sql` takes `test_out` and the fine-tuned `model_out`, and `condition-1` holds the AWQ and S3 upload. It runs when the fine-tune beats the base model, and is skipped when it does not.
+
+Hit **Create run**, pick an experiment, and set `bucket_name`. The other parameters have defaults:
+
+![The Create run form with the run parameters.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755335/llm-eks-sql-run-params.webp)
 
 | Parameter         | Default                      |
 | ----------------- | ---------------------------- |
@@ -200,9 +218,83 @@ Upload `finetune_pipeline.yaml`, hit **Create run**, and set `bucket_name`. The 
 | `tune_max_epochs` | 3                            |
 | `s3_prefix`       | `pipeline-output`            |
 
-The trials table shows up as the `trials_report` artifact of the `tune-hyperparams` step.
+We started two runs:
 
-To score the served model, port-forward vLLM in one terminal and run the eval script in another:
+- `sql-baseline` with `num_trials=1`: the old settings alone, the full pipeline.
+- `sql-tuned` with `num_trials=6`: the old settings plus 5 configs from the search space.
+
+![Both runs done: sql-baseline in 42 minutes, sql-tuned in 1 hour 9 minutes.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755337/llm-eks-sql-runs-done.webp)
+
+One thing to watch in the form: our first `sql-tuned` run started with `num_trials=1`, because we cloned the form from `sql-baseline`. We terminated that run and started a new one with 6 trials.
+
+## Results
+
+### The Trials
+
+The `trials_report` of `sql-tuned`, sorted by eval loss:
+
+| `lora_r` | `lora_alpha` | `learning_rate` | Epochs run | `eval_loss` | Note     |
+| -------- | ------------ | --------------- | ---------- | ----------- | -------- |
+| 16       | 16           | 3.06e-4         | 3          | 0.0624      |          |
+| 32       | 16           | 2.39e-4         | 3          | 0.0627      |          |
+| 32       | 64           | 9.08e-5         | 3          | 0.0643      |          |
+| 32       | 64           | 7.41e-5         | 3          | 0.0661      |          |
+| 16       | 32           | 5.00e-5         | 3          | 0.0759      | baseline |
+| 32       | 16           | 1.03e-4         | 1          | 0.0805      |          |
+
+- The tune step took about 40 minutes for 6 trials. One full trial takes about 7 minutes.
+- ASHA stopped one trial after epoch 1. The other 5 ran all 3 epochs, because with 6 trials and `reduction_factor=2`, half of the trials pass each rung.
+- The top two rows have a higher learning rate, and the ranks go down with the learning rate. Rank 16 with `lr=3.06e-4` has a lower loss than rank 32 with `lr=2.39e-4`. For this task, learning rate matters more than rank.
+- The baseline ranks 5 of 6. The baseline eval loss in `sql-baseline` was 0.0762, close to the 0.0759 here, so the number is stable between runs.
+
+### The Test Set
+
+`evaluate_sql` scores the fine-tuned model in fp16 with greedy decoding:
+
+| Model                                              | Exact match |
+| -------------------------------------------------- | ----------- |
+| Base `Qwen2.5-1.5B-Instruct`                       | 48.0%       |
+| LoRA, old settings (`r=16`, `alpha=32`, `lr=5e-5`) | 64.5%       |
+| LoRA, tuned (`r=16`, `alpha=16`, `lr=3.06e-4`)     | 70.0%       |
+
+Fine-tuning added 16.5 points, and tuning added 5.5 more. Both runs beat the base model, so both runs uploaded a model to S3.
+
+Most of the gain is style. The normalization forgives fences and quotes, but not aliases or guessed values, and the base model adds both. After LoRA, the model writes one line in the dataset style:
+
+| Question                                                   | Base                                                  | Tuned                                                     |
+| ---------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
+| Who did the Texans play on Week 4?                         | `... WHERE week = 'Week 4'`                           | `... WHERE week = 4`                                      |
+| Player who is Sco, moving to Greenock Morton in the summer | `... nat = 'Sco' AND transfer_window LIKE '%summer%'` | `... nat = "scotland" AND transfer_window = "summer" ...` |
+
+The expected answers are `week = "4"` and `nat = "sco"`, so all four answers are misses. The tuned model is closer, and also more sure of itself: it turned "Sco" into "scotland".
+
+## Rolling Out Model B
+
+`quantize_and_upload` wrote model B to `pipeline-output/<run-id>`. Rolling out model B is the commit from the [previous post](/blog/llm-on-eks-gitops/#rolling-out-model-b):
+
+```bash
+$ sed -i 's|^modelPrefix:.*|modelPrefix: pipeline-output/ad3af70c-14c0-45b5-a103-5201a19fecd5|' manifests/vllm/values.yaml
+$ git add manifests/vllm/values.yaml
+$ git commit -m "feat: serve the tuned text-to-sql model"
+$ git push
+```
+
+The switch on the `survive_llm` cluster:
+
+| Stage                                        | Time (UTC+7)   | Since push |
+| -------------------------------------------- | -------------- | ---------- |
+| Push                                         | 20:07:51       |            |
+| Argo CD synced                               | 20:08:21       | 30s        |
+| New Ray head `Pending` (not enough CPU)      | 20:08 to 20:21 |            |
+| System node group scaled from 3 to 4 by hand | 20:16:48       |            |
+| New GPU workers running                      | 20:29:21       | ~21.5 min  |
+| RayService healthy, traffic on model B       | 20:32:55       | ~25 min    |
+
+The same problem as in the previous post: the second Ray head needs 1.5 CPU, and three `t3.large` system nodes did not have it. Without that wait, the switch takes about 12 minutes. At the peak, the cluster ran 8 nodes: 4 `t3.large` and 4 `g4dn.xlarge`.
+
+### Scoring the Served Model
+
+`evaluate_sql` scores the model inside the pipeline. To score the model that vLLM serves, port-forward vLLM and run the eval script:
 
 ```bash
 $ just vllm-forward
@@ -212,35 +304,58 @@ $ just eval-sql
 # runs: python tests/eval_sql.py
 ```
 
-`tests/eval_sql.py` loads the same dataset with the same seed as `prepare_dataset`, so it gets the same 200 test rows the pipeline held out. It sends each one to `localhost:8000/v1/chat/completions` with `temperature: 0`, and prints the exact-match score and a few examples.
+`tests/eval_sql.py` loads the same dataset with the same seed as `prepare_dataset`, so it gets the same 200 test rows. It sends each one to `localhost:8000/v1/chat/completions` with `temperature: 0` and uses the same normalization.
 
-## What We Know So Far
+| Served model          | Exact match |
+| --------------------- | ----------- |
+| Model A (guanaco)     | 39.5%       |
+| Model B (Text-to-SQL) | 63.5%       |
 
-I have not run this pipeline yet, so there is no trials table and no model B in this post. What we do have is the baseline the run has to beat: model A with the knowledge base, measured on the AWS Community Day cluster with `just eval`:
+Two things in this table:
 
-| Setup                                                           | Score |
-| --------------------------------------------------------------- | ----- |
-| Model A, whole knowledge base in the prompt                     | 6/15  |
-| Model A, keyword retrieval (the prompt gets the matching lines) | 11/15 |
+- **Model A scores below the base model** (39.5% against 48.0%). The guanaco fine-tune made the model worse at SQL. A fine-tune for one task can cost skill in another.
+- **Model B scores 63.5%, not 70.0%.** The served model is the AWQ version, and vLLM generates the text, not `transformers`. Together, the two cost about 6.5 points. One example: the AWQ model wrote `SUM(points) AS Total`, and the fp16 model wrote `SUM(points)`.
 
-The misses are not random. Questions about one line work: where and when the event is, or which room a talk is in when you give its full title. Questions where the model has to scan many lines fail: "who speaks from AWS?" or "what is on the Main Stage after lunch?". A section that groups speakers by company turned the first one into a one-line lookup, and the model got it right 3 times out of 3.
+In the chat app, the difference shows on the first question. Model A answers with a fenced, multi-line query and an alias:
 
-That changes my guess from the start of this post. The biggest gap so far is how much context the 1.5B model gets, not its weights. Sending fewer, better lines (retrieval) gained more than any LoRA setting is likely to.
+![Model A: a fenced SQL block with an alias.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755339/llm-eks-sql-chat-model-a.webp)
 
-## What's Next
+Model B answers with one line in the dataset style. Model B is not perfect: the join query groups by city but does not select the city, and a question with no table still gets a SQL answer:
 
-The pipeline in this post is ready to run, but it needs two changes first (see [What Fine-Tuning Could Teach](#what-fine-tuning-could-teach)):
+![Model B: one line per answer, and SQL even for "What is the capital of Panama?".](https://res.cloudinary.com/diunivf9n/image/upload/v1794755342/llm-eks-sql-chat-model-b.webp)
 
-1. A dataset built from the knowledge base, in place of `guanaco-llama2-1k`.
-2. Loss masking, so training counts the answer and not the prompt.
+### Rolling Back
 
-Then one run answers three questions with the same test set: does LoRA beat base Qwen with the knowledge base, does tuning beat the old settings, and does either one beat retrieval. I will add the results here once that run happens.
+To go back to model A, we reverted the commit:
+
+```bash
+$ git revert ea62252
+$ git push
+```
+
+Argo CD synced in 8 seconds, and KubeRay built a cluster with model A next to model B. After the RayService was healthy, `just eval-sql` scored 79/200 (39.5%) again, the same as before the switch:
+
+![After the revert, the served model scores 39.5% again.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755345/llm-eks-sql-eval-rollback.webp)
+
+The revert took 18 minutes. The new GPU workers waited about 6 minutes, because Karpenter hit `VcpuLimitExceeded`: a GPU node from the old cluster was still terminating and still counted toward the 16 vCPU quota. Two switches close together need more than 16 vCPUs, or a few minutes between switches.
+
+## Problems We Found
+
+- **The run ID did not resolve inside `dsl.If`.** `quantize_and_upload` wrote model B to the literal prefix `pipeline-output/{{$.pipeline_job_uuid}}/`. We copied the files to `pipeline-output/<run-id>/` by hand before the rollout. The fix goes in the pipeline code.
+- **The KFP UI cannot show the Markdown reports.** The `trials_report` and `eval_report` artifacts show "Error in retrieving Markdown visualization information". The `ml-pipeline-ui` service account has no IAM role (IRSA) for the artifact bucket, so S3 returns Access Denied. Until the fix, the tables are in the step logs.
+- **CPU and vCPU limits during a switch.** Covered above: a fourth system node for the second Ray head, and enough GPU quota for two clusters plus nodes that are still terminating.
 
 ## Conclusion
 
-Ray Tune fits into the pipeline as one more step, without touching the RayCluster that serves users. Ray Tune runs in the training pod, ASHA stops the weak trials after one epoch, and the old settings run as one of the trials. When the old settings have the lowest loss, the pipeline skips the training and keeps model A.
+Ray Tune fits into the pipeline as one more step, without touching the RayCluster that serves users. Ray Tune runs in the training pod, ASHA stops the weak trials, and the old settings run as one of the trials. For Text-to-SQL, the old settings ranked 5 of 6, and a higher learning rate made the difference.
 
-The bigger lesson came before any tuning: measure the thing you want to improve. For our event chatbot, the numbers so far point at the prompt, not the weights. Tuning is ready for the day a dataset says the weights matter.
+The bigger lesson is to measure before and after each step. The event chatbot needed better context, not new weights. For Text-to-SQL, fine-tuning added 16.5 points, tuning added 5.5, and AWQ took back 6.5 once the model was served. Each of those numbers came from the same 200 questions, so we could compare them.
+
+What's next:
+
+1. Fix the run ID in `quantize_and_upload` and the IRSA role for the KFP UI.
+2. Score with execution accuracy, so a different alias or condition order no longer counts as a miss.
+3. Find where the 6.5 points go: AWQ settings, or a comparison with the fp16 model in vLLM.
 
 :::tip[Source Code]
 Wanna see the full code? See the repo here: [danielcristho/eks-cdk-llm](https://github.com/danielcristho/eks-cdk-llm)

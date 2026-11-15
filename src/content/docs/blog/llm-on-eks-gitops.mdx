@@ -23,7 +23,7 @@ Hi there! 👋🏽 In the [previous post](/blog/llm-on-eks-pipeline-kubeflow/), 
 
 So in this post, we will close that gap. vLLM loads the pipeline's model from S3, every model version gets its own S3 prefix, and switching versions is a Git commit. Argo CD picks up the commit, and KubeRay brings up the new model next to the old one before moving traffic over.
 
-We also add a small chatbot: an assistant for AWS Community Day Jakarta 2026 that answers questions about the agenda. The chatbot reads a knowledge base from its prompt. We use the chatbot to try the model, and later to load test vLLM.
+We also add a small chat app with Gradio to try the model, and load tests to watch vLLM scale.
 
 ## TL;DR
 
@@ -31,12 +31,14 @@ We also add a small chatbot: an assistant for AWS Community Day Jakarta 2026 tha
 - vLLM serves the model under a fixed name, `qwen-lora`, so clients do not change when the model behind the name changes.
 - Model versions are write-once S3 prefixes (`pipeline-output/model-v1`, `pipeline-output/<run-id>`). `modelPrefix` in `manifests/vllm/values.yaml` picks the version to serve.
 - Switching models is a Git commit. Argo CD synced our commit within 25 seconds, KubeRay builds a new RayCluster with the new model, and traffic moves once the new cluster serves. One switch takes 10 to 15 minutes. Rolling back is `git revert`.
+- Argo CD posts every sync, health change and drift to Discord, with the commit message and author.
+- A change made by hand to the RayService is undone in about 2 seconds.
 - A switch needs room for two clusters for a few minutes: twice the GPUs, plus a second Ray head on the system nodes.
 - A new GPU replica takes about 8 minutes from request to serving. Karpenter takes less than one of those minutes.
 
 ## Architecture
 
-Here is the full picture. A developer deploys the infrastructure with CDK and runs the Kubeflow pipeline. The pipeline writes each model to its own S3 prefix. A commit to `manifests/vllm/values.yaml` tells Argo CD which model to serve, and KubeRay rolls the model out to the GPU workers that Karpenter brings up. Users talk to the event chatbot, and the chatbot calls vLLM inside the cluster.
+Here is the full picture. A developer deploys the infrastructure with CDK and runs the Kubeflow pipeline. The pipeline writes each model to its own S3 prefix. A commit to `manifests/vllm/values.yaml` tells Argo CD which model to serve, and KubeRay rolls the model out to the GPU workers that Karpenter brings up. Users talk to the chat app, and the chat app calls vLLM inside the cluster.
 
 ![LLM on EKS, from pipeline to GitOps rollout.](https://res.cloudinary.com/diunivf9n/image/upload/v1794235102/llm-eks-architecture.webp)
 
@@ -131,6 +133,60 @@ CDK installs Argo CD on the system nodes and creates one Application, `vllm`, th
 
 The full stack is in [`argocd_stack.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/hypertuning_llm/argocd/argocd_stack.py).
 
+### Notifications in Discord
+
+A switch takes 10 to 25 minutes, and we do not want to watch the Argo CD UI the whole time. Argo CD has a notifications controller, and the Helm chart takes its config under `notifications`. We send three events to a Discord channel through a webhook:
+
+| Trigger          | When                                   | Message                                           |
+| ---------------- | -------------------------------------- | ------------------------------------------------- |
+| `on-synced`      | A sync succeeds, once per Git revision | Commit hash and commit message                    |
+| `on-healthy`     | The app becomes `Healthy`              | Commit hash and commit message                    |
+| `on-out-of-sync` | The live state differs from Git        | The resources that differ, like `RayService/vllm` |
+
+Each message is a Discord embed with the app, commit, author and chart path. The commit message comes from Argo CD's repo service:
+
+```python
+COMMIT_MSG = '{{ (call .repo.GetCommitMetadata .app.status.sync.revision).Message | toJson }}'
+```
+
+`toJson` matters here. A commit message with quotes or new lines would break the JSON body of the webhook. `toJson` escapes the message and adds the quotes.
+
+The Application subscribes to the three triggers with annotations:
+
+```python
+"annotations": {
+    f"notifications.argoproj.io/subscribe.{t}.discord": ""
+    for t in ("on-synced", "on-healthy", "on-out-of-sync")
+},
+```
+
+The webhook URL is a secret, so it does not go in Git or in CDK. After a deploy, put the URL in the notifications secret:
+
+```bash
+$ just discord-webhook https://discord.com/api/webhooks/<id>/<token>
+# runs: kubectl patch secret argocd-notifications-secret -n argocd --type merge -p '{"stringData":{"discord-url":"<url>"}}'
+```
+
+Our first deploy with notifications failed: the templates had emojis, the emojis became escaped surrogate pairs in the Helm values, and the chart failed with "invalid Unicode character escape code". We dropped the emojis.
+
+### Drift and selfHeal
+
+To test `selfHeal`, we changed `max_ongoing_requests` from 5 to 10 in the live RayService with `kubectl patch`, and read the value back every 3 seconds:
+
+```bash
+$ kubectl patch rayservice vllm -n kuberay --type merge -p '<serveConfigV2 with max_ongoing_requests: 10>'
+rayservice.ray.io/vllm patched
+19:25:14  live: max_ongoing_requests: 5
+```
+
+The first read, 6 seconds after the patch, already showed 5 again. With `kubectl edit`, Argo CD finished the sync in about 2 seconds. The app went `Synced`, `OutOfSync`, `OutOfSync` with a sync running, then `Synced` again.
+
+Discord showed "Out of sync with Git" and no "Synced" message. That is the expected behavior: `on-synced` fires once per Git revision, and `selfHeal` does not create a new revision.
+
+### Changing the Serve Config through Git
+
+The same change made through Git takes the other path from [Why the Model Lives in `rayClusterConfig`](#why-the-model-lives-in-rayclusterconfig). We committed `max_ongoing_requests: 8` in the chart. Argo CD synced 21 seconds after the push, and Ray Serve updated the app on the running cluster. The Ray pods kept their names and start times, and the RayService stayed `Running`. No new cluster, no extra GPUs.
+
 ### Switching in Practice
 
 ```bash
@@ -158,6 +214,14 @@ During the switch, both `model-v2-demo` workers stayed ready and served. vLLM on
 
 ![Two workers on model-v3-demo and two on model-v2-demo, each pulling its own model from S3.](https://res.cloudinary.com/diunivf9n/image/upload/v1794237161/llm-eks-gitops-workers.webp)
 
+The same switch on the next run, to the Text-to-SQL model from the [hyperparameter tuning post](/blog/llm-on-eks-hyperparametertuning/). Argo CD is `Synced` to the new commit, the app is `Progressing`, and the new head (`kfmsm`) is `Pending` next to the old cluster (`cb86w`) that still serves:
+
+![The new RayCluster starts next to the old one while the old one serves.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755347/llm-eks-gitops-bluegreen.webp)
+
+Discord posted the drift, the sync and, 24 minutes later, the health change:
+
+![Discord: out of sync, synced, then healthy at the new commit.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755350/llm-eks-gitops-discord-switch.webp)
+
 To check which model each worker has, read `MODEL_URI` from the pods and the log of the init container:
 
 ```bash
@@ -165,6 +229,21 @@ $ kubectl get pods -n kuberay -l ray.io/node-type=worker \
   -o custom-columns='POD:.metadata.name,NODE:.spec.nodeName,MODEL:.spec.initContainers[0].env[?(@.name=="MODEL_URI")].value'
 $ kubectl logs -n kuberay <worker-pod> -c model-cache-sync
 ```
+
+### Rolling Back
+
+A rollback is a commit too:
+
+```bash
+$ git revert <commit>
+$ git push
+```
+
+KubeRay builds a cluster with the old model, the same way as a switch. The Discord message shows the revert commit, so the channel also records which commit went back:
+
+![Discord: the revert commit synced and healthy.](https://res.cloudinary.com/diunivf9n/image/upload/v1794755352/llm-eks-gitops-discord-revert.webp)
+
+Our revert synced 8 seconds after the push and was healthy 18 minutes later. The numbers are in the [hyperparameter tuning post](/blog/llm-on-eks-hyperparametertuning/#rolling-back).
 
 ### A Switch Needs Room for Two Clusters
 
@@ -174,6 +253,8 @@ Our first switch, to `model-v2-demo`, took 38 minutes instead of 10. Two things 
 - **The GPU limit.** For a few minutes, the new cluster needs as many GPUs as the old one. Our Karpenter NodePool stops at 4 GPUs, and an empty GPU node counts toward that limit until consolidation removes the node (`consolidateAfter: 5m`). One new worker waited for an old node to go.
 
 So zero downtime needs extra capacity: twice the GPUs during the switch, and spare CPU on the system nodes for a second head. Size the quota, the NodePool limit and the system node group for the switch, not for the steady state.
+
+Two switches close together need even more. A GPU node from the last switch counts toward the vCPU quota until the node is gone. In our revert, Karpenter hit `VcpuLimitExceeded` and the new workers waited about 6 minutes.
 
 ### Why the Pipeline Does Not Deploy
 
@@ -244,24 +325,19 @@ In the serving post, the chatbot was a small [Streamlit](https://github.com/stre
 Why we switched:
 
 - **The chat UI is built in.** `gr.ChatInterface` gives us history, streaming and example questions. In Streamlit, we kept the chat history in `st.session_state` ourselves.
-- **Panels that update while the answer streams.** Next to the chat, we show the knowledge base lines behind each answer and a live log with tokens and time to first token. Streamlit reruns the whole script on every interaction, so updating side panels token by token gets awkward.
+- **Updates while the answer streams.** Streamlit reruns the whole script on every interaction, so updating the page token by token gets awkward.
 - **One Python process serves the web app,** which makes the chatbot easy to put in a pod later.
 
-The chatbot is an assistant for AWS Community Day Jakarta 2026. The whole event knowledge base goes into the system prompt ([`src/prompt.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/prompt.py)). The knowledge base is [`src/knowledge_base.md`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/knowledge_base.md), generated from the event API by [`src/build_kb.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/build_kb.py). With 44 sessions, the knowledge base is around 2k tokens, so the whole file fits in `max_model_len` 4096 without a retrieval index.
+The first version of the chatbot was an assistant for AWS Community Day Jakarta 2026. The whole event knowledge base (around 2k tokens) went into the system prompt, and the load test numbers above were measured with that prompt. A 1.5B model answered lookups of one line well, but failed questions that need many lines, like "who speaks from AWS?". The [next post](/blog/llm-on-eks-hyperparametertuning/#why-not-the-event-chatbot) measures this and explains why we moved to Text-to-SQL.
 
-vLLM is private now, so run the chatbot from your laptop through a port-forward:
+The app is now a plain SQL assistant: paste a `CREATE TABLE`, ask a question, and the model replies with SQL. The system prompt is in [`src/prompt.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/prompt.py), and the streaming code with time to first token is in [`src/llm.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/llm.py).
+
+vLLM is private now, so run the app from your laptop through a port-forward:
 
 ```bash
 $ just vllm-forward              # vLLM at localhost:8000
 $ python src/chat_gradio/app.py  # VLLM_URL=http://localhost:8000 in .env
 ```
-
-How well does a 1.5B model answer from a 2k-token prompt? Lookups of one line work: where and when the event is, or which room a talk is in when you give the talk title. Questions that need the model to scan many lines do not work: "who speaks from AWS?" or "what's on the Main Stage after lunch?". Two changes helped:
-
-- **A "Speakers by company" section** in the knowledge base. `build_kb.py` groups speakers by company once, so "who's from AWS?" becomes a one-line lookup. The model got that question right 3 times out of 3.
-- **`temperature=0.2`** in [`src/llm.py`](https://github.com/danielcristho/eks-cdk-llm/blob/main/hypertuning_llm/src/llm.py). With sampling, the same list question flipped between the right names and "not listed".
-
-The "after lunch" question still comes out wrong. That is a limit of the model size. The [next post](/blog/llm-on-eks-hyperparametertuning/) asks whether fine-tuning or a retrieval step fixes it.
 
 ## Deploy
 
@@ -271,6 +347,7 @@ $ cp .env.example .env    # account, region, admin user, bucket, GITOPS_REPO_URL
 $ just deploy             # refuses to run with uncommitted changes in the folder
 $ just kubeconfig
 $ just argocd-ui          # Argo CD at localhost:8081, user admin, password from `just argocd-password`
+$ just discord-webhook <url>   # optional: Argo CD notifications to Discord
 $ just vllm-forward       # vLLM at localhost:8000
 ```
 
@@ -291,7 +368,7 @@ If `eks-stack` ends in `DELETE_FAILED`, the cause is often something created out
 
 The pipeline's model is in production now, and getting a model there is a Git commit instead of a script with cluster access. Argo CD syncs the commit, KubeRay builds a new cluster next to the old one, and the old model serves until the new one is ready. The cost is twice the GPUs for a few minutes, and 10 to 15 minutes per switch, most of that time spent waiting for vLLM to start.
 
-This post does not answer whether model B is better than model A. Our demo models have the same weights. In the [next post](/blog/llm-on-eks-hyperparametertuning/), Ray Tune searches the LoRA settings, and we measure whether fine-tuning helps the event chatbot at all.
+This post does not answer whether model B is better than model A. Our demo models have the same weights. In the [next post](/blog/llm-on-eks-hyperparametertuning/), Ray Tune searches the LoRA settings, and we measure a real model B on a Text-to-SQL test set.
 
 :::tip[Source Code]
 Wanna see the full code? See the repo here: [danielcristho/eks-cdk-llm](https://github.com/danielcristho/eks-cdk-llm)
