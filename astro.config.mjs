@@ -37,6 +37,25 @@ import vercel from "@astrojs/vercel";
 export default defineConfig({
   adapter: vercel(),
   site: BLOG_URL,
+  redirects: {
+    "/til/aws-solution-architect/day-1": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-2": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-3": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-4": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-5": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-6": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-7": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-8": "/til/aws-solution-architect/summary",
+    "/til/aws-solution-architect/day-9": "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-10":
+      "/til/aws-solution-architect/domain-1",
+    "/til/aws-solution-architect/day-11":
+      "/til/aws-solution-architect/domain-2",
+    "/til/aws-solution-architect/day-12":
+      "/til/aws-solution-architect/domain-3",
+    "/til/aws-solution-architect/day-13":
+      "/til/aws-solution-architect/domain-4",
+  },
   image: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },

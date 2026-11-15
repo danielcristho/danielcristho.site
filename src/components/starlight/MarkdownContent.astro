@@ -1,6 +1,7 @@
 ---
 import Default from "starlight-blog/overrides/MarkdownContent.astro";
 import Giscus from "../Giscus.astro";
+import SeriesToc from "../SeriesToc.astro";
 import ImageZoom from "starlight-image-zoom/components/ImageZoom.astro";
 
 const isBlogPost = Astro.url.pathname.startsWith("/blog/");
@@ -9,6 +10,7 @@ const isBlogPost = Astro.url.pathname.startsWith("/blog/");
 <ImageZoom />
 
 <Default {...Astro.props}>
+  {isBlogPost && <SeriesToc />}
   <slot />
 </Default>
 

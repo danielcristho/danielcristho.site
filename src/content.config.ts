@@ -12,6 +12,7 @@ export const collections = {
       extend: (context) =>
         blogSchema(context).extend({
           trivia: triviaCard.or(z.array(triviaCard)).nullish(),
+          series: z.string().optional(),
         }),
     }),
   }),
