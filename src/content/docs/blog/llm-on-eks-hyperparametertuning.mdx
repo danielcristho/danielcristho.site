@@ -160,43 +160,59 @@ The stack is the same as in the previous post. If the cluster from the previous 
 ```bash
 $ cd hypertuning_llm
 $ cp .env.example .env    # account, region, admin user, bucket, GITOPS_REPO_URL, GITOPS_REVISION
-$ just deploy             # refuses to run with uncommitted changes in the folder
+$ just deploy
 $ just kubeconfig
 ```
 
+The `just` recipes are short wrappers around the real commands, so here is what each one runs:
+
+- `just deploy` checks the folder first with `git diff --quiet HEAD -- .` and `git ls-files --others`, and stops when something is not committed. Argo CD deploys the vLLM chart from Git, so a deploy from uncommitted code would leave the cluster and the repo out of step. Then it runs `cdk deploy --all`, which deploys the stacks in the order `app.py` sets.
+- `just kubeconfig` runs `aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_DEFAULT_REGION`. It writes the cluster endpoint and an auth entry to `~/.kube/config`, so `kubectl` talks to the new cluster.
+
 ## Running the Pipeline
 
-First, compile the pipeline. This writes `finetune_pipeline.yaml` next to `finetune_pipeline.py`:
+First, compile the pipeline:
 
 ```bash
 $ just compile
+# runs: python hypertuning_llm/kubeflow/pipelines/finetune_pipeline.py
 ```
+
+The file ends with `compiler.Compiler().compile(finetune_pipeline, ...)`. The KFP compiler turns the Python components into a pipeline spec, `finetune_pipeline.yaml`, next to the `.py` file. That YAML is what KFP runs: each component's code and its `pip` packages are inside it.
 
 Then open the KFP UI. There is no public load balancer for the UI, so we port-forward:
 
 ```bash
-$ just kfp-ui   # KFP UI at localhost:8080
+$ just kfp-ui
+# runs: kubectl port-forward -n kubeflow svc/ml-pipeline-ui 8080:80
 ```
+
+`kubectl port-forward` opens a tunnel from `localhost:8080` on the laptop to port 80 of the `ml-pipeline-ui` Service in the cluster, through the Kubernetes API. The tunnel lives as long as the command runs.
 
 Upload `finetune_pipeline.yaml`, hit **Create run**, and set `bucket_name`. The other parameters have defaults:
 
 | Parameter         | Default                      |
 | ----------------- | ---------------------------- |
 | `base_model`      | `Qwen/Qwen2.5-1.5B-Instruct` |
-| `num_examples`    | 200                          |
+| `num_examples`    | 1000                         |
+| `num_test`        | 200                          |
 | `num_trials`      | 6                            |
 | `tune_max_epochs` | 3                            |
 | `s3_prefix`       | `pipeline-output`            |
 
 The trials table shows up as the `trials_report` artifact of the `tune-hyperparams` step.
 
-To score a model on the knowledge base questions, port-forward vLLM and run the eval script. `--no-kb` leaves the knowledge base out of the system prompt:
+To score the served model, port-forward vLLM in one terminal and run the eval script in another:
 
 ```bash
 $ just vllm-forward
-$ just eval --label model-v1+kb
-$ just eval --label model-v1-no-kb --no-kb
+# runs: kubectl port-forward -n kuberay svc/vllm-serve-svc 8000:8000
+
+$ just eval-sql
+# runs: python tests/eval_sql.py
 ```
+
+`tests/eval_sql.py` loads the same dataset with the same seed as `prepare_dataset`, so it gets the same 200 test rows the pipeline held out. It sends each one to `localhost:8000/v1/chat/completions` with `temperature: 0`, and prints the exact-match score and a few examples.
 
 ## What We Know So Far
 
